@@ -1,5 +1,6 @@
 (ns ez-form.core
   (:require [ez-form.error :refer [get-error-message]]
+            [ez-form.flow :as flow]
             [ez-form.list :as list]
             [ez-form.paragraph :as paragraph]
             [ez-form.table :as table]
@@ -70,6 +71,7 @@
 (defn as-list [form]
   (map #(list/li % (:options form)) (:fields form)))
 
+(def as-flow flow/flow)
 
 (defmacro defform [name options fields]
   `(defn ~name

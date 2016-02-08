@@ -4,61 +4,41 @@
 (defmulti row (fn [field form-options] (:type field)))
 
 (defmethod row :checkbox [field form-options]
-  (let [label (get-first field true :label :name)
-        id (get-first field :id :name)
-        text (:text field)
-        errors (:errors field)]
+  (let [text (:text field)]
     [:tr
-     [:th [:label {:for id} label]]
+     [:th (ez.field/label field)]
      [:td
-      (if errors
-        (map error-div errors))
+      (ez.field/errors field)
       (ez.field/field field form-options)
       text]]))
 
 (defmethod row :radio [field form-options]
-  (let [label (get-first field true :label :name)
-        id (get-first field :id :name)
-        text (:text field)
-        errors (:errors field)]
+  (let [text (:text field)]
     [:tr
-     [:th [:label {:for id} label]]
+     [:th (ez.field/label field)]
      [:td
-      (if errors
-        (map error-div errors))
+      (ez.field/errors field)
       (ez.field/field field form-options)
       text]]))
 
 (defmethod row :textarea [field form-options]
-  (let [label (get-first field true :label :name)
-        id (get-first field :id :name)
-        errors (:errors field)]
-    [:tr
-     [:th [:label {:for id} label]]
-     [:td
-      (if errors
-        (map error-div errors))
-      (ez.field/field field form-options)]]))
+  [:tr
+   [:th (ez.field/label field)]
+   [:td
+    (ez.field/errors field)
+    (ez.field/field field form-options)]])
 
 (defmethod row :dropdown [field form-options]
-  (let [label (get-first field true :label :name)
-        id (get-first field :id :name)
-        errors (:errors field)]
-    [:tr
-     [:th [:label {:for id} label]]
-     [:td
-      (if errors
-        (map error-div errors))
-      (ez.field/field field form-options)]]))
+  [:tr
+   [:th (ez.field/label field)]
+   [:td
+    (ez.field/errors field)
+    (ez.field/field field form-options)]])
 
 (defmethod row :default [field form-options]
   "Any input that is like text will work with this one"
-  (let [label (get-first field true :label :name)
-        id (get-first field :id :name)
-        errors (:errors field)]
-    [:tr
-     [:th [:label {:for id} label]]
-     [:td
-      (if errors
-        (map error-div errors))
-      (ez.field/field field form-options)]]))
+  [:tr
+   [:th (ez.field/label field)]
+   [:td
+    (ez.field/errors field)
+    (ez.field/field field form-options)]])

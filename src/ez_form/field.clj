@@ -1,6 +1,8 @@
 (ns ez-form.field
   (:require [clojure.string :as str]))
 
+(defn error-div [error]
+  [:div.error error])
 
 (defn get-first [field & [capitalize? & values]]
   (let [values (if (true? capitalize?)
@@ -18,6 +20,17 @@
          nil
          (recur values))))))
 
+(defn errors
+  "Send in a field from a map and get back a list of error messages"
+  [{:keys [errors]}]
+  (if errors
+    (map error-div errors)))
+
+(defn label [field]
+  (let [label (get-first field true :label :name)
+        id (get-first field :id :name)]
+    [:label {:for id} label]))
+
 (defn option [selected-value opt]
   (let [[value text] (if (sequential? opt)
                        [(first opt) (second opt)]
@@ -26,9 +39,6 @@
                {:value value :selected true}
                {:value value})]
     [:option opts text]))
-
-(defn error-div [error]
-  [:div.error error])
 
 (defn get-opts [field keys form-options]
   (merge
@@ -43,7 +53,6 @@
                      [k (if (keyword? v) (name v) v)])) (select-keys field keys)))))
 
 
-
 (defmulti field (fn [field form-options] (:type field)))
 
 (defmethod field :checkbox [field form-options]
@@ -52,7 +61,6 @@
         checked? (:checked field)
         opts (get-opts field [:class :name :value :type] form-options)]
     [:input (merge opts {:id id} (if checked? {:checked true})) value]))
-
 
 (defmethod field :radio [field form-options]
   (let [id (get-first field :id :name)
@@ -75,7 +83,6 @@
     [:select (merge opts {:type :select
                           :id id})
        (map (partial option value) options)]))
-
 
 (defmethod field :default [field form-options]
   (let [id (get-first field :id :name)
