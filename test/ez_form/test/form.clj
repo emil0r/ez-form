@@ -1,5 +1,6 @@
 (ns ez-form.test.form
   (:require [ez-form.core :as ez-form :refer [defform]]
+            [ez-form.flow :as flow]
             [vlad.core :as vlad]
             [midje.sweet :refer :all]))
 
@@ -57,6 +58,15 @@
 
 (ez-form/as-table (testform {} {:email "emil@emil0r.com"
                                 :password "my password"}))
+
+(ez-form/as-flow
+ [:table.table
+  [:tr
+   [:th :email.label]
+   [:td.testus :email.field :email.errors]]]
+ (testform {:email "emil@emil0r.com"} {}))
+
+(ez-form.flow/get-field (testform {:email "emil@emil0r.com"}) :email.field)
 
 (fact
  "valid?"
