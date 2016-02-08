@@ -18,14 +18,16 @@
     :label (t :form.field/email)
     :name :email
     :placeholder (t :form.placeholder/email)
-    :validation (vlad/present)
+    :validation (vlad/attr [:email] (vlad/present))
     :error-messages {:custom "foobar"}}
    {:type :password
     :label (t :form.field/password)
     :name :password
     :validation (vlad/join
-                 (vlad/present)
-                 (vlad/length-in 6 100))}
+                 (vlad/attr [:password]
+                            (vlad/present))
+                 (vlad/attr [:password]
+                            (vlad/length-in 6 100)))}
    {:type :password
     :label (t :form.field/repeat-password)
     :name :repeat-password
@@ -52,27 +54,11 @@
 
    ])
 
-(first (ez-form/as-table
-  (testform {} {:email "emil@emil0r.com"})
-  {:email "emil@emil0r.com"}))
-
 (ez-form/as-table
- (ez-form/form [{:type :email
-                 :name :email
-                 :label "Email"}] {} {:radio "m"} nil)
- {}
- )
+ (testform {} {:email ""
+               :password ""}
+           ))
 
-(ez-form/as-table {:fields  [{:type :radio
-                              :name :radio
-                              :options {"m" "Male"
-                                        "f" "Female"}}]
-                   :options {}} )
 
-;; (testform default-data)
-;; (testform default-data params)
-;; (testform default-data params options)
-
-;; (ez-form/as-table (testform request default-data {:validate? false}))
-;; (ez-form/as-list (testform request default-data {:validate? false}))
-;; (ez-form/as-paragraphs (testform request default-data {:validate? false}))
+(ez-form/validate (testform {:email "emil@emil0r.com"}) {})
+(ez-form/valid? (testform {} nil))

@@ -1,0 +1,81 @@
+(ns ez-form.field
+  (:require [clojure.string :as str]))
+
+
+(defn get-first [field & [capitalize? & values]]
+  (let [values (if (true? capitalize?)
+                 values
+                 (into [capitalize?] values))
+        capitalize? (if (true? capitalize?) true false)]
+   (loop [[value & values] values]
+     (if-let [value (get field value)]
+       (cond
+         (keyword? value) (if capitalize?
+                            (str/capitalize (name value))
+                            (name value))
+         :else value)
+       (if (and (nil? value) (nil? values))
+         nil
+         (recur values))))))
+
+(defn option [selected-value opt]
+  (let [[value text] (if (sequential? opt)
+                       [(first opt) (second opt)]
+                       [opt opt])
+        opts (if (= value selected-value)
+               {:value value :selected true}
+               {:value value})]
+    [:option opts text]))
+
+(defn error-div [error]
+  [:div.error error])
+
+(defn get-opts [field keys form-options]
+  (merge
+
+   (:opts field)
+   (into {} (map (fn [[k v]]
+                   (if (nil? v)
+                     [k v]
+                     [k (if (keyword? v) (name v) v)])) (select-keys field keys)))))
+
+
+
+(defmulti field (fn [field form-options] (:type field)))
+
+(defmethod field :checkbox [field form-options]
+  (let [id (get-first field :id :name)
+        value (:value field)
+        checked? (:checked field)
+        opts (get-opts field [:class :name :value :type] form-options)]
+    [:input (merge opts {:id id} (if checked? {:checked true})) value]))
+
+
+(defmethod field :radio [field form-options]
+  (let [id (get-first field :id :name)
+        value (:value field)
+        checked? (:checked field)
+        opts (get-opts field [:class :name :value :type] form-options)]
+    [:input (merge opts {:id id} (if checked? {:checked true})) value]))
+
+(defmethod field :textarea [field form-options]
+  (let [id (get-first field :id :name)
+        value (:value field)
+        opts (get-opts field [:class :name] form-options)]
+    [:textarea (merge opts {:id id}) value]))
+
+(defmethod field :dropdown [field form-options]
+  (let [id (get-first field :id :name)
+        value (:value field)
+        opts (get-opts field [:class :name] form-options)
+        options (:options field)]
+    [:select (merge opts {:type :select
+                          :id id})
+       (map (partial option value) options)]))
+
+
+(defmethod field :default [field form-options]
+  (let [id (get-first field :id :name)
+        opts (get-opts field [:value :placeholder :class :name :type] form-options)]
+    [:input (merge {:type :text
+                    :id id} opts)]))
