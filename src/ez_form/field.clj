@@ -32,7 +32,10 @@
 
 (defn get-opts [field keys form-options]
   (merge
-
+   (if (contains? (get-in form-options [:css :field]) :all)
+     {:class (get-in form-options [:css :field :all])})
+   (if (contains? (get-in form-options [:css :field]) (:type field))
+     {:class (get-in form-options [:css :field (:type field)])})
    (:opts field)
    (into {} (map (fn [[k v]]
                    (if (nil? v)

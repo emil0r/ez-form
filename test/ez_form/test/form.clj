@@ -8,8 +8,9 @@
   arg)
 
 (defform testform
-  {:css {:input {:all :form-control
-                 :email "form-control email"}
+  {:css {:field {:all :form-control
+                 :email "form-control email"
+                 :dropdown nil}
          :label {:radio "btn btn-info"
                  :radio-active "btn btn-info active"}}}
 
@@ -53,6 +54,9 @@
 
 
    ])
+
+(ez-form/as-table (testform {} {:email "emil@emil0r.com"
+                                :password "my password"}))
 
 (fact
  "valid?"
