@@ -38,9 +38,9 @@
 (defn valid?
   "Is the form valid? Runs a validate and checks for errors"
   ([form]
-   (every? nil? (map :errors (validate form))))
+   (every? nil? (map :errors (:fields (validate form)))))
   ([form params]
-   (every? nil? (map :errors (validate form params)))))
+   (every? nil? (map :errors (:fields (validate form params))))))
 
 
 (defn- add-value [data {:keys [name] :as field}]

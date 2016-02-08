@@ -54,11 +54,12 @@
 
    ])
 
-(ez-form/as-table
- (testform {} {:email ""
-               :password ""}
-           ))
+(fact
+ "valid?"
+ (ez-form/valid? (testform {} {:email "emil@emil0r.com"
+                               :password "my password"}))
+ => true
 
-
-(ez-form/validate (testform {:email "emil@emil0r.com"}) {})
-(ez-form/valid? (testform {} nil))
+ (ez-form/valid? (testform {} {:email "emil@emil0r.com"
+                               :password ""}))
+ => false)
