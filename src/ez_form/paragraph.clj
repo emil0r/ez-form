@@ -5,22 +5,20 @@
 (defmulti paragraph (fn [field form-options] (:type field)))
 
 (defmethod paragraph :checkbox [field form-options]
-  (let [text (:text field)]
-    (list
-     [:p (ez.field/label field)]
-     [:p
-      (ez.field/errors field)
-      (ez.field/field field form-options)
-      text])))
+  (list
+   [:p (ez.field/label field)]
+   [:p
+    (ez.field/errors field)
+    (ez.field/field field form-options)
+    (ez.field/text field)]))
 
 (defmethod paragraph :radio [field form-options]
-  (let [text (:text field)]
-    (list
-     [:p (ez.field/label field)]
-     [:p
-      (ez.field/errors field)
-      (ez.field/field field form-options)
-      text])))
+  (list
+   [:p (ez.field/label field)]
+   [:p
+    (ez.field/errors field)
+    (ez.field/field field form-options)
+    (ez.field/text field)]))
 
 (defmethod paragraph :textarea [field form-options]
   (list

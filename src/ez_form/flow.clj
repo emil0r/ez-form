@@ -5,7 +5,7 @@
 
 
 (defn marker [n]
-  (map #(keyword (str (name n) "." %)) ["field" "errors" "label"]))
+  (map #(keyword (str (name n) "." %)) ["field" "errors" "label" "text"]))
 
 (defn field? [marker]
   (str/ends-with? (str marker) ".field"))
@@ -15,6 +15,9 @@
 
 (defn label? [marker]
   (str/ends-with? (str marker) ".label"))
+
+(defn text? [marker]
+  (str/ends-with? (str marker) ".text"))
 
 (defn get-field [form marker]
   (let [field (keyword (last (re-find #"^:(.*)\..+" (str marker))))]
@@ -46,6 +49,7 @@
                   (field? node) (recur (zip/replace next-loc (ez.field/field field form-options)))
                   (errors? node) (recur (zip/replace next-loc (ez.field/errors field)))
                   (label? node) (recur (zip/replace next-loc (ez.field/label field)))
+                  (text? node) (recur (zip/replace next-loc (ez.field/text field)))
                   :else (recur next-loc))
                 (recur next-loc))
               (recur next-loc))))))))

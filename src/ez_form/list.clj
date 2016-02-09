@@ -5,20 +5,18 @@
 (defmulti li (fn [field form-options] (:type field)))
 
 (defmethod li :checkbox [field form-options]
-  (let [text (:text field)]
-    [:li
-     (ez.field/label field)
-     (ez.field/errors field)
-     (ez.field/field field form-options)
-     text]))
+  [:li
+   (ez.field/label field)
+   (ez.field/errors field)
+   (ez.field/field field form-options)
+   (ez.field/text field)])
 
 (defmethod li :radio [field form-options]
-  (let [text (:text field)]
-    [:li
-     (ez.field/label field)
-     (ez.field/errors field)
-     (ez.field/field field form-options)
-     text]))
+  [:li
+   (ez.field/label field)
+   (ez.field/errors field)
+   (ez.field/field field form-options)
+   (ez.field/text field)])
 
 (defmethod li :textarea [field form-options]
   [:li

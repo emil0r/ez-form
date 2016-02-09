@@ -45,14 +45,16 @@
     :label "my checkbox"}
    {:type :radio
     :name :radio
-    :options {"m" "Male"
-              "f" "Female"}}
-
-
-   ])
+    :value "m"
+    :text "Male"}
+   {:type :radio
+    :name :radio
+    :value "f"
+    :text "Female"}])
 
 (ez-form/as-table (testform {} {:email "emil@emil0r.com"
-                                :password "my password"}))
+                                :password "my password"
+                                :radio "m"}))
 
 (ez-form/as-flow
  [:table.table

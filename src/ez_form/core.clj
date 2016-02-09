@@ -24,6 +24,7 @@
      form))
   ([form params]
    (assoc form
+          :params params
           :fields
           (reduce (fn [out field]
                     (let [{:keys [validation error-messages]} field]
@@ -45,14 +46,14 @@
 
 
 (defn- add-value [data {:keys [name] :as field}]
-  (assoc field :value (get data name)))
+  (assoc field :value-added (get data name)))
 
 (defrecord Form [fields options])
 
 (defn form [fields form-options data params options]
   (let [fields (if-not (nil? params)
-                 (map (partial add-value params) fields)
-                 (map (partial add-value data) fields))
+                 (map #(add-value params %) fields)
+                 (map #(add-value data %) fields))
         form (map->Form {:fields fields
                          :options form-options
                          :data data

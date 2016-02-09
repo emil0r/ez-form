@@ -4,22 +4,20 @@
 (defmulti row (fn [field form-options] (:type field)))
 
 (defmethod row :checkbox [field form-options]
-  (let [text (:text field)]
-    [:tr
-     [:th (ez.field/label field)]
-     [:td
-      (ez.field/errors field)
-      (ez.field/field field form-options)
-      text]]))
+  [:tr
+   [:th (ez.field/label field)]
+   [:td
+    (ez.field/errors field)
+    (ez.field/field field form-options)
+    (ez.field/text field)]])
 
 (defmethod row :radio [field form-options]
-  (let [text (:text field)]
-    [:tr
-     [:th (ez.field/label field)]
-     [:td
-      (ez.field/errors field)
-      (ez.field/field field form-options)
-      text]]))
+  [:tr
+   [:th (ez.field/label field)]
+   [:td
+    (ez.field/errors field)
+    (ez.field/field field form-options)
+    (ez.field/text field)]])
 
 (defmethod row :textarea [field form-options]
   [:tr
