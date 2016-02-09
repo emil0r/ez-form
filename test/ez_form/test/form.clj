@@ -11,9 +11,7 @@
 (defform testform
   {:css {:field {:all :form-control
                  :email "form-control email"
-                 :dropdown nil}
-         :label {:radio "btn btn-info"
-                 :radio-active "btn btn-info active"}}}
+                 :dropdown nil}}}
 
 
   [{:type :email
@@ -35,16 +33,13 @@
     :name :repeat-password
     :error-messages {:equals-field (t :form.error/fields-equal)}}
    {:type :text
-    :name :text
-    :initial "my initial text"
-    }
+    :name :text}
    {:type :dropdown
     :label "my dropdown"
     :name :dropdown
     :options ["opt 1"
               "opt 2"
-              "opt 3"]
-    :initial "opt 2"}
+              "opt 3"]}
    {:type :checkbox
     :name :checkbox
     :label "my checkbox"}
