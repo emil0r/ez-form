@@ -21,6 +21,7 @@ Forms for the web. Server side only (so far).
  [{:type :text
    :label "First name"
    :name :firstname
+   :opts {:order 1} ;; additional parameters to add to the output HTML
    :validation (vlad/attr [:firstname] (vlad/present))}
   {:type :text
    :label "Last name"
