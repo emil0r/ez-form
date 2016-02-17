@@ -9,30 +9,40 @@
    (ez.field/label field)
    (ez.field/errors field)
    (ez.field/field field form-options)
-   (ez.field/text field)])
+   (ez.field/text field)
+   (if-let [help (ez.field/help field)]
+      [:div.help help])])
 
 (defmethod li :radio [field form-options]
   [:li
    (ez.field/label field)
    (ez.field/errors field)
    (ez.field/field field form-options)
-   (ez.field/text field)])
+   (ez.field/text field)
+   (if-let [help (ez.field/help field)]
+      [:div.help help])])
 
 (defmethod li :textarea [field form-options]
   [:li
    (ez.field/label field)
    (ez.field/errors field)
-   (ez.field/field field form-options)])
+   (ez.field/field field form-options)
+   (if-let [help (ez.field/help field)]
+      [:div.help help])])
 
 (defmethod li :dropdown [field form-options]
   [:li
    (ez.field/label field)
    (ez.field/errors field)
-   (ez.field/field field form-options)])
+   (ez.field/field field form-options)
+   (if-let [help (ez.field/help field)]
+      [:div.help help])])
 
 (defmethod li :default [field form-options]
   "Any input that is like text will work with this one"
   [:li
    (ez.field/label field)
    (ez.field/errors field)
-   (ez.field/field field form-options)])
+   (ez.field/field field form-options)
+   (if-let [help (ez.field/help field)]
+      [:div.help help])])

@@ -34,6 +34,9 @@
 (defn text [field]
   (:text field))
 
+(defn help [field]
+  (:help field))
+
 (defn option [selected-value opt]
   (let [[value text] (if (sequential? opt)
                        [(first opt) (second opt)]

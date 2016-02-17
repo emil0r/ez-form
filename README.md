@@ -30,6 +30,7 @@ Forms for the web. Server side only (so far).
   {:type :email
    :name :myemail
    :label "My email"
+   :help "Help text about email"
    :validation (vlad/attr [:email] (vlad/present))}])
 
 ;; using defform
@@ -45,14 +46,17 @@ Forms for the web. Server side only (so far).
 ;; the form as a list
 (form/as-list (myform {}))
 
-;; free flow. takes :<field-name>.[label, errors, field, text]
+;; free flow. takes :<field-name>.[label, errors, field, text, help]
 (form/as-flow
   [:div.columns
     [:div.left
       :email.label]
     [:div.right
       :email.errors
-      :email.field]]
+      :email.field
+      [:p.text :email.text]
+      [:div.help
+        :email.help]]
   (myform {:email "emil@emil0r.com"}))
   
   
