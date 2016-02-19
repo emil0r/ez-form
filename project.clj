@@ -1,4 +1,4 @@
-(defproject ez-form "0.4.2-SNAPSHOT"
+(defproject ez-form "0.4.2"
   :description "Forms for the web"
   :url "https://github.com/emil0r/ez-form"
   :license {:name "Eclipse Public License"
