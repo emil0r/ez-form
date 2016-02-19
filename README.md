@@ -22,7 +22,9 @@ Forms for the web. Server side only (so far).
    :label "First name"
    :name :firstname
    :opts {:order 1} ;; additional parameters to add to the output HTML
-   :validation (vlad/attr [:firstname] (vlad/present))}
+   :validation (vlad/attr [:firstname] (vlad/present))
+   :error-messages {:custom "foobar"
+                    :vlad.core/present "my custom error message"}}
   {:type :text
    :label "Last name"
    :name :lastname
