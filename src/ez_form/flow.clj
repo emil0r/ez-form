@@ -33,7 +33,7 @@
 (defn get-markers [form]
   (->> form
        :fields
-       (map :type)
+       (map :name)
        (map marker)
        flatten))
 
