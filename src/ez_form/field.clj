@@ -79,6 +79,8 @@
                                     (if (and
                                          (not (nil? value))
                                          (or checked?
+                                             (if (string? (:value opts))
+                                               (some #(= value %) (str/split #"," (:value opts))))
                                              (= value (:value opts))
                                              (= "on" (:value opts))
                                              (= "on" value)))
