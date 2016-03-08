@@ -65,10 +65,33 @@
   (let [id (get-first field :id :name)
         value (:value-added field)
         checked? (:checked field)
+        options (:options field)
         opts (get-opts field [:class :name :value :type] form-options)]
-    [:input (merge {:value value} opts {:id id} (if (or checked?
-                                                        (= value (:value opts)))
-                                                  {:checked true}))]))
+    (if options
+      (map (fn [option]
+             (let [[value label] (if (sequential? option)
+                                   option
+                                   [option option])
+                   id (str (name id) "-" value)]
+               (list [:input (merge {:value value}
+                                    opts
+                                    {:id id}
+                                    (if (and
+                                         (not (nil? value))
+                                         (or checked?
+                                             (= value (:value opts))
+                                             (= "on" (:value opts))
+                                             (= "on" value)))
+                                      {:checked true}))]
+                     [:label {:for id} label])))
+           options)
+      [:input (merge {:value value} opts {:id id} (if (and
+                                                       (not (nil? value))
+                                                       (or checked?
+                                                           (= value (:value opts))
+                                                           (= "on" (:value opts))
+                                                           (= "on" value)))
+                                                    {:checked true}))])))
 
 (defmethod field :radio [field form-options]
   (let [id (get-first field :id :name)
