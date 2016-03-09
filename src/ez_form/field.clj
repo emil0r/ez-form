@@ -81,6 +81,10 @@
                                          (or checked?
                                              (if (string? (:value opts))
                                                (some #(= value %) (str/split (:value opts) #",")))
+                                             (if (string? (:value-added field))
+                                               (some #(= value %) (str/split (:value-added field) #",")))
+                                             (if (vector? (:value-added field))
+                                               (some #(= value %) (:value-added field)))
                                              (= value (:value opts))
                                              (= "on" (:value opts))
                                              (= "on" value)))
