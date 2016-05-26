@@ -73,23 +73,24 @@
                                    option
                                    [option option])
                    id (str (name id) "-" value)]
-               (list [:input (merge {:value value}
-                                    opts
-                                    {:id id}
-                                    (if (and
-                                         (not (nil? value))
-                                         (or checked?
-                                             (if (string? (:value opts))
-                                               (some #(= value %) (str/split (:value opts) #",")))
-                                             (if (string? (:value-added field))
-                                               (some #(= value %) (str/split (:value-added field) #",")))
-                                             (if (vector? (:value-added field))
-                                               (some #(= value %) (:value-added field)))
-                                             (= value (:value opts))
-                                             (= "on" (:value opts))
-                                             (= "on" value)))
-                                      {:checked true}))]
-                     [:label {:for id} label])))
+               [:div
+                [:input (merge {:value value}
+                               opts
+                               {:id id}
+                               (if (and
+                                    (not (nil? value))
+                                    (or checked?
+                                        (if (string? (:value opts))
+                                          (some #(= value %) (str/split (:value opts) #",")))
+                                        (if (string? (:value-added field))
+                                          (some #(= value %) (str/split (:value-added field) #",")))
+                                        (if (sequential? (:value-added field))
+                                          (some #(= value %) (:value-added field)))
+                                        (= value (:value opts))
+                                        (= "on" (:value opts))
+                                        (= "on" value)))
+                                 {:checked true}))]
+                [:label {:for id} label]]))
            options)
       [:input (merge {:value value} opts {:id id} (if (and
                                                        (not (nil? value))
@@ -107,6 +108,10 @@
     [:input (merge {:value value} opts {:id id} (if (or checked?
                                                         (= value (:value opts)))
                                                   {:checked true}))]))
+
+(defmethod field :html [field form-options]
+  (if-let [f (:fn field)]
+    (f field form-options)))
 
 (defmethod field :textarea [field form-options]
   (let [id (get-first field :id :name)

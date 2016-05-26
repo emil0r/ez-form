@@ -55,7 +55,7 @@
                  (map #(add-value params %) fields)
                  (map #(add-value data %) fields))
         form (map->Form {:fields fields
-                         :options form-options
+                         :options (assoc form-options :data options)
                          :data data
                          :params params})]
     (cond
