@@ -88,7 +88,8 @@
                                           (some #(= value %) (:value-added field)))
                                         (= value (:value opts))
                                         (= "on" (:value opts))
-                                        (= "on" value)))
+                                        (= "on" value)
+                                        (true? value)))
                                  {:checked true}))]
                 [:label {:for id} label]]))
            options)
@@ -97,7 +98,9 @@
                                                        (or checked?
                                                            (= value (:value opts))
                                                            (= "on" (:value opts))
-                                                           (= "on" value)))
+                                                           (true? (:value opts))
+                                                           (= "on" value)
+                                                           (true? value)))
                                                     {:checked true}))])))
 
 (defmethod field :radio [field form-options]
