@@ -86,21 +86,20 @@
                                           (some #(= value %) (str/split (:value-added field) #",")))
                                         (if (sequential? (:value-added field))
                                           (some #(= value %) (:value-added field)))
-                                        (= value (:value opts))
-                                        (= "on" (:value opts))
-                                        (= "on" value)
-                                        (true? value)))
+                                        (or (not (nil? (:value opts)))
+                                            (not (false? (:value opts))))
+                                        (or (not (nil? value))
+                                            (not (false? value)))))
                                  {:checked true}))]
                 [:label {:for id} label]]))
            options)
       [:input (merge {:value value} opts {:id id} (if (and
                                                        (not (nil? value))
                                                        (or checked?
-                                                           (= value (:value opts))
-                                                           (= "on" (:value opts))
-                                                           (true? (:value opts))
-                                                           (= "on" value)
-                                                           (true? value)))
+                                                           (or (not (nil? (:value opts)))
+                                                               (not (false? (:value opts))))
+                                                           (or (not (nil? value))
+                                                               (not (false? value)))))
                                                     {:checked true}))])))
 
 (defmethod field :radio [field form-options]
