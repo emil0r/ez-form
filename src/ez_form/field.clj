@@ -63,44 +63,44 @@
 
 (defmethod field :checkbox [field form-options]
   (let [id (get-first field :id :name)
-        value (:value-added field)
-        checked? (:checked field)
+        value-added (:value-added field)
+        checked? (:checked? field)
         options (:options field)
         opts (get-opts field [:class :name :value :type] form-options)]
     (if options
-      (map (fn [option]
-             (let [[value label] (if (sequential? option)
-                                   option
-                                   [option option])
-                   id (str (name id) "-" value)]
-               [:div
-                [:input (merge {:value value}
-                               opts
-                               {:id id}
-                               (if (and
-                                    (not (nil? value))
-                                    (or checked?
-                                        (if (string? (:value opts))
-                                          (some #(= value %) (str/split (:value opts) #",")))
-                                        (if (string? (:value-added field))
-                                          (some #(= value %) (str/split (:value-added field) #",")))
-                                        (if (sequential? (:value-added field))
-                                          (some #(= value %) (:value-added field)))
-                                        (or (not (nil? (:value opts)))
-                                            (not (false? (:value opts))))
-                                        (or (not (nil? value))
-                                            (not (false? value)))))
-                                 {:checked true}))]
-                [:label {:for id} label]]))
-           options)
-      [:input (merge {:value value} opts {:id id} (if (and
-                                                       (not (nil? value))
-                                                       (or checked?
-                                                           (or (not (nil? (:value opts)))
-                                                               (not (false? (:value opts))))
-                                                           (or (not (nil? value))
-                                                               (not (false? value)))))
-                                                    {:checked true}))])))
+      (let [value-added (cond (string? value-added) (str/split value-added #",")
+                              :else value-added)
+            ]
+       (map (fn [option]
+              (let [[value label] (if (sequential? option)
+                                    option
+                                    [option option])
+                    id (str (name id) "-" value)]
+                [:div
+                 [:input (merge {:value value}
+                                opts
+                                {:id id}
+                                (if (or
+                                     ;; default checked, but only if
+                                     ;; value-added is empty
+                                     (and checked?
+                                          (nil? value-added))
+                                     ;; check if value equals value-added
+                                     (some #(= value %) value-added))
+                                  {:checked true}))]
+                 [:label {:for id} label]]))
+            options))
+      [:input (merge {:value value-added}
+                     opts
+                     {:id id}
+                     (if (or
+                          ;; default checked, but only if value-added is empty
+                          (and checked?
+                               (nil? value-added))
+                          ;; checked if value-added is non-nil and non-false
+                          (and (not (nil? value-added))
+                               (not (false? value-added))))
+                       {:checked true}))])))
 
 (defmethod field :radio [field form-options]
   (let [id (get-first field :id :name)

@@ -51,6 +51,10 @@
 (defrecord Form [fields options])
 
 (defn form [fields form-options data params options]
+  (when (and (not (nil? data)) (not (nil? params)))
+    (throw (ex-info "ez-form.core/defform: data and params can't both be sent in at the same time"
+                    {:data data
+                     :params params})))
   (let [fields (if-not (nil? params)
                  (map #(add-value params %) fields)
                  (map #(add-value data %) fields))
