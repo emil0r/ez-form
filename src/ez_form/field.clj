@@ -9,16 +9,16 @@
                  values
                  (into [capitalize?] values))
         capitalize? (if (true? capitalize?) true false)]
-   (loop [[value & values] values]
-     (if-let [value (get field value)]
-       (cond
-         (keyword? value) (if capitalize?
-                            (str/capitalize (name value))
-                            (name value))
-         :else value)
-       (if (and (nil? value) (nil? values))
-         nil
-         (recur values))))))
+    (loop [[value & values] values]
+      (if-let [value (get field value)]
+        (cond
+          (keyword? value) (if capitalize?
+                             (str/capitalize (name value))
+                             (name value))
+          :else value)
+        (if (and (nil? value) (nil? values))
+          nil
+          (recur values))))))
 
 (defn errors
   "Send in a field from a map and get back a list of error messages"
@@ -70,25 +70,25 @@
     (if options
       (let [value-added (cond (string? value-added) (str/split value-added #",")
                               :else value-added)]
-       (map (fn [option]
-              (let [[value label] (if (sequential? option)
-                                    option
-                                    [option option])
-                    id (str (name id) "-" value)]
-                [:div
-                 [:input (merge {:value value}
-                                opts
-                                {:id id}
-                                (if (or
-                                     ;; default checked, but only if
-                                     ;; value-added is empty
-                                     (and checked?
-                                          (nil? value-added))
-                                     ;; check if value equals value-added
-                                     (some #(= value %) value-added))
-                                  {:checked true}))]
-                 [:label {:for id} label]]))
-            options))
+        (map (fn [option]
+               (let [[value label] (if (sequential? option)
+                                     option
+                                     [option option])
+                     id (str (name id) "-" value)]
+                 [:div
+                  [:input (merge {:value value}
+                                 opts
+                                 {:id id}
+                                 (if (or
+                                      ;; default checked, but only if
+                                      ;; value-added is empty
+                                      (and checked?
+                                           (nil? value-added))
+                                      ;; check if value equals value-added
+                                      (some #(= value %) value-added))
+                                   {:checked true}))]
+                  [:label {:for id} label]]))
+             options))
       [:input (merge {:value value-added}
                      opts
                      {:id id}
@@ -100,6 +100,9 @@
                           (and (not (nil? value-added))
                                (not (false? value-added))))
                        {:checked true}))])))
+
+(defmethod field :boolean [f form-options]
+  (field (assoc f :type :checkbox) form-options))
 
 (defmethod field :radio [field form-options]
   (let [id (get-first field :id :name)
@@ -127,7 +130,9 @@
         options (:options field)]
     [:select (merge opts {:type :select
                           :id id})
-       (map (partial option value) options)]))
+     (if (fn? options)
+       (map (partial option value) (options (:data form-options)))
+       (map (partial option value) options))]))
 
 (defmethod field :default [field form-options]
   (let [id (get-first field :id :name)
