@@ -69,8 +69,7 @@
         opts (get-opts field [:class :name :value :type] form-options)]
     (if options
       (let [value-added (cond (string? value-added) (str/split value-added #",")
-                              :else value-added)
-            ]
+                              :else value-added)]
        (map (fn [option]
               (let [[value label] (if (sequential? option)
                                     option
