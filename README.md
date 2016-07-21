@@ -5,7 +5,7 @@ Forms for the web. Server side only (so far).
 ## Dependancy
 
 ```clojure
-[ez-form "0.4.2"]
+[ez-form "0.4.4"]
 ```
 
 ## Usage
