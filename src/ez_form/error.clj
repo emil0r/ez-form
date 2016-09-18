@@ -58,15 +58,12 @@
     (or error-message
         (*t* *locale* ::equals-value (-> error :value)))))
 
-(defmethod get-error-message :custom [field error]
-  (let [error-message (-> field :error-messages :custom)]
-    (or error-message
-        (*t* *locale* ::unknown-error))))
-
 ;; skip any error messages if the error is nil
 (defmethod get-error-message nil [field error]
   (if-not (nil? error)
     (*t* *locale* ::unknown-error)))
 
 (defmethod get-error-message :default [field error]
-  (*t* *locale* ::unknown-error))
+  [field error]
+  (or (get-in field [:error-messages (:type error)])
+      (*t* *locale* ::unknown-error)))
