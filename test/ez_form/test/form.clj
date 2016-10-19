@@ -59,9 +59,20 @@
 (ez-form/as-flow
  [:table.table
   [:tr
-   [:th :email.label]
-   [:td.testus :email.field :email.errors]]]
+   [:th :$email.label]
+   [:td.testus :$email.field :$email.errors]]]
  (testform {:email "emil@emil0r.com"} {}))
+
+(ez-form/as-template [:div [:span :$label] [:div.input :$field]]
+                     (testform {:email "emil@emil0r.com"} {}))
+
+(ez-form/as-template
+  [:div
+    [:span.label :$label]
+    :$errors
+    [:div.input :$field]]
+  (testform {}))
+
 
 (ez-form.flow/get-field (testform {:email "emil@emil0r.com"}) :email.field)
 

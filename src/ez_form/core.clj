@@ -74,6 +74,12 @@
 
 (def as-flow flow/flow)
 
+(defn as-template [flowchart form]
+  (map (fn [field]
+         (flow/flow (flow/correct-flowchart-for-template flowchart field)
+                    (assoc form :fields [field])))
+       (:fields form)))
+
 (defmacro defform [name options fields]
   `(defn ~name
      ([~'data]
