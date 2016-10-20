@@ -1,6 +1,7 @@
 (ns ez-form.flow
   (:require [clojure.string :as str]
             [clojure.walk :as walk]
+            [clojure.zip :as zip]
             [ez-form.zipper :refer [zipper]]
             [ez-form.field :as ez.field]))
 
