@@ -1,7 +1,7 @@
 (ns ez-form.flow
   (:require [clojure.string :as str]
             [clojure.walk :as walk]
-            [clojure.zip :as zip]
+            [ez-form.zipper :refer [zipper]]
             [ez-form.field :as ez.field]))
 
 
@@ -27,7 +27,7 @@
   (str/ends-with? (str marker) ".help"))
 
 (defn correct-flowchart-for-template [flowchart field]
-  (let [name (apply str (drop 1 (str (:name field))))]
+  (let [name (apply str (drop 1 (str (or (:id field) (:name field)))))]
     (walk/postwalk (fn [v]
                      (if (and (keyword? v)
                               (re-find #":\$.*" (str v)))
@@ -40,21 +40,22 @@
   (let [field (keyword (last (re-find #"^:(\$)?(.*)\..+" (str marker))))]
     (->> form
          :fields
-         (filter (fn [{:keys [name]}]
-                   (= name field)))
+         (filter (fn [{:keys [id name]}]
+                   (or (= id field)
+                       (= name field))))
          first)))
 
 (defn get-markers [form]
   (->> form
        :fields
-       (map :name)
+       (map (fn [{:keys [name id]}] (or id name)))
        (map marker)
        flatten))
 
 (defn flow [flowchart form]
   (let [form-options (:options form)
         markers (get-markers form)]
-    (loop [loc (zip/vector-zip flowchart)]
+    (loop [loc (zipper flowchart)]
       (let [next-loc (zip/next loc)]
         (if (zip/end? next-loc)
           (zip/root loc)

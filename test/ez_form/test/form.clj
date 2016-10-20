@@ -44,13 +44,15 @@
     :name :checkbox
     :label "my checkbox"}
    {:type :radio
-    :name :radio
+    :name :sex
+    :id :male
     :value "m"
-    :text "Male"}
+    :label "Male"}
    {:type :radio
-    :name :radio
+    :name :sex
+    :id :female
     :value "f"
-    :text "Female"}])
+    :label "Female"}])
 
 (ez-form/as-table (testform {} {:email "emil@emil0r.com"
                                 :password "my password"
@@ -62,6 +64,17 @@
    [:th :$email.label]
    [:td.testus :$email.field :$email.errors]]]
  (testform {:email "emil@emil0r.com"} {}))
+
+(ez-form/as-flow
+ [:table.table
+  [:tr
+   [:th :$male.label]
+   [:td.testus :$male.field :$male.errors]]
+  [:tr
+   [:th :$female.label]
+   [:td.testus :$female.field :$female.errors]]]
+ (testform {:email "emil@emil0r.com"} {}))
+
 
 (ez-form/as-template [:div [:span :$label] [:div.input :$field]]
                      (testform {:email "emil@emil0r.com"} {}))
