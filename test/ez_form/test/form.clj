@@ -1,5 +1,6 @@
 (ns ez-form.test.form
-  (:require [ez-form.core :as ez-form :refer [defform]]
+  (:require [ez-form.common :refer [get-field]]
+            [ez-form.core :as ez-form :refer [defform]]
             [ez-form.flow :as flow]
             [vlad.core :as vlad]
             [midje.sweet :refer :all]))
@@ -60,10 +61,10 @@
 
 (ez-form/as-flow
  [:table.table
-  [:tr
+  [:tr :?email.wrapper
    [:th :$email.label]
    [:td.testus :$email.field :$email.errors]]]
- (testform {:email "emil@emil0r.com"} {}))
+ (testform {:email "emil@emil0r.com"} {} {:decor {:?wrapper nil}}))
 
 (ez-form/as-flow
  [:table.table
@@ -76,7 +77,7 @@
  (testform {:email "emil@emil0r.com"} {}))
 
 
-(ez-form/as-template [:div [:span :$label] [:div.input :$field]]
+(ez-form/as-template [:div :?wrapper [:span :$label] [:div.input :$field]]
                      (testform {:email "emil@emil0r.com"} {}))
 
 (ez-form/as-template
@@ -87,7 +88,7 @@
   (testform {}))
 
 
-(ez-form.flow/get-field (testform {:email "emil@emil0r.com"}) :email.field)
+(get-field (testform {:email "emil@emil0r.com"}) :email.field)
 
 (fact
  "valid?"

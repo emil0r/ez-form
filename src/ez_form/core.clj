@@ -1,5 +1,6 @@
 (ns ez-form.core
-  (:require [ez-form.error :refer [get-error-message]]
+  (:require [ez-form.decorate :refer [decor]]
+            [ez-form.error :refer [get-error-message]]
             [ez-form.flow :as flow]
             [ez-form.list :as list]
             [ez-form.paragraph :as paragraph]
@@ -63,20 +64,30 @@
       params (validate form)
       :else form)))
 
-(defn as-table [form]
-  (map #(table/row % (:options form)) (:fields form)))
+(defn as-table
+  "Output the form as a table (wrap in a table)"
+  [form]
+  (map (fn [field]
+         (table/row field (:options form)))
+       (:fields form)))
 
-(defn as-paragraph [form]
+(defn as-paragraph
+  "Output the form as a list of paragraphs"
+  [form]
   (map #(paragraph/paragraph % (:options form)) (:fields form)))
 
-(defn as-list [form]
+(defn as-list
+  "Out the form as a list (wrap in ul or ol list)"
+  [form]
   (map #(list/li % (:options form)) (:fields form)))
 
 (def as-flow flow/flow)
 
-(defn as-template [flowchart form]
+(defn as-template
+  "Apply the template to the fields of the form"
+  [template form]
   (map (fn [field]
-         (flow/flow (flow/correct-flowchart-for-template flowchart field)
+         (flow/flow (flow/correct-flowchart-for-template template field)
                     (assoc form :fields [field])))
        (:fields form)))
 
