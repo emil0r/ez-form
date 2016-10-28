@@ -1,7 +1,6 @@
 (ns ez-form.table
   (:require [ez-form.decorate :refer [add-decor]]
-            [ez-form.field :as ez.field :refer [error-div
-                                                get-first
+            [ez-form.field :as ez.field :refer [get-first
                                                 get-opts
                                                 option]]))
 
