@@ -10,7 +10,7 @@
                                     :wrapper :div}
                             :?help {:css {:class "help"}
                                     :wrapper :div}
-                            :?error {:css {:class "error"}
+                            :?error {:css {:class "error-message"}
                                      :wrapper :div}})
 
 (defn add-decor [decor field]
