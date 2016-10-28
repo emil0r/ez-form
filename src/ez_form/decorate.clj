@@ -1,15 +1,16 @@
 (ns ez-form.decorate
   (:require [clojure.string :as str]
             [clojure.zip :as zip]
+            [ez-form.common :refer [get-field]]
             [ez-form.zipper :refer [zipper]]))
 
 
 (def ^:dynamic *materials* {:?wrapper {:class "error"}
                             :?text {:css {:class "text"}
                                     :wrapper :div}
-                            :?help {:css {:class "text"}
+                            :?help {:css {:class "help"}
                                     :wrapper :div}
-                            :?error {:css {:class "text"}
+                            :?error {:css {:class "error"}
                                      :wrapper :div}})
 
 (defn add-decor [decor field]
@@ -78,10 +79,13 @@
 (defmethod decor :?help [form loc] (wrap-decor form loc))
 (defmethod decor :?wrapper [form loc]
   (let [node (zip/node loc)
-        base-material (material node)
-        options (get-material form node base-material)]
-    (if options
-      (zip/replace loc options)
+        field (get-field form node :wrapper)]
+    (if-not (empty? (:errors field))
+      (let [base-material (material node)
+            options (get-material form node base-material)]
+        (if options
+          (zip/replace loc options)
+          (zip/remove loc)))
       (zip/remove loc))))
 (defmethod decor :default [_ loc] loc)
 
