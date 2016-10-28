@@ -1,8 +1,8 @@
 (ns ez-form.field
-  (:require [clojure.string :as str]))
-
-(defn error-div [error]
-  [:div.error error])
+  (:require [clojure.string :as str]
+            [ez-form.decorate :refer [add-help-decor
+                                      add-error-decor
+                                      add-text-decor]]))
 
 (defn get-first [field & [capitalize? & values]]
   (let [values (if (true? capitalize?)
@@ -22,9 +22,9 @@
 
 (defn errors
   "Send in a field from a map and get back a list of error messages"
-  [{:keys [errors]}]
+  [{:keys [errors] :as field}]
   (if errors
-    (map error-div errors)))
+    (map #(add-error-decor field %) errors)))
 
 (defn label [field]
   (let [label (get-first field true :label :name)
@@ -32,10 +32,10 @@
     [:label {:for id} label]))
 
 (defn text [field]
-  (:text field))
+  (add-text-decor field))
 
 (defn help [field]
-  (:help field))
+  (add-help-decor field))
 
 (defn option [selected-value opt]
   (let [[value text] (if (sequential? opt)

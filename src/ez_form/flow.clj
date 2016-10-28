@@ -3,7 +3,7 @@
             [clojure.walk :as walk]
             [clojure.zip :as zip]
             [ez-form.common :refer [get-field]]
-            [ez-form.decorate :refer [decor]]
+            [ez-form.decorate :refer [decor decorate]]
             [ez-form.field :as ez.field]
             [ez-form.zipper :refer [zipper]]))
 
@@ -63,21 +63,22 @@
   "Take a flowchart, a valid form, and output the content of the form into the flowchart"
   [flowchart form]
   (let [form-options (:options form)
-        markers (get-markers form)]
-    (loop [loc (zipper flowchart)]
-      (let [next-loc (zip/next loc)]
-        (if (zip/end? next-loc)
-          (zip/root loc)
-          (let [node (zip/node next-loc)
-                marker? (some #(= node %) markers)]
-            (if marker?
-              (if-let [field (get-field form node)]
-                (cond
-                  (field? node) (recur (zip/replace next-loc (ez.field/field field form-options)))
-                  (errors? node) (recur (zip/replace next-loc (ez.field/errors field)))
-                  (label? node) (recur (zip/replace next-loc (ez.field/label field)))
-                  (text? node) (recur (zip/replace next-loc (ez.field/text field)))
-                  (help? node) (recur (zip/replace next-loc (ez.field/help field)))
-                  :else (recur next-loc))
-                (recur next-loc))
-              (recur (decor form next-loc)))))))))
+        markers (get-markers form)
+        output (loop [loc (zipper flowchart)]
+                 (let [next-loc (zip/next loc)]
+                   (if (zip/end? next-loc)
+                     (zip/root loc)
+                     (let [node (zip/node next-loc)
+                           marker? (some #(= node %) markers)]
+                       (if marker?
+                         (if-let [field (get-field form node)]
+                           (cond
+                             (field? node) (recur (zip/replace next-loc (ez.field/field field form-options)))
+                             (errors? node) (recur (zip/replace next-loc (ez.field/errors field)))
+                             (label? node) (recur (zip/replace next-loc (ez.field/label field)))
+                             (text? node) (recur (zip/replace next-loc (ez.field/text field)))
+                             (help? node) (recur (zip/replace next-loc (ez.field/help field)))
+                             :else (recur next-loc))
+                           (recur next-loc))
+                         (recur next-loc))))))]
+    (decorate form output)))

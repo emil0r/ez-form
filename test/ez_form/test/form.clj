@@ -18,6 +18,8 @@
   [{:type :email
     :label (t :form.field/email)
     :name :email
+    :help "help text"
+    :text "text info"
     :placeholder (t :form.placeholder/email)
     :validation (vlad/attr [:email] (vlad/present))
     :error-messages {:custom "foobar"}}
@@ -68,16 +70,16 @@
 
 (ez-form/as-flow
  [:table.table
-  [:tr
+  [:tr :?male.wrapper
    [:th :$male.label]
    [:td.testus :$male.field :$male.errors]]
-  [:tr
+  [:tr :?female.wrapper
    [:th :$female.label]
    [:td.testus :$female.field :$female.errors]]]
  (testform {:email "emil@emil0r.com"} {}))
 
 
-(ez-form/as-template [:div :?wrapper [:span :$label] [:div.input :$field]]
+(ez-form/as-template [:div :?wrapper [:span :$label] [:div.input :$field] :$help]
                      (testform {:email "emil@emil0r.com"} {}))
 
 (ez-form/as-template

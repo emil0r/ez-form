@@ -1,10 +1,11 @@
 (ns ez-form.core
-  (:require [ez-form.decorate :refer [decor]]
+  (:require [ez-form.decorate :refer [decorate]]
             [ez-form.error :refer [get-error-message]]
             [ez-form.flow :as flow]
             [ez-form.list :as list]
             [ez-form.paragraph :as paragraph]
             [ez-form.table :as table]
+            [ez-form.zipper :refer [zipper]]
             [vlad.core :as vlad]))
 
 (defn post?
@@ -67,19 +68,17 @@
 (defn as-table
   "Output the form as a table (wrap in a table)"
   [form]
-  (map (fn [field]
-         (table/row field (:options form)))
-       (:fields form)))
+  (map #(decorate form (table/row % (:options form))) (:fields form)))
 
 (defn as-paragraph
   "Output the form as a list of paragraphs"
   [form]
-  (map #(paragraph/paragraph % (:options form)) (:fields form)))
+  (map #(decorate form (paragraph/paragraph % (:options form))) (:fields form)))
 
 (defn as-list
   "Out the form as a list (wrap in ul or ol list)"
   [form]
-  (map #(list/li % (:options form)) (:fields form)))
+  (map #(decorate form (list/li % (:options form))) (:fields form)))
 
 (def as-flow flow/flow)
 
