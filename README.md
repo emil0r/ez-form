@@ -110,6 +110,12 @@ Decor also allows for overriding the content that is used for decorating. In the
 
 ```clojure
 
+;; setting it in the form
+
+(defform myform
+  {:decor {:?wrapper {:class "my-class"}}}
+  [ fields ... ])
+
 ;; new CSS class
 
 (form/as-flow
