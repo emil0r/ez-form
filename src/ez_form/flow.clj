@@ -62,7 +62,10 @@
 (defn flow
   "Take a flowchart, a valid form, and output the content of the form into the flowchart"
   [flowchart form]
-  (let [form-options (:options form)
+  (let [form (if (nil? (get-in form [:options :ez-form.core/as]))
+               (assoc-in form [:options :ez-form.core/as] :flow)
+               form)
+        form-options (:options form)
         markers (get-markers form)
         output (loop [loc (zipper flowchart)]
                  (let [next-loc (zip/next loc)]
@@ -81,4 +84,6 @@
                              :else (recur next-loc))
                            (recur next-loc))
                          (recur next-loc))))))]
-    (decorate form output)))
+    (if (= :flow (get-in form [:options :ez-form.core/as]))
+      (decorate form (list :?ez-form.form-name output))
+      (decorate form output))))

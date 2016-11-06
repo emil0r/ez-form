@@ -42,9 +42,13 @@
 (defn valid?
   "Is the form valid? Runs a validate and checks for errors"
   ([form]
-   (every? nil? (map :errors (:fields (validate form)))))
+   (and
+    (= (get-in form [:params :__ez-form.form-name]) (get-in form [:options :name]))
+    (every? nil? (map :errors (:fields (validate form))))))
   ([form params]
-   (every? nil? (map :errors (:fields (validate form params))))))
+   (and
+    (= (get-in params [:__ez-form.form-name]) (get-in form [:options :name]))
+    (every? nil? (map :errors (:fields (validate form params)))))))
 
 
 (defn- add-value [data {:keys [name] :as field}]
@@ -65,36 +69,58 @@
       params (validate form)
       :else form)))
 
+(defn get-tail [form args]
+  (->> (into args (if (get-in form [:options :name])
+                    [:?ez-form.form-name]))
+       (remove nil?)))
+
 (defn as-table
   "Output the form as a table (wrap in a table)"
-  [form]
-  (map #(decorate form (table/row % (:options form))) (:fields form)))
+  [form & args]
+  (let [tail (get-tail form args)
+        form (assoc-in form [:options ::as] :table)]
+    (decorate form
+              (into (map #(table/row % (:options form)) (:fields form))
+                    tail))))
 
 (defn as-paragraph
   "Output the form as a list of paragraphs"
-  [form]
-  (map #(decorate form (paragraph/paragraph % (:options form))) (:fields form)))
+  [form & args]
+  (let [tail (get-tail form args)
+        form (assoc-in form [:options ::as] :paragraph)]
+    (decorate form
+              (into (map #(paragraph/paragraph % (:options form)) (:fields form))
+                    tail))))
 
 (defn as-list
   "Out the form as a list (wrap in ul or ol list)"
-  [form]
-  (map #(decorate form (list/li % (:options form))) (:fields form)))
+  [form & args]
+  (let [tail (get-tail form args)
+        form (assoc-in form [:options ::as] :list)]
+    (decorate form
+              (into (map #(list/li % (:options form)) (:fields form))
+                    tail))))
 
 (def as-flow flow/flow)
 
 (defn as-template
   "Apply the template to the fields of the form"
-  [template form]
-  (map (fn [field]
-         (flow/flow (flow/correct-flowchart-for-template template field)
-                    (assoc form :fields [field])))
-       (:fields form)))
+  [template form & args]
+  (let [tail (get-tail form args)
+        form (assoc-in form [:options ::as] :template)]
+    (into
+     (map (fn [field]
+            (flow/flow (flow/correct-flowchart-for-template template field)
+                       (assoc form :fields [field])))
+          (:fields form))
+     (decorate form tail))))
 
 (defmacro defform [name options fields]
-  `(defn ~name
-     ([~'data]
-      (~name ~'data nil nil))
-     ([~'data ~'params]
-      (~name ~'data ~'params nil))
-     ([~'data ~'params ~'opts]
-      (form ~fields ~options ~'data ~'params ~'opts))))
+  (let [form-name (clojure.core/name name)]
+    `(defn ~name
+       ([~'data]
+        (~name ~'data nil nil))
+       ([~'data ~'params]
+        (~name ~'data ~'params nil))
+       ([~'data ~'params ~'opts]
+        (form ~fields (assoc ~options :name ~form-name) ~'data ~'params ~'opts)))))

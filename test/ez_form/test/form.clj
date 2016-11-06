@@ -94,9 +94,14 @@
 
 (fact
  "valid?"
- (ez-form/valid? (testform {} {:email "emil@emil0r.com"
+ (ez-form/valid? (testform {} {:__ez-form.form-name "testform"
+                               :email "emil@emil0r.com"
                                :password "my password"}))
  => true
+
+ (ez-form/valid? (testform {} {:email "emil@emil0r.com"
+                               :password "my password"}))
+ => false
 
  (ez-form/valid? (testform {} {:email "emil@emil0r.com"
                                :password ""}))

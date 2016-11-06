@@ -5,7 +5,8 @@
             [ez-form.zipper :refer [zipper]]))
 
 
-(def ^:dynamic *materials* {:?wrapper {:class "error"}
+(def ^:dynamic *materials* {:?form-name {:class "hidden"}
+                            :?wrapper {:class "error"}
                             :?text {:css {:class "text"}
                                     :wrapper :div}
                             :?help {:css {:class "help"}
@@ -86,6 +87,35 @@
         (if options
           (zip/replace loc options)
           (zip/remove loc)))
+      (zip/remove loc))))
+(defmethod decor :?form-name [form loc]
+  (let [form-name (get-in form [:options :name])
+        as (get-in form [:options :ez-form.core/as])
+        node (zip/node loc)
+        base-material (material node)
+        options (get-material form node base-material)]
+    (cond
+      (and form-name
+           (= as :table))
+      (zip/replace loc [:tr options [:td {:colspan 2} [:input {:type "hidden" :name :__ez-form.form-name :value form-name}]]])
+
+      (and form-name
+           (= as :list))
+      (zip/replace loc [:input {:type "hidden" :name :__ez-form.form-name :value form-name}])
+
+      (and form-name
+           (= as :paragraph))
+      (zip/replace loc [:input {:type "hidden" :name :__ez-form.form-name :value form-name}])
+
+      (and form-name
+           (= as :template))
+      (zip/replace loc [:input {:type "hidden" :name :__ez-form.form-name :value form-name}])
+
+      (and form-name
+           (= as :flow))
+      (zip/replace loc [:input {:type "hidden" :name :__ez-form.form-name :value form-name}])
+
+      :else
       (zip/remove loc))))
 (defmethod decor :default [_ loc] loc)
 
