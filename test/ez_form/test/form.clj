@@ -61,6 +61,16 @@
                                 :password "my password"
                                 :radio "m"}))
 
+(ez-form/as-paragraph (testform {} {:email "emil@emil0r.com"
+                                    :password "my password"
+                                    :radio "m"}))
+
+
+(ez-form/as-list (testform {} {:email "emil@emil0r.com"
+                               :password "my password"
+                               :radio "m"}))
+
+
 (ez-form/as-flow
  [:table.table
   [:tr :?email.wrapper
