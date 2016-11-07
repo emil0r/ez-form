@@ -71,7 +71,6 @@
           (zip/replace [(:wrapper options) (:css options) to-wrap]))
       (zip/replace loc nil))))
 
-(def decor nil)
 (defmulti decor
   "The decor function recognizes the decor in the form output and does the decoration"
   (fn [_ loc] (material (zip/node loc))))

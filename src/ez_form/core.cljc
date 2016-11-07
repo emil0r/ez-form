@@ -8,15 +8,17 @@
             [ez-form.zipper :refer [zipper]]
             [vlad.core :as vlad]))
 
-(defn post?
-  "Is the request a POST?"
-  [request]
-  (= (:request-method request) :post))
+#?(:clj
+   (defn post?
+     "Is the request a POST?"
+     [request]
+     (= (:request-method request) :post)))
 
-(defn get?
-  "Is the request a GET?"
-  [request]
-  (= (:request-method request) :get))
+#?(:clj
+   (defn get?
+     "Is the request a GET?"
+     [request]
+     (= (:request-method request) :get)))
 
 (defn validate
   "Take a form and validate it. Error messages are added to each field found to have errors"

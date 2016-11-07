@@ -1,9 +1,11 @@
 (ns ez-form.test.form
-  (:require [ez-form.common :refer [get-field]]
-            [ez-form.core :as ez-form :refer [defform]]
-            [ez-form.flow :as flow]
-            [vlad.core :as vlad]
-            [midje.sweet :refer :all]))
+  (:require
+   #?(:cljs [cljs.test :refer-macros [deftest is testing]])
+   #?(:clj  [clojure.test :refer [deftest is testing]])
+   [ez-form.common :refer [get-field]]
+   [ez-form.core :as ez-form :refer [defform]]
+   [ez-form.flow :as flow]
+   [vlad.core :as vlad]))
 
 
 (defn t [arg]
@@ -13,7 +15,6 @@
   {:css {:field {:all :form-control
                  :email "form-control email"
                  :dropdown nil}}}
-
 
   [{:type :email
     :label (t :form.field/email)
@@ -57,16 +58,16 @@
     :value "f"
     :label "Female"}])
 
-(ez-form/as-table (testform {} {:email "emil@emil0r.com"
+(ez-form/as-table (testform {} {:email "test@example.com"
                                 :password "my password"
                                 :radio "m"}))
 
-(ez-form/as-paragraph (testform {} {:email "emil@emil0r.com"
+(ez-form/as-paragraph (testform {} {:email "test@example.com"
                                     :password "my password"
                                     :radio "m"}))
 
 
-(ez-form/as-list (testform {} {:email "emil@emil0r.com"
+(ez-form/as-list (testform {} {:email "test@example.com"
                                :password "my password"
                                :radio "m"}))
 
@@ -76,7 +77,7 @@
   [:tr :?email.wrapper
    [:th :$email.label]
    [:td.testus :$email.field :$email.errors]]]
- (testform {:email "emil@emil0r.com"} {} {:decor {:?wrapper nil}}))
+ (testform {:email "test@example.com"} {} {:decor {:?wrapper nil}}))
 
 (ez-form/as-flow
  [:table.table
@@ -86,11 +87,11 @@
   [:tr :?female.wrapper
    [:th :$female.label]
    [:td.testus :$female.field :$female.errors]]]
- (testform {:email "emil@emil0r.com"} {}))
+ (testform {:email "test@example.com"} {}))
 
 
 (ez-form/as-template [:div :?wrapper [:span :$label] [:div.input :$field] :$help]
-                     (testform {:email "emil@emil0r.com"} {}))
+                     (testform {:email "test@example.com"} {}))
 
 (ez-form/as-template
   [:div
@@ -100,19 +101,21 @@
   (testform {}))
 
 
-(get-field (testform {:email "emil@emil0r.com"}) :email.field)
+(get-field (testform {:email "test@example.com"}) :email.field)
 
-(fact
- "valid?"
- (ez-form/valid? (testform {} {:__ez-form.form-name "testform"
-                               :email "emil@emil0r.com"
-                               :password "my password"}))
- => true
 
- (ez-form/valid? (testform {} {:email "emil@emil0r.com"
-                               :password "my password"}))
- => false
+(deftest validity
+  (testing "Validity"
+   (is (true? (ez-form/valid? (testform {} {:__ez-form.form-name "testform"
+                                            :email "test@example.com"
+                                            :password "my password"})))
+       "Is valid")
 
- (ez-form/valid? (testform {} {:email "emil@emil0r.com"
-                               :password ""}))
- => false)
+   (is (false? (ez-form/valid? (testform {} {:email "test@example.com"
+                                             :password "my password"})))
+       "Is not valid because it's missing the form name")
+
+   (is (false? (ez-form/valid? (testform {} {:__ez-form.form-name "testform"
+                                             :email "test@example.com"
+                                             :password ""})))
+       "Is not valid because password is empty")))

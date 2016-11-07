@@ -1,8 +1,7 @@
 (ns ez-form.test.checkbox
   (:require [ez-form.core :as ez-form :refer [defform]]
             [ez-form.flow :as flow]
-            [vlad.core :as vlad]
-            [midje.sweet :refer :all]))
+            [vlad.core :as vlad]))
 
 
 (defn t [arg]

@@ -1,4 +1,8 @@
-(ns ez-form.error)
+(ns ez-form.error
+  #?(:cljs
+     (:require
+      [goog.string :as gstring]
+      [goog.string.format])))
 
 (def dictionary (atom {:en {::present "This field is mandatory"
                             ::length-under "This field must be under %d characters"
@@ -22,8 +26,10 @@
                             ::equals-value "Detta fält måste vara exakt lika %s"
                             ::unknown-error "Okänt fel"}}))
 (def ^:dynamic *locale* :en)
-(defn ^:dynamic *t* [locale path & args]
-  (apply format (get-in @dictionary [locale path] "") args))
+#?(:clj  (defn ^:dynamic *t* [locale path & args]
+           (apply format (get-in @dictionary [locale path] "") args)))
+#?(:cljs (defn ^:dynamic *t* [locale path & args]
+           (apply gstring/format (get-in @dictionary [locale path] "") args)))
 
 (defmulti get-error-message (fn [_ error] (:type error)))
 
