@@ -1,8 +1,9 @@
 (ns ez-form.field
   (:require [clojure.string :as str]
             [ez-form.common :refer [get-first]]
-            [ez-form.decorate :refer [add-help-decor
-                                      add-error-decor
+            [ez-form.decorate :refer [add-error-decor
+                                      add-help-decor
+                                      add-label-decor
                                       add-text-decor]]))
 
 (defn errors
@@ -12,9 +13,7 @@
     (map #(add-error-decor field %) errors)))
 
 (defn label [field]
-  (let [label (get-first field true :label :name)
-        id (get-first field :id :name)]
-    [:label {:for id} label]))
+  (add-label-decor field))
 
 (defn text [field]
   (add-text-decor field))

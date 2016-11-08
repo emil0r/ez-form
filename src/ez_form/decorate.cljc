@@ -30,6 +30,12 @@
   (if-let [text (:text field)]
     (list (add-decor :text field) text)))
 
+(defn add-label-decor [field]
+  (let [label (get-first field true :label :name)
+        id (get-first field :id :name)]
+    [:label {:for id}
+     (list (add-decor :label field) label)]))
+
 (defn get-material
   "Get the material to decorate with for the node"
   [form node base-material]
@@ -68,7 +74,10 @@
     (if options
       (-> loc
           (zip/remove)
-          (zip/replace [(:wrapper options) (:css options) to-wrap]))
+          (zip/replace [(:wrapper options) (:css options)
+                        (if (fn? to-wrap)
+                          (to-wrap form (get-field form node :wrapper))
+                          to-wrap)]))
       (zip/replace loc nil))))
 
 (defmulti decor
@@ -77,13 +86,19 @@
 (defmethod decor :?text [form loc] (wrap-decor form loc))
 (defmethod decor :?error [form loc] (wrap-decor form loc))
 (defmethod decor :?help [form loc] (wrap-decor form loc))
+(defmethod decor :?label [form loc]
+  (let [node (zip/node loc)
+        next-node (zip/node (zip/next loc))]
+    (-> loc
+        (zip/remove)
+        (zip/replace (if (fn? next-node)
+                       (next-node form (get-field form node :wrapper))
+                       next-node)))))
 (defmethod decor :?wrapper [form loc]
   ;; clojurescript needs to decorate with a key for react's sake
   #?(:cljs (let [node (zip/node loc)
                  field (get-field form node :wrapper)
-                 id (get-first field :id :name)
-                 k (str id "-" (get-in form [:options :ez-form.core/uuid]))
-                 options (merge {:key k}
+                 options (merge {:key (get-first field :id :name)}
                                 (if-not (empty? (:errors field))
                                   (get-material form node (material node))))]
              (zip/replace loc options)))
@@ -106,27 +121,37 @@
     (cond
       (and form-name
            (= as :table))
-      (zip/replace loc [:tr options [:td
-                                     ;; react complains about :colspan
-                                     #?(:clj  {:colspan 2})
-                                     #?(:cljs {:colSpan 2})
-                                     [:input {:type "hidden" :name :__ez-form.form-name :value form-name}]]])
+      (zip/replace loc [:tr #?(:cljs (merge options {:key "__ez-form.form-name"}))
+                            #?(:clj  options)
+                        [:td
+                         ;; react complains about :colspan
+                         #?(:clj  {:colspan 2})
+                         #?(:cljs {:colSpan 2})
+                         [:input {:type "hidden" :name "__ez-form.form-name" :value form-name}]]])
 
       (and form-name
            (= as :list))
-      (zip/replace loc [:input {:type "hidden" :name :__ez-form.form-name :value form-name}])
+      (zip/replace loc [:input
+                        #?(:cljs {:type "hidden" :name "__ez-form.form-name" :value form-name :key "__ez-form.form-name"})
+                        #?(:clj  {:type "hidden" :name "__ez-form.form-name" :value form-name})])
 
       (and form-name
            (= as :paragraph))
-      (zip/replace loc [:input {:type "hidden" :name :__ez-form.form-name :value form-name}])
+      (zip/replace loc [:input
+                        #?(:cljs {:type "hidden" :name "__ez-form.form-name" :value form-name :key "__ez-form.form-name"})
+                        #?(:clj  {:type "hidden" :name "__ez-form.form-name" :value form-name})])
 
       (and form-name
            (= as :template))
-      (zip/replace loc [:input {:type "hidden" :name :__ez-form.form-name :value form-name}])
+      (zip/replace loc [:input
+                        #?(:cljs {:type "hidden" :name "__ez-form.form-name" :value form-name :key "__ez-form.form-name"})
+                        #?(:clj  {:type "hidden" :name "__ez-form.form-name" :value form-name})])
 
       (and form-name
            (= as :flow))
-      (zip/replace loc [:input {:type "hidden" :name :__ez-form.form-name :value form-name}])
+      (zip/replace loc [:input
+                        #?(:cljs {:type "hidden" :name "__ez-form.form-name" :value form-name :key "__ez-form.form-name"})
+                        #?(:clj  {:type "hidden" :name "__ez-form.form-name" :value form-name})])
 
       :else
       (zip/remove loc))))

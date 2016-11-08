@@ -29,6 +29,9 @@
           (keyword? value) (if capitalize?
                              (str/capitalize (name value))
                              (name value))
+
+          (fn? value) (value field)
+
           :else value)
         (if (and (nil? value) (nil? ks))
           nil

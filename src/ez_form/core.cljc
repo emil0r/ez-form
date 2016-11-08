@@ -118,8 +118,7 @@
      (decorate form tail))))
 
 (defmacro defform [-name options fields]
-  (let [form-name (name -name)
-        options (assoc options ::uuid #?(:cljs (cljs.core/random-uuid)) #?(:clj (java.util.UUID/randomUUID)))]
+  (let [form-name (name -name)]
     `(defn ~-name
        ([~'data]
         (~-name ~'data nil nil))
