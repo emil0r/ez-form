@@ -117,12 +117,13 @@
           (:fields form))
      (decorate form tail))))
 
-(defmacro defform [name options fields]
-  (let [form-name (clojure.core/name name)]
-    `(defn ~name
+(defmacro defform [-name options fields]
+  (let [form-name (name -name)
+        options (assoc options ::uuid #?(:cljs (cljs.core/random-uuid)) #?(:clj (java.util.UUID/randomUUID)))]
+    `(defn ~-name
        ([~'data]
-        (~name ~'data nil nil))
+        (~-name ~'data nil nil))
        ([~'data ~'params]
-        (~name ~'data ~'params nil))
+        (~-name ~'data ~'params nil))
        ([~'data ~'params ~'opts]
         (form ~fields (assoc ~options :name ~form-name) ~'data ~'params ~'opts)))))

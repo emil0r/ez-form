@@ -9,5 +9,8 @@ pom.xml.asc
 /.nrepl-port
 .hgignore
 .hg/
-.emacs.desktop*
+/resources/public/js/out
+/resources/public/js/compiled.js
 /resources/test/compiled.js
+/repl
+*.log

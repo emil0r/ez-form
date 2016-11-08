@@ -1,7 +1,7 @@
 (ns ez-form.decorate
   (:require [clojure.string :as str]
             [clojure.zip :as zip]
-            [ez-form.common :refer [get-field]]
+            [ez-form.common :refer [get-field get-first]]
             [ez-form.zipper :refer [zipper]]))
 
 
@@ -78,15 +78,25 @@
 (defmethod decor :?error [form loc] (wrap-decor form loc))
 (defmethod decor :?help [form loc] (wrap-decor form loc))
 (defmethod decor :?wrapper [form loc]
-  (let [node (zip/node loc)
-        field (get-field form node :wrapper)]
-    (if-not (empty? (:errors field))
-      (let [base-material (material node)
-            options (get-material form node base-material)]
-        (if options
-          (zip/replace loc options)
-          (zip/remove loc)))
-      (zip/remove loc))))
+  ;; clojurescript needs to decorate with a key for react's sake
+  #?(:cljs (let [node (zip/node loc)
+                 field (get-field form node :wrapper)
+                 id (get-first field :id :name)
+                 k (str id "-" (get-in form [:options :ez-form.core/uuid]))
+                 options (merge {:key k}
+                                (if-not (empty? (:errors field))
+                                  (get-material form node (material node))))]
+             (zip/replace loc options)))
+  ;; clojure can skip decorating with a key
+  #?(:clj  (let [node (zip/node loc)
+                 field (get-field form node :wrapper)]
+             (if-not (empty? (:errors field))
+               (let [base-material (material node)
+                     options (get-material form node base-material)]
+                 (if options
+                   (zip/replace loc options)
+                   (zip/remove loc)))
+               (zip/remove loc)))))
 (defmethod decor :?form-name [form loc]
   (let [form-name (get-in form [:options :name])
         as (get-in form [:options :ez-form.core/as])
@@ -96,7 +106,11 @@
     (cond
       (and form-name
            (= as :table))
-      (zip/replace loc [:tr options [:td {:colspan 2} [:input {:type "hidden" :name :__ez-form.form-name :value form-name}]]])
+      (zip/replace loc [:tr options [:td
+                                     ;; react complains about :colspan
+                                     #?(:clj  {:colspan 2})
+                                     #?(:cljs {:colSpan 2})
+                                     [:input {:type "hidden" :name :__ez-form.form-name :value form-name}]]])
 
       (and form-name
            (= as :list))

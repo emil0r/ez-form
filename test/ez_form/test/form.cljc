@@ -1,11 +1,13 @@
 (ns ez-form.test.form
-  (:require
-   #?(:cljs [cljs.test :refer-macros [deftest is testing]])
-   #?(:clj  [clojure.test :refer [deftest is testing]])
-   [ez-form.common :refer [get-field]]
-   [ez-form.core :as ez-form :refer [defform]]
-   [ez-form.flow :as flow]
-   [vlad.core :as vlad]))
+  (:require #?(:clj  [clojure.test :refer [deftest is testing]])
+            #?(:cljs [cljs.test :refer-macros [deftest is testing]])
+            [clojure.zip :as zip]
+            [ez-form.common :refer [get-field]]
+            [ez-form.core :as ez-form :refer [defform]]
+            [ez-form.decorate :as decorate]
+            [ez-form.flow :as flow]
+            [ez-form.zipper :refer [zipper]]
+            [vlad.core :as vlad]))
 
 
 (defn t [arg]
@@ -103,6 +105,7 @@
 
 (get-field (testform {:email "test@example.com"}) :email.field)
 
+(decorate/decorate (testform nil) [:?email.wrapper])
 
 (deftest validity
   (testing "Validity"

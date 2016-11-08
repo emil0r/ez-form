@@ -1,24 +1,9 @@
 (ns ez-form.field
   (:require [clojure.string :as str]
+            [ez-form.common :refer [get-first]]
             [ez-form.decorate :refer [add-help-decor
                                       add-error-decor
                                       add-text-decor]]))
-
-(defn get-first [field & [capitalize? & values]]
-  (let [values (if (true? capitalize?)
-                 values
-                 (into [capitalize?] values))
-        capitalize? (if (true? capitalize?) true false)]
-    (loop [[value & values] values]
-      (if-let [value (get field value)]
-        (cond
-          (keyword? value) (if capitalize?
-                             (str/capitalize (name value))
-                             (name value))
-          :else value)
-        (if (and (nil? value) (nil? values))
-          nil
-          (recur values))))))
 
 (defn errors
   "Send in a field from a map and get back a list of error messages"
@@ -121,7 +106,7 @@
   (let [id (get-first field :id :name)
         value (or (:value field) (:value-added field))
         opts (get-opts field [:class :name] form-options)]
-    [:textarea (merge opts {:id id}) value]))
+    [:textarea (merge opts {:id id}) (or value "")]))
 
 (defmethod field :dropdown [field form-options]
   (let [id (get-first field :id :name)
@@ -139,5 +124,5 @@
         value (or (:value field) (:value-added field))
         opts (get-opts field [:placeholder :class :name :type] form-options)]
     [:input (merge {:type :text
-                    :value value
+                    :value (or value "")
                     :id id} opts)]))

@@ -1,7 +1,7 @@
 (ns ez-form.table
-  (:require [ez-form.decorate :refer [add-decor]]
-            [ez-form.field :as ez.field :refer [get-first
-                                                get-opts
+  (:require [ez-form.common :refer [get-first]]
+            [ez-form.decorate :refer [add-decor]]
+            [ez-form.field :as ez.field :refer [get-opts
                                                 option]]))
 
 (defmulti row (fn [field form-options] (:type field)))
