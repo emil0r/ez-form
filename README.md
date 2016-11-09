@@ -75,12 +75,38 @@ Forms for the web. Server side only (so far).
   
 ```
 
+## help, text and label
+
+Help, text and label can take functions as values. During evaluation the function will be called with two arguments, form and the current field. Whatever is returned will be used.
+
+```clojure
+(def locale (atom :en))
+
+(defn delayed-t [k]
+  (fn [form field]
+    (t @locale k)))
+    
+(defn alt-delayed-t [k]
+  (fn [form field]
+    ;; get the locale from data sent in to the form as opposed to relying on a
+    ;; global atom, with a default locale of :en
+    (t (get-in form [:options :data :locale] :en) k))
+
+(defform i18n-form
+ {}
+ [{:name :name
+   :type :text
+   :label (delayed-t :form.field/name)
+   :validation (vlad/attr [:name] (vlad/present))])
+  
+```
+
 ## decor
 
 ez-form has a concept of decor for decorating the markup being returned with optional classes/markup and allowing for a post-process of the output.
 See ez-form.decorate for implementation details. Decor must always be a keyword starting with a ? sign (ie, :?decor or :?my-decor, :?wrapper, etc)
 
-Internal decors that are supported are :?wrapper, :?text, :?help, :?error
+Internal decors that are supported are :?wrapper, :?text, :?help, :?error and :?label
 
 ```clojure
 
