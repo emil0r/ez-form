@@ -31,45 +31,60 @@
 #?(:cljs (defn ^:dynamic *t* [locale path & args]
            (apply gstring/format (get-in @dictionary [locale path] "") args)))
 
-(defmulti get-error-message (fn [_ error] (:type error)))
+(defmulti get-error-message (fn [_ _ error] (:type error)))
 
-(defmethod get-error-message :vlad.core/present [field error]
+(defmethod get-error-message :vlad.core/present [form field error]
   (let [error-message (-> field :error-messages :vlad.core/present)]
-    (or error-message
+    (or (if (fn? error-message)
+          (error-message form field)
+          error-message)
         (*t* *locale* ::present))))
 
-(defmethod get-error-message :vlad.core/length-under [field error]
+(defmethod get-error-message :vlad.core/length-under [form field error]
   (let [error-message (-> field :error-messages :vlad.core/length-under)]
-    (or error-message
+    (or (if (fn? error-message)
+          (error-message form field)
+          error-message)
         (*t* *locale* ::length-under (:size error)))))
 
-(defmethod get-error-message :vlad.core/length-over [field error]
+(defmethod get-error-message :vlad.core/length-over [form field error]
   (let [error-message (-> field :error-messages :vlad.core/length-over)]
-    (or error-message
+    (or (if (fn? error-message)
+          (error-message form field)
+          error-message)
         (*t* *locale* ::length-over (:size error)))))
 
-(defmethod get-error-message :vlad.core/equals-field [field error]
+(defmethod get-error-message :vlad.core/equals-field [form field error]
   (let [error-message (-> field :error-messages :vlad.core/equals-field)]
-    (or error-message
+    (or (if (fn? error-message)
+          (error-message form field)
+          error-message)
         (*t* *locale* ::equals-field (-> error :second-selector first name)))))
 
 
-(defmethod get-error-message :vlad.core/matches [field error]
+(defmethod get-error-message :vlad.core/matches [form field error]
   (let [error-message (-> field :error-messages :vlad.core/matches)]
-    (or error-message
+    (or (if (fn? error-message)
+          (error-message form field)
+          error-message)
         (*t* *locale* ::matches (-> error :pattern str)))))
 
-(defmethod get-error-message :vlad.core/equals-value [field error]
+(defmethod get-error-message :vlad.core/equals-value [form field error]
   (let [error-message (-> field :error-messages :vlad.core/equals-value)]
-    (or error-message
+    (or (if (fn? error-message)
+          (error-message form field)
+          error-message)
         (*t* *locale* ::equals-value (-> error :value)))))
 
 ;; skip any error messages if the error is nil
-(defmethod get-error-message nil [field error]
+(defmethod get-error-message nil [form field error]
   (if-not (nil? error)
     (*t* *locale* ::unknown-error)))
 
-(defmethod get-error-message :default [field error]
+(defmethod get-error-message :default [form field error]
   [field error]
-  (or (get-in field [:error-messages (:type error)])
-      (*t* *locale* ::unknown-error)))
+  (let [error-message (get-in field [:error-messages (:type error)])]
+    (or (if (fn? error-message)
+          (error-message form field)
+          error-message)
+        (*t* *locale* ::unknown-error))))

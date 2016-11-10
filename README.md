@@ -24,7 +24,7 @@ Forms for the web. Server side only (so far).
    :opts {:order 1} ;; additional parameters to add to the output HTML
    :validation (vlad/attr [:firstname] (vlad/present))
    :error-messages {:custom "foobar"
-                    :vlad.core/present "my custom error message"}}
+                    :vlad.core/present (fn [form field] "my custom error message")}}
   {:type :text
    :label "Last name"
    :name :lastname
@@ -75,9 +75,9 @@ Forms for the web. Server side only (so far).
   
 ```
 
-## help, text and label
+## help, text, label and error-messages
 
-Help, text and label can take functions as values. During evaluation the function will be called with two arguments, form and the current field. Whatever is returned will be used.
+Help, text, label and error-messages can take functions as values. During evaluation the function will be called with two arguments, form and the current field. Whatever is returned will be used.
 
 ```clojure
 (def locale (atom :en))
@@ -90,14 +90,15 @@ Help, text and label can take functions as values. During evaluation the functio
   (fn [form field]
     ;; get the locale from data sent in to the form as opposed to relying on a
     ;; global atom, with a default locale of :en
-    (t (get-in form [:options :data :locale] :en) k))
+    (t (get-in form [:options :data :locale] :en) k)))
 
 (defform i18n-form
  {}
  [{:name :name
    :type :text
    :label (delayed-t :form.field/name)
-   :validation (vlad/attr [:name] (vlad/present))])
+   :validation (vlad/attr [:name] (vlad/present))
+   :error-messages {:vlad.core/present (delayed-t :form.field/error)}}])
   
 ```
 

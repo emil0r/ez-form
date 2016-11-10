@@ -1,9 +1,10 @@
 (ns ez-form.test.form
-  (:require #?(:clj  [clojure.test :refer [deftest is testing]])
-            #?(:cljs [cljs.test :refer-macros [deftest is testing]])
+  (:require #?@(:clj  [[clojure.test :refer [deftest is testing]]
+                       [ez-form.core :as ez-form :refer [defform]]])
+            #?@(:cljs [[cljs.test :refer-macros [deftest is testing]]
+                       [ez-form.core :as ez-form :refer-macros [defform]]])
             [clojure.zip :as zip]
             [ez-form.common :refer [get-field]]
-            [ez-form.core :as ez-form :refer [defform]]
             [ez-form.decorate :as decorate]
             [ez-form.flow :as flow]
             [ez-form.zipper :refer [zipper]]
@@ -25,7 +26,7 @@
     :text "text info"
     :placeholder (t :form.placeholder/email)
     :validation (vlad/attr [:email] (vlad/present))
-    :error-messages {:custom "foobar"}}
+    :error-messages {:vlad.core/present (fn [_ _] "foobar")}}
    {:type :password
     :label (t :form.field/password)
     :name :password
@@ -122,3 +123,13 @@
                                              :email "test@example.com"
                                              :password ""})))
        "Is not valid because password is empty")))
+
+
+(deftest errormessages
+  (testing "Error messages"
+    (is (=
+         (list
+          [:input {:type "hidden", :name "__ez-form.form-name", :value "testform"}]
+          (list [:div.error "foobar"]))
+
+         (ez-form/as-flow [:$email.errors] (testform nil))))))

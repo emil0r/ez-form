@@ -34,7 +34,7 @@
                     (let [{:keys [validation error-messages]} field]
                       (if (and params validation)
                         (let [validated (vlad/validate validation params)
-                              errors (map (partial get-error-message field) validated)]
+                              errors (map #(get-error-message form field %) validated)]
                           (conj out (assoc field
                                            :errors (if (empty? errors) nil errors)
                                            :validated validated)))
