@@ -101,6 +101,15 @@ Help, text and label can take functions as values. During evaluation the functio
   
 ```
 
+## helper functions
+
+```clojure
+
+;; will return a map of all the fields along with their associated values
+(form/select-fields (myform nil {:firstname "Firstname", :lastname "Lastname", :myemail "firstname@lastname.com"}))
+
+```
+
 ## decor
 
 ez-form has a concept of decor for decorating the markup being returned with optional classes/markup and allowing for a post-process of the output.

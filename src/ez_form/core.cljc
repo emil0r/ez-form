@@ -117,7 +117,9 @@
           (:fields form))
      (decorate form tail))))
 
-(defn select-fields [form]
+(defn select-fields
+  "Return the fields of the form as a map"
+  [form]
   (reduce (fn [out field]
             (assoc out
                    (or (:id field) (:name field))
