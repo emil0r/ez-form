@@ -117,6 +117,13 @@
           (:fields form))
      (decorate form tail))))
 
+(defn select-fields [form]
+  (reduce (fn [out field]
+            (assoc out
+                   (or (:id field) (:name field))
+                   (or (:value-added field) (:value field))))
+          {} (:fields form)))
+
 (defmacro defform [-name options fields]
   (let [form-name (name -name)]
     `(defn ~-name
