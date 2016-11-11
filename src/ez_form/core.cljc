@@ -45,11 +45,16 @@
   "Is the form valid? Runs a validate and checks for errors"
   ([form]
    (and
-    (= (get-in form [:params :__ez-form.form-name]) (get-in form [:options :name]))
+    ;; check for both keyword and string because ring's middleware for transforming
+    ;; the params map to keyword/string pairs doesn't seem to work
+    ;; with "_ez-form.form-name"
+    (or (= (get-in form [:params "__ez-form.form-name"]) (get-in form [:options :name]))
+        (= (get-in form [:params :__ez-form.form-name]) (get-in form [:options :name])))
     (every? nil? (map :errors (:fields (validate form))))))
   ([form params]
    (and
-    (= (get-in params [:__ez-form.form-name]) (get-in form [:options :name]))
+    (or (= (get-in params ["__ez-form.form-name"]) (get-in form [:options :name]))
+        (= (get-in params [:__ez-form.form-name]) (get-in form [:options :name])))
     (every? nil? (map :errors (:fields (validate form params)))))))
 
 
