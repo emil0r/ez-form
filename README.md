@@ -1,11 +1,11 @@
 # ez-form
 
-Forms for the web. Server side only (so far).
+Forms for the web. For Clojure(Script).
 
 ## Dependancy
 
 ```clojure
-[ez-form "0.6.0"]
+[ez-form "0.7.0"]
 ```
 
 ## Usage
@@ -186,6 +186,39 @@ Uses [vlad](https://github.com/logaan/vlad) for validation. See documentation th
 
 ## i18n
 Uses a very simple implementation meant to be switched for something else. [Tower](https://github.com/ptaoussanis/tower) is recommended.
+
+
+*Alternative 1*
+
+```clojure
+;; import a tower t function that you've set up
+'(require [namespace.i18n :refer [t]])
+
+(defn my-t-func [locale path & args]
+  (apply t locale path args))
+  
+(binding [ez-form.error/*t* my-t-func]
+  ;; do your stuff with ez-form within here
+  )
+```
+
+*Alternative 2*
+
+```clojure
+;; import a tower t function that you've set up
+'(require [namespace.i18n :refer [t]])
+
+(defn- ez-form-t [locale path & args]
+  ;; in this scenario we handle locale differently
+  ;; and so don't even both with what is sent in
+  (apply t path args))
+
+;; wrap ez-form in a ring middleware
+(defn wrap-ez-form-i18n [handler]
+  (fn [request]
+    (binding [ez-form.error/*t* ez-form-t]
+      (handler request))))
+```
 
 ## License
 
