@@ -75,6 +75,18 @@ Forms for the web. For Clojure(Script).
   
 ```
 
+## fields
+
+Special types
+
+- :checkbox
+- :boolean (same as :checkbox)
+- :radio
+- :html (will take a :fn field which assumes a function that takes [field form-options] as paramters)
+- :dropdown (same format as hiccup)
+
+Everything else goes into the :default multimethod for ez-form.field/field where the :type is used as the type of the field.
+
 ## help, text, label and error-messages
 
 Help, text, label and error-messages can take functions as values. During evaluation the function will be called with two arguments, form and the current field. Whatever is returned will be used.
