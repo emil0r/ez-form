@@ -6,6 +6,7 @@
             [ez-form.paragraph :as paragraph]
             [ez-form.table :as table]
             [ez-form.zipper :refer [zipper]]
+            #?(:cljs [reagent.core :as r])
             [vlad.core :as vlad]))
 
 #?(:clj
@@ -58,15 +59,22 @@
     (every? nil? (map :errors (:fields (validate form params)))))))
 
 
-(defn- add-value [data {:keys [name] :as field}]
-  (assoc field :value-added (get data name)))
+#?(:clj
+   (defn- add-value [data {:keys [name] :as field}]
+     (assoc field :value-added (get data name))))
+
+#?(:cljs
+   (defn- add-cursor [data {:keys [name] :as field}]
+     (assoc field :cursor (r/cursor data [name]))))
 
 (defrecord Form [fields options])
 
 (defn form [fields form-options data params options]
-  (let [fields (if-not (nil? params)
-                 (map #(add-value params %) fields)
-                 (map #(add-value data %) fields))
+  (let [fields
+        #?(:clj (if-not (nil? params)
+                  (map #(add-value params %) fields)
+                  (map #(add-value data %) fields)))
+        #?(:cljs (map #(add-cursor data %) fields))
         form (map->Form {:fields fields
                          :options (assoc form-options :data options)
                          :data data

@@ -4,7 +4,8 @@
             [ez-form.decorate :refer [add-error-decor
                                       add-help-decor
                                       add-label-decor
-                                      add-text-decor]]))
+                                      add-text-decor]]
+            #?(:cljs [reagent.core :as r])))
 
 (defn errors
   "Send in a field from a map and get back a list of error messages"
@@ -109,7 +110,7 @@
 
 (defmethod field :dropdown [field form-options]
   (let [id (get-first field :id :name)
-        value (or (:value field) (:value-added field))
+        value (or (:value field) (:value-added field) "")
         opts (get-opts field [:class :name] form-options)
         options (:options field)]
     [:select (merge opts {:type :select
@@ -118,10 +119,17 @@
        (map (partial option value) (options (:data form-options)))
        (map (partial option value) options))]))
 
+(defn value-of [element]
+ (-> element .-target .-value))
+
 (defmethod field :default [field form-options]
   (let [id (get-first field :id :name)
         value (or (:value field) (:value-added field))
-        opts (get-opts field [:placeholder :class :name :type] form-options)]
+        opts (get-opts field [:placeholder :class :name :type] form-options)
+        #?@(:cljs [c (:cursor field)])]
     [:input (merge {:type :text
-                    :value (or value "")
+                    #?@(:clj [:value (or value "")])
+                    #?@(:cljs [
+                               :value (or @c "")
+                               :on-change #(reset! c (value-of %))])
                     :id id} opts)]))

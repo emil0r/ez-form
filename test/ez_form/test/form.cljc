@@ -2,7 +2,8 @@
   (:require #?@(:clj  [[clojure.test :refer [deftest is testing]]
                        [ez-form.core :as ez-form :refer [defform]]])
             #?@(:cljs [[cljs.test :refer-macros [deftest is testing]]
-                       [ez-form.core :as ez-form :refer-macros [defform]]])
+                       [ez-form.core :as ez-form :refer-macros [defform]]
+                       [reagent.core :as r]])
             [clojure.zip :as zip]
             [ez-form.common :refer [get-field]]
             [ez-form.decorate :as decorate]
@@ -63,7 +64,8 @@
 
 (ez-form/as-table (testform {} {:email "test@example.com"
                                 :password "my password"
-                                :radio "m"}))
+                                :radio "m"}
+                            {:atom (r/atom nil)}))
 
 (ez-form/as-paragraph (testform {} {:email "test@example.com"
                                     :password "my password"
@@ -73,6 +75,8 @@
 (ez-form/as-list (testform {} {:email "test@example.com"
                                :password "my password"
                                :radio "m"}))
+
+(:options (testform nil))
 
 
 (ez-form/as-flow

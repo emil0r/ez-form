@@ -1,4 +1,4 @@
-(defproject ez-form "0.7.0"
+(defproject ez-form "0.7.1-SNAPSHOT"
   :description "Forms for the web"
 
   :url "https://github.com/emil0r/ez-form"
@@ -7,15 +7,16 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
   :dependencies [[org.clojure/clojure "1.8.0"]
-                 [vlad "3.3.0"]]
+                 [vlad "3.3.0"]
+                 [org.clojure/clojurescript "1.9.293"]
+                 [reagent "0.6.0"]]
 
   :min-lein-version "2.0.0"
 
   :plugins [[lein-cljsbuild "1.1.4" :exclusions [[org.clojure/clojure]]]
             [lein-figwheel "0.5.8"]]
 
-  :profiles {:dev {:dependencies [[org.clojure/clojurescript "1.9.293"]
-                                  [com.cemerick/piggieback "0.2.1"]
+  :profiles {:dev {:dependencies [[com.cemerick/piggieback "0.2.1"]
                                   [binaryage/devtools "0.8.2"]
                                   [figwheel-sidecar "0.5.4-7"]
                                   [spyscope "0.1.5"]]
