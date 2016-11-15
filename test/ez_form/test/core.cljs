@@ -7,12 +7,13 @@
 (enable-console-print!)
 
 
-(defn render-form [data]
+(defn render-form [data result-fn]
   [:table
-   [:tbody (form/as-table (testform data))]])
+   [:tbody (form/as-table (testform data result-fn))]])
 
 
 (defn ^:export run []
   (println "ez-form.test.core is running")
-  (let [data (r/atom nil)]
-    (r/render-component [render-form data] (.getElementById js/document "form-container"))))
+  (let [data (r/atom nil)
+        result-fn (fn [data] (println (:status data)))]
+    (r/render-component [render-form data result-fn] (.getElementById js/document "form-container"))))

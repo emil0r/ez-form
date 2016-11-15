@@ -99,9 +99,9 @@
   #?(:cljs (let [node (zip/node loc)
                  field (get-field form node :wrapper)
                  options (merge {:key (get-first field :id :name)}
-                                (if-not (empty? (:errors field))
+                                #_(if-not (empty? @(:errors field))
                                   (get-material form node (material node))))]
-             (zip/replace loc options)))
+               (zip/replace loc options)))
   ;; clojure can skip decorating with a key
   #?(:clj  (let [node (zip/node loc)
                  field (get-field form node :wrapper)]

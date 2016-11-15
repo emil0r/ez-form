@@ -28,19 +28,32 @@
      (validate form params)
      form))
   ([form params]
-   (assoc form
-          :params params
-          :fields
-          (reduce (fn [out field]
-                    (let [{:keys [validation error-messages]} field]
-                      (if (and params validation)
-                        (let [validated (vlad/validate validation params)
-                              errors (map #(get-error-message form field %) validated)]
-                          (conj out (assoc field
-                                           :errors (if (empty? errors) nil errors)
-                                           :validated validated)))
-                        (conj out field))))
-                  [] (:fields form)))))
+   (let [new-form
+         (assoc form
+                :params params
+                :fields
+                (reduce (fn [out field]
+                          (let [{:keys [validation error-messages]} field]
+                            (if (and params validation)
+                              (let [validated (vlad/validate validation params)
+                                    errors (map #(get-error-message form field %) validated)]
+                                (conj out (assoc field
+                                                 :errors (if (empty? errors) nil errors)
+                                                 :validated validated)))
+                              (conj out field))))
+                        [] (:fields form)))]
+     #?(:cljs
+        (let [errors (->> (:fields new-form)
+                          (map (fn [{:keys [id name errors]}]
+                                 [(or id name) errors]))
+                          (into {}))
+              validated (->> (:fields new-form)
+                             (map (fn [{:keys [id name validated]}]
+                                    [(or id name) validated]))
+                             (into {}))]
+          (when (not= errors (:errors @(:data form)))
+            (swap! (:data form) merge {:errors errors :validated validated}))))
+     new-form)))
 
 (defn valid?
   "Is the form valid? Runs a validate and checks for errors"
@@ -49,13 +62,13 @@
     ;; check for both keyword and string because ring's middleware for transforming
     ;; the params map to keyword/string pairs doesn't seem to work
     ;; with "_ez-form.form-name"
-    (or (= (get-in form [:params "__ez-form.form-name"]) (get-in form [:options :name]))
-        (= (get-in form [:params :__ez-form.form-name]) (get-in form [:options :name])))
+    #?(:clj (or (= (get-in form [:params "__ez-form.form-name"]) (get-in form [:options :name]))
+                (= (get-in form [:params :__ez-form.form-name])  (get-in form [:options :name]))))
     (every? nil? (map :errors (:fields (validate form))))))
   ([form params]
    (and
-    (or (= (get-in params ["__ez-form.form-name"]) (get-in form [:options :name]))
-        (= (get-in params [:__ez-form.form-name]) (get-in form [:options :name])))
+    #?(:clj (or (= (get-in params ["__ez-form.form-name"]) (get-in form [:options :name]))
+                (= (get-in params [:__ez-form.form-name])  (get-in form [:options :name]))))
     (every? nil? (map :errors (:fields (validate form params)))))))
 
 
@@ -65,24 +78,55 @@
 
 #?(:cljs
    (defn- add-cursor [data {:keys [name] :as field}]
-     (assoc field :cursor (r/cursor data [name]))))
+     (assoc field :cursor (r/cursor data [:fields name]))))
 
-(defrecord Form [fields options])
+#?(:cljs
+   (defn- track-focus [k _ old-state new-state]
+     ;; refocus
+     (when (not= (:errors new-state) (:errors old-state))
+       (doseq [[k v] (:errors new-state)]
+         (when (not= (get-in old-state [:errors k]) v)
+           (js/setTimeout #(.. js/document (getElementById (name k)) (focus)) 10))))
+     ;; emit state?
+     (when (and (not (nil? (:errors new-state)))
+                (fn? (:form-fn new-state))
+                (every? nil? (map second (:errors new-state)))
+                (some identity (map second (:errors old-state))))
+       ((:form-fn new-state)
+        {:status :valid
+         :data (:fields new-state)}))))
 
-(defn form [fields form-options data params options]
-  (let [fields
-        #?(:clj (if-not (nil? params)
-                  (map #(add-value params %) fields)
-                  (map #(add-value data %) fields)))
-        #?(:cljs (map #(add-cursor data %) fields))
-        form (map->Form {:fields fields
-                         :options (assoc form-options :data options)
-                         :data data
-                         :params params})]
-    (cond
-      (false? (:validation? options)) form
-      params (validate form)
-      :else form)))
+(defrecord Form [fields options data params])
+
+(defn form [fields form-options data params-or-fn options]
+  #?(:clj
+     (let [fields (if-not (nil? params-or-fn)
+                    (map #(add-value params-or-fn %) fields)
+                    (map #(add-value data %) fields))
+            form (map->Form {:fields fields
+                             :options (assoc form-options :data options)
+                             :data data
+                             :params params-or-fn})]
+        (cond
+          (false? (:validation? options)) form
+          params-or-fn (validate form)
+          :else form)))
+  #?(:cljs
+     (let [fields (map #(add-cursor data %) fields)
+           params (r/cursor data [:fields])
+           form (map->Form {:fields fields
+                            :options (assoc form-options :data options)
+                            :data data
+                            :params @params
+                            :fn params-or-fn})]
+
+       (when-not (:initalized? @data)
+         (swap! data assoc
+                :initialized? true
+                :form-fn params-or-fn)
+         (add-watch data :track-focus track-focus))
+
+       (validate form))))
 
 (defn get-tail [form args]
   (->> (into args (if (get-in form [:options :name])

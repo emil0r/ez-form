@@ -64,8 +64,7 @@
 
 (ez-form/as-table (testform {} {:email "test@example.com"
                                 :password "my password"
-                                :radio "m"}
-                            {:atom (r/atom nil)}))
+                                :radio "m"}))
 
 (ez-form/as-paragraph (testform {} {:email "test@example.com"
                                     :password "my password"

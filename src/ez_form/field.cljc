@@ -1,17 +1,26 @@
 (ns ez-form.field
   (:require [clojure.string :as str]
             [ez-form.common :refer [get-first]]
-            [ez-form.decorate :refer [add-error-decor
+            [ez-form.decorate :refer [add-decor
+                                      add-error-decor
                                       add-help-decor
                                       add-label-decor
                                       add-text-decor]]
             #?(:cljs [reagent.core :as r])))
 
+(defn value-of [element]
+  (-> element .-target .-value))
+
 (defn errors
   "Send in a field from a map and get back a list of error messages"
   [{:keys [errors] :as field}]
   (if errors
-    (map #(add-error-decor field %) errors)))
+    (map #(add-error-decor field %) errors))
+
+  ;; #?(:clj (if errors
+  ;;           (map #(add-error-decor field %) errors)))
+  ;; #?(:cljs (add-decor :error field))
+  )
 
 (defn label [field]
   (add-label-decor field))
@@ -47,56 +56,72 @@
 (defmulti field (fn [field form-options] (:type field)))
 
 (defmethod field :checkbox [field form-options]
-  (let [id (get-first field :id :name)
-        value-added (:value-added field)
-        checked? (:checked? field)
-        options (:options field)
-        opts (get-opts field [:class :name :value :type] form-options)]
-    (if options
-      (let [value-added (cond (string? value-added) (str/split value-added #",")
-                              :else value-added)]
-        (map (fn [option]
-               (let [[value label] (if (sequential? option)
-                                     option
-                                     [option option])
-                     id (str (name id) "-" value)]
-                 [:div
-                  [:input (merge {:value value}
-                                 opts
-                                 {:id id}
-                                 (if (or
-                                      ;; default checked, but only if
-                                      ;; value-added is empty
-                                      (and checked?
-                                           (nil? value-added))
-                                      ;; check if value equals value-added
-                                      (some #(= value %) value-added))
-                                   {:checked true}))]
-                  [:label {:for id} label]]))
-             options))
-      [:input (merge {:value value-added}
-                     opts
-                     {:id id}
-                     (if (or
-                          ;; default checked, but only if value-added is empty
-                          (and checked?
-                               (nil? value-added))
-                          ;; checked if value-added is non-nil and non-false
-                          (and (not (nil? value-added))
-                               (not (false? value-added))))
-                       {:checked true}))])))
+  #?(:clj
+     (let [id (get-first field :id :name)
+           value-added (:value-added field)
+           checked? (:checked? field)
+           options (:options field)
+           opts (get-opts field [:class :name :value :type] form-options)]
+       (if options
+         (let [value-added (cond (string? value-added) (str/split value-added #",")
+                                 :else value-added)]
+           (map (fn [option]
+                  (let [[value label] (if (sequential? option)
+                                        option
+                                        [option option])
+                        id (str (name id) "-" value)]
+                    [:div
+                     [:input (merge {:value value}
+                                    opts
+                                    {:id id}
+                                    (if (or
+                                         ;; default checked, but only if
+                                         ;; value-added is empty
+                                         (and checked?
+                                              (nil? value-added))
+                                         ;; check if value equals value-added
+                                         (some #(= value %) value-added))
+                                      {:checked true}))]
+                     [:label {:for id} label]]))
+                options))
+         [:input (merge {:value value-added}
+                        opts
+                        {:id id}
+                        (if (or
+                             ;; default checked, but only if value-added is empty
+                             (and checked?
+                                  (nil? value-added))
+                             ;; checked if value-added is non-nil and non-false
+                             (and (not (nil? value-added))
+                                  (not (false? value-added))))
+                          {:checked true}))])))
+  ;; leave multiple checkboxes for now
+  #?(:cljs
+     (let [id (get-first field :id :name)
+           c (:cursor field)
+           value (or (:value field) (:value-added field))
+           opts (get-opts field [:class :name :type] form-options)]
+       [:input (merge {:value value
+                       :on-change #(reset! c (value-of %))
+                       :checked (= @c value)}
+                      opts
+                      {:id id})])))
 
 (defmethod field :boolean [f form-options]
   (field (assoc f :type :checkbox) form-options))
 
 (defmethod field :radio [field form-options]
   (let [id (get-first field :id :name)
-        value (:value-added field)
         checked? (:checked field)
-        opts (get-opts field [:class :name :value :type] form-options)]
-    [:input (merge {:value value} opts {:id id} (if (or checked?
-                                                        (= value (:value opts)))
-                                                  {:checked true}))]))
+        opts (get-opts field [:class :name :value :type] form-options)
+        value (or (:value field) (:value-added field))
+        #?@(:cljs [c (:cursor field)])]
+    #?(:clj  [:input (merge {:value value} opts {:id id} (if (or checked?
+                                                                 (= value (:value opts)))
+                                                           {:checked true}))])
+    #?(:cljs [:input (merge {:value @c
+                             :checked (= @c (:value opts))
+                             :on-change #(reset! c (value-of %))} opts {:id id})])))
 
 (defmethod field :html [field form-options]
   (if-let [f (:fn field)]
@@ -104,32 +129,41 @@
 
 (defmethod field :textarea [field form-options]
   (let [id (get-first field :id :name)
-        value (or (:value field) (:value-added field))
-        opts (get-opts field [:class :name] form-options)]
-    [:textarea (merge opts {:id id}) (or value "")]))
+        opts (get-opts field [:class :name] form-options)
+        #?@(:clj  [value (or (:value field) (:value-added field))])
+        #?@(:cljs [c (:cursor field)])]
+    #?(:clj
+       [:textarea (merge opts {:id id}) (or value "")])
+    #?(:cljs
+       [:textarea (merge opts {:id id :on-change #(reset! c (value-of %))}) (or @c "")])))
 
 (defmethod field :dropdown [field form-options]
   (let [id (get-first field :id :name)
-        value (or (:value field) (:value-added field) "")
         opts (get-opts field [:class :name] form-options)
-        options (:options field)]
+        options (:options field)
+        #?@(:clj  [value (or (:value field) (:value-added field) "")])
+        #?@(:cljs [c (:cursor field)])]
     [:select (merge opts {:type :select
-                          :id id})
-     (if (fn? options)
-       (map (partial option value) (options (:data form-options)))
-       (map (partial option value) options))]))
-
-(defn value-of [element]
- (-> element .-target .-value))
+                          :id id
+                          #?@(:cljs [:on-change #(reset! c (value-of %))])
+                          })
+     #?(:cljs
+        (if (fn? options)
+          (map (partial option @c) (options (:data form-options)))
+          (map (partial option @c) options)))
+     #?(:clj
+        (if (fn? options)
+          (map (partial option value) (options (:data form-options)))
+          (map (partial option value) options)))]))
 
 (defmethod field :default [field form-options]
   (let [id (get-first field :id :name)
-        value (or (:value field) (:value-added field))
         opts (get-opts field [:placeholder :class :name :type] form-options)
+        #?@(:clj  [value (or (:value field) (:value-added field))])
         #?@(:cljs [c (:cursor field)])]
     [:input (merge {:type :text
                     #?@(:clj [:value (or value "")])
-                    #?@(:cljs [
+                    #?@(:cljs [:key (str "field-" (name (:name field)))
                                :value (or @c "")
                                :on-change #(reset! c (value-of %))])
                     :id id} opts)]))

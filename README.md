@@ -1,11 +1,14 @@
 # ez-form
 
-Forms for the web. For Clojure(Script).
+Forms for the web. For Clojure.
 
 ## Dependancy
 
 ```clojure
 [ez-form "0.7.0"]
+
+;; development
+[ez-form "0.7.1-SNAPSHOT"]
 ```
 
 ## Usage
