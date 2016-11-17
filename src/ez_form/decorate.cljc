@@ -66,6 +66,19 @@
            (str/starts-with? (str node) ":?"))
     (keyword (str "?" (last (re-find #":\?.+\.(.*)" (str node)))))))
 
+#?(:cljs
+   (defn display-error-messages [form field material-options errors]
+     [:div (if (and errors
+                    (not (nil? @(:cursor field))))
+             {}
+             {:style {:display "none"}})
+      (map (fn [error]
+             (let [display (if (fn? error)
+                             (error form field)
+                             error)
+                   k (str "errors-" (name (:name field)) "-" (str display))]
+               [(:wrapper material-options) (merge {:key k} (:css material-options))
+                display])) errors)]))
 (defn- wrap-decor [form loc]
   (let [node (zip/node loc)
         to-wrap (zip/node (zip/next loc))
@@ -84,8 +97,14 @@
   "The decor function recognizes the decor in the form output and does the decoration"
   (fn [_ loc] (material (zip/node loc))))
 (defmethod decor :?text [form loc] (wrap-decor form loc))
-(defmethod decor :?error [form loc] (wrap-decor form loc))
 (defmethod decor :?help [form loc] (wrap-decor form loc))
+#?(:clj  (defmethod decor :?error [form loc] (wrap-decor form loc)))
+#?(:cljs (defmethod decor :?error [form loc]
+           (let [node (zip/node loc)
+                 field (get-field form node :error)
+                 options (get-material form node (material node))
+                 errors (:errors field)]
+             (zip/replace loc (display-error-messages form field options errors)))))
 (defmethod decor :?label [form loc]
   (let [node (zip/node loc)
         next-node (zip/node (zip/next loc))]
@@ -99,7 +118,7 @@
   #?(:cljs (let [node (zip/node loc)
                  field (get-field form node :wrapper)
                  options (merge {:key (get-first field :id :name)}
-                                #_(if-not (empty? @(:errors field))
+                                (if-not (empty? (:errors field))
                                   (get-material form node (material node))))]
                (zip/replace loc options)))
   ;; clojure can skip decorating with a key

@@ -13,6 +13,14 @@ Forms for the web. For Clojure.
 
 ## Usage
 
+Clojure works as below. 
+
+ClojureScript works roughly the same way, with the exception of how the form is initiated. When initating a ClojureScript form it assumes the following:
+
+1. You are using reagent
+2. You are sending in as first argument a ratom
+3. You are sending in as a second argument a function that will be called when the form is valid. The function will only be called once per valid confirmation.
+
 ```clojure
 (ns some-namespace
   (:require [ez-form.core :as form :refer [defform]]

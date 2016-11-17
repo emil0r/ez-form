@@ -43,16 +43,9 @@
                               (conj out field))))
                         [] (:fields form)))]
      #?(:cljs
-        (let [errors (->> (:fields new-form)
-                          (map (fn [{:keys [id name errors]}]
-                                 [(or id name) errors]))
-                          (into {}))
-              validated (->> (:fields new-form)
-                             (map (fn [{:keys [id name validated]}]
-                                    [(or id name) validated]))
-                             (into {}))]
-          (when (not= errors (:errors @(:data form)))
-            (swap! (:data form) merge {:errors errors :validated validated}))))
+        (if (every? nil? (map :errors (:fields new-form)))
+          (swap! (:data form) assoc ::form.valid? true)
+          (swap! (:data form) assoc ::form.valid? false)))
      new-form)))
 
 (defn valid?
@@ -77,21 +70,15 @@
      (assoc field :value-added (get data name))))
 
 #?(:cljs
-   (defn- add-cursor [data {:keys [name] :as field}]
+   (defn- add-cursor [data {:keys [id name] :as field}]
      (assoc field :cursor (r/cursor data [:fields name]))))
 
 #?(:cljs
    (defn- track-focus [k _ old-state new-state]
-     ;; refocus
-     (when (not= (:errors new-state) (:errors old-state))
-       (doseq [[k v] (:errors new-state)]
-         (when (not= (get-in old-state [:errors k]) v)
-           (js/setTimeout #(.. js/document (getElementById (name k)) (focus)) 10))))
      ;; emit state?
-     (when (and (not (nil? (:errors new-state)))
-                (fn? (:form-fn new-state))
-                (every? nil? (map second (:errors new-state)))
-                (some identity (map second (:errors old-state))))
+     (when (and (fn? (:form-fn new-state))
+                (true? (::form.valid? new-state))
+                (not (::form.valid? old-state)))
        ((:form-fn new-state)
         {:status :valid
          :data (:fields new-state)}))))

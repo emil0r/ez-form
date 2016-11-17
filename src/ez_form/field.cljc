@@ -14,13 +14,12 @@
 (defn errors
   "Send in a field from a map and get back a list of error messages"
   [{:keys [errors] :as field}]
-  (if errors
-    (map #(add-error-decor field %) errors))
-
-  ;; #?(:clj (if errors
-  ;;           (map #(add-error-decor field %) errors)))
-  ;; #?(:cljs (add-decor :error field))
-  )
+  ;; for clojure errors are always run per display
+  #?(:clj  (if errors
+             (map #(add-error-decor field %) errors)))
+  ;; for clojurescript always decorate errors, we just
+  ;; do not show them when they're not present
+  #?(:cljs (add-decor :error field)))
 
 (defn label [field]
   (add-label-decor field))
@@ -35,9 +34,13 @@
   (let [[value text] (if (sequential? opt)
                        [(first opt) (second opt)]
                        [opt opt])
-        opts (if (= value selected-value)
-               {:value value :selected true}
-               {:value value})]
+        opts
+        #?(:clj  (if (= value selected-value)
+                   {:value value :selected true}
+                   {:value value}))
+        #?(:cljs (if (= value selected-value)
+                   {:value value :key value :selected true}
+                   {:value value :key value}))]
     [:option opts text]))
 
 (defn get-opts [field keys form-options]
@@ -99,11 +102,9 @@
   #?(:cljs
      (let [id (get-first field :id :name)
            c (:cursor field)
-           value (or (:value field) (:value-added field))
            opts (get-opts field [:class :name :type] form-options)]
-       [:input (merge {:value value
-                       :on-change #(reset! c (value-of %))
-                       :checked (= @c value)}
+       [:input (merge {:on-change #(reset! c (not (true? @c)))
+                       :checked (true? @c)}
                       opts
                       {:id id})])))
 
@@ -149,12 +150,12 @@
                           })
      #?(:cljs
         (if (fn? options)
-          (map (partial option @c) (options (:data form-options)))
-          (map (partial option @c) options)))
+          (map #(option @c %) (options (:data form-options)))
+          (map #(option @c %) options)))
      #?(:clj
         (if (fn? options)
-          (map (partial option value) (options (:data form-options)))
-          (map (partial option value) options)))]))
+          (map #(option value %) (options (:data form-options)))
+          (map #(option value %) options)))]))
 
 (defmethod field :default [field form-options]
   (let [id (get-first field :id :name)
