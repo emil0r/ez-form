@@ -36,28 +36,28 @@
 (defmethod get-error-message :vlad.core/present [form field error]
   (let [error-message (-> field :error-messages :vlad.core/present)]
     (or (if (fn? error-message)
-          (error-message form field)
+          (error-message form field ::present)
           error-message)
         (*t* *locale* ::present))))
 
 (defmethod get-error-message :vlad.core/length-under [form field error]
   (let [error-message (-> field :error-messages :vlad.core/length-under)]
     (or (if (fn? error-message)
-          (error-message form field)
+          (error-message form field ::length-under (:size error))
           error-message)
         (*t* *locale* ::length-under (:size error)))))
 
 (defmethod get-error-message :vlad.core/length-over [form field error]
   (let [error-message (-> field :error-messages :vlad.core/length-over)]
     (or (if (fn? error-message)
-          (error-message form field)
+          (error-message form field ::length-over (:size error))
           error-message)
         (*t* *locale* ::length-over (:size error)))))
 
 (defmethod get-error-message :vlad.core/equals-field [form field error]
   (let [error-message (-> field :error-messages :vlad.core/equals-field)]
     (or (if (fn? error-message)
-          (error-message form field)
+          (error-message form field ::equals-field (-> error :second-selector first name))
           error-message)
         (*t* *locale* ::equals-field (-> error :second-selector first name)))))
 
@@ -65,14 +65,14 @@
 (defmethod get-error-message :vlad.core/matches [form field error]
   (let [error-message (-> field :error-messages :vlad.core/matches)]
     (or (if (fn? error-message)
-          (error-message form field)
+          (error-message form field ::matches (-> error :pattern str))
           error-message)
         (*t* *locale* ::matches (-> error :pattern str)))))
 
 (defmethod get-error-message :vlad.core/equals-value [form field error]
   (let [error-message (-> field :error-messages :vlad.core/equals-value)]
     (or (if (fn? error-message)
-          (error-message form field)
+          (error-message form field ::equals-value (-> error :value))
           error-message)
         (*t* *locale* ::equals-value (-> error :value)))))
 
@@ -85,6 +85,6 @@
   [field error]
   (let [error-message (get-in field [:error-messages (:type error)])]
     (or (if (fn? error-message)
-          (error-message form field)
+          (error-message form field ::unknown-error)
           error-message)
         (*t* *locale* ::unknown-error))))

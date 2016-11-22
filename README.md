@@ -100,7 +100,7 @@ Everything else goes into the :default multimethod for ez-form.field/field where
 
 ## help, text, label and error-messages
 
-Help, text, label and error-messages can take functions as values. During evaluation the function will be called with two arguments, form and the current field. Whatever is returned will be used.
+Help, text, label and error-messages can take functions as values. During evaluation the function for help, text and label will be called with two arguments, form and the current field. Error-messages will be called with at least 3 arguments: form, field, error key and any number of args. Whatever is returned will be used.
 
 ```clojure
 (def locale (atom :en))
@@ -110,10 +110,10 @@ Help, text, label and error-messages can take functions as values. During evalua
     (t @locale k)))
     
 (defn alt-delayed-t [k]
-  (fn [form field]
+  (fn [form field k & args]
     ;; get the locale from data sent in to the form as opposed to relying on a
     ;; global atom, with a default locale of :en
-    (t (get-in form [:options :data :locale] :en) k)))
+    (apply t (get-in form [:options :data :locale] :en) k args)))
 
 (defform i18n-form
  {}

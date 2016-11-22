@@ -28,25 +28,19 @@
      (validate form params)
      form))
   ([form params]
-   (let [new-form
-         (assoc form
-                :params params
-                :fields
-                (reduce (fn [out field]
-                          (let [{:keys [validation error-messages]} field]
-                            (if (and params validation)
-                              (let [validated (vlad/validate validation params)
-                                    errors (map #(get-error-message form field %) validated)]
-                                (conj out (assoc field
-                                                 :errors (if (empty? errors) nil errors)
-                                                 :validated validated)))
-                              (conj out field))))
-                        [] (:fields form)))]
-     #?(:cljs
-        (if (every? nil? (map :errors (:fields new-form)))
-          (swap! (:data form) assoc ::form.valid? true)
-          (swap! (:data form) assoc ::form.valid? false)))
-     new-form)))
+   (assoc form
+          :params params
+          :fields
+          (reduce (fn [out field]
+                    (let [{:keys [validation error-messages]} field]
+                      (if (and params validation)
+                        (let [validated (vlad/validate validation params)
+                              errors (map #(get-error-message form field %) validated)]
+                          (conj out (assoc field
+                                           :errors (if (empty? errors) nil errors)
+                                           :validated validated)))
+                        (conj out field))))
+                  [] (:fields form)))))
 
 (defn valid?
   "Is the form valid? Runs a validate and checks for errors"
@@ -74,14 +68,18 @@
      (assoc field :cursor (r/cursor data [:fields name]))))
 
 #?(:cljs
-   (defn- track-focus [k _ old-state new-state]
-     ;; emit state?
-     (when (and (fn? (:form-fn new-state))
-                (true? (::form.valid? new-state))
-                (not (::form.valid? old-state)))
-       ((:form-fn new-state)
-        {:status :valid
-         :data (:fields new-state)}))))
+   (defn- track-focus [form]
+     (fn [k _ old-state new-state]
+       ;; emit state?
+       (when (and (fn? (:form-fn new-state))
+                  (valid? form (:fields new-state))
+                  (not (valid? form (:fields old-state)))
+                  ;;(true? (::form.valid? new-state))
+                  ;;(not (::form.valid? old-state))
+                  )
+         ((:form-fn new-state)
+          {:status :valid
+           :data (:fields new-state)})))))
 
 (defrecord Form [fields options data params])
 
@@ -107,11 +105,11 @@
                             :params @params
                             :fn params-or-fn})]
 
-       (when-not (:initalized? @data)
+       (when-not (:initialized? @data)
          (swap! data assoc
                 :initialized? true
                 :form-fn params-or-fn)
-         (add-watch data :track-focus track-focus))
+         (add-watch data :track-focus (track-focus form)))
 
        (validate form))))
 
