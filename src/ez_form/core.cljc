@@ -108,7 +108,8 @@
        (when-not (:initialized? @data)
          (swap! data assoc
                 :initialized? true
-                :form-fn params-or-fn)
+                :form-fn params-or-fn
+                :fields (assoc (:fields @data) :__ez-form.form-name (:name form-options)))
          (add-watch data :track-focus (track-focus form)))
 
        (validate form))))
