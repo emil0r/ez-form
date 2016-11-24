@@ -62,55 +62,6 @@
     :value "f"
     :label "Female"}])
 
-(ez-form/as-table (testform {} {:email "test@example.com"
-                                :password "my password"
-                                :radio "m"}))
-
-(ez-form/as-paragraph (testform {} {:email "test@example.com"
-                                    :password "my password"
-                                    :radio "m"}))
-
-
-(ez-form/as-list (testform {} {:email "test@example.com"
-                               :password "my password"
-                               :radio "m"}))
-
-(:options (testform nil))
-
-
-(ez-form/as-flow
- [:table.table
-  [:tr :?email.wrapper
-   [:th :$email.label]
-   [:td.testus :$email.field :$email.errors]]]
- (testform {:email "test@example.com"} {} {:decor {:?wrapper nil}}))
-
-(ez-form/as-flow
- [:table.table
-  [:tr :?male.wrapper
-   [:th :$male.label]
-   [:td.testus :$male.field :$male.errors]]
-  [:tr :?female.wrapper
-   [:th :$female.label]
-   [:td.testus :$female.field :$female.errors]]]
- (testform {:email "test@example.com"} {}))
-
-
-(ez-form/as-template [:div :?wrapper [:span :$label] [:div.input :$field] :$help]
-                     (testform {:email "test@example.com"} {}))
-
-(ez-form/as-template
-  [:div
-    [:span.label :$label]
-    :$errors
-    [:div.input :$field]]
-  (testform {}))
-
-
-(get-field (testform {:email "test@example.com"}) :email.field)
-
-(decorate/decorate (testform nil) [:?email.wrapper])
-
 (deftest validity
   (testing "Validity"
    (is (true? (ez-form/valid? (testform {} {:__ez-form.form-name "testform"
@@ -136,3 +87,58 @@
           (list [:div.error "foobar"]))
 
          (ez-form/as-flow [:$email.errors] (testform nil))))))
+
+
+
+
+(comment
+  (ez-form/as-table (testform {} {:email "test@example.com"
+                                  :password "my password"
+                                  :sex "m"}))
+
+  (ez-form/as-paragraph (testform {} {:email "test@example.com"
+                                      :password "my password"
+                                      :sex "m"}))
+
+
+  (ez-form/as-list (testform {} {:email "test@example.com"
+                                 :password "my password"
+                                 :sex "m"}))
+
+  (:options (testform nil))
+
+
+  (ez-form/as-flow
+   [:table.table
+    [:tr :?email.wrapper
+     [:th :$email.label]
+     [:td.testus :$email.field :$email.errors]]]
+   (testform {:email "test@example.com"} {} {:decor {:?wrapper nil}}))
+
+  (ez-form/as-flow
+   [:table.table
+    [:tr :?male.wrapper
+     [:th :$male.label]
+     [:td.testus :$male.field :$male.errors]]
+    [:tr :?female.wrapper
+     [:th :$female.label]
+     [:td.testus :$female.field :$female.errors]]]
+   (testform {:email "test@example.com"} {}))
+
+
+  (ez-form/as-template [:div :?wrapper [:span :$label] [:div.input :$field] :$help]
+                       (testform {:email "test@example.com"} {}))
+
+  (ez-form/as-template
+   [:div
+    [:span.label :$label]
+    :$errors
+    [:div.input :$field]]
+   (testform {}))
+
+
+  (get-field (testform {:email "test@example.com"}) :email.field)
+
+  (decorate/decorate (testform nil) [:?email.wrapper])
+
+  )

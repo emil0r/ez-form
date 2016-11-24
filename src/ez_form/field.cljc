@@ -96,7 +96,8 @@
                                   (nil? value-added))
                              ;; checked if value-added is non-nil and non-false
                              (and (not (nil? value-added))
-                                  (not (false? value-added))))
+                                  (not (false? value-added))
+                                  (= (:value field) value-added)))
                           {:checked true}))])))
   ;; leave multiple checkboxes for now
   #?(:cljs
@@ -115,7 +116,7 @@
   (let [id (get-first field :id :name)
         checked? (:checked field)
         opts (get-opts field [:class :name :value :type] form-options)
-        value (or (:value field) (:value-added field))
+        value (or (:value-added field) (:value field))
         #?@(:cljs [c (:cursor field)])]
     #?(:clj  [:input (merge {:value value} opts {:id id} (if (or checked?
                                                                  (= value (:value opts)))
