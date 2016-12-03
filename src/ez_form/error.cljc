@@ -24,7 +24,14 @@
                             ::equals-field "Detta fält måste vara det samma som fältet %s"
                             ::matches "Detta fält måste motsvara %s"
                             ::equals-value "Detta fält måste vara exakt lika %s"
-                            ::unknown-error "Okänt fel"}}))
+                            ::unknown-error "Okänt fel"}
+                       :de {::equals-field, "Dieses Feld muss entsprechen %s"
+                            ::equals-value, "Dieses Feld muss genau entsprechen %s"
+                            ::length-over, "Dieses Feld muss über %d Zeichen betragen"
+                            ::length-under, "Dieses Feld muss unter %d Zeichen betragen"
+                            ::matches, "Dieses Feld muss entsprechen %s"
+                            ::present, "Pflichtfeld"
+                            ::unknown-error, "Unbekannter Fehler"}}))
 (def ^:dynamic *locale* :en)
 #?(:clj  (defn ^:dynamic *t* [locale path & args]
            (apply format (get-in @dictionary [locale path] "") args)))

@@ -1,16 +1,16 @@
 # ez-form
 
-Forms for the web. For Clojure.
+Forms for the web. For Clojure(Script).
 
 ## Dependancy
 
 ```clojure
-[ez-form "0.7.1"]
+[ez-form "0.7.2"]
 ```
 
 ## Usage
 
-Clojure works as below. 
+Clojure works as below.
 
 ClojureScript works roughly the same way, with the exception of how the form is initiated. When initating a ClojureScript form it assumes the following:
 
@@ -22,7 +22,7 @@ ClojureScript works roughly the same way, with the exception of how the form is 
 (ns some-namespace
   (:require [ez-form.core :as form :refer [defform]]
             [vlad.core :as vlad]))
-  
+
 (defform myform
  {:css {:field {:all :form-control
                 :email "form-control email"}
@@ -47,7 +47,7 @@ ClojureScript works roughly the same way, with the exception of how the form is 
 ;; given above myform defined by defform
 (myform [default-data] [default-data params] [default-data params options])
 
-;; the form as a table   
+;; the form as a table
 (form/as-table (myform {}))
 
 ;; the form as paragraphs
@@ -80,7 +80,7 @@ ClojureScript works roughly the same way, with the exception of how the form is 
       [:div.help
         :$email.help]]
   (myform {:email "emil@emil0r.com"}))
-  
+
 ```
 
 ## fields
@@ -105,7 +105,7 @@ Help, text, label and error-messages can take functions as values. During evalua
 (defn delayed-t [k]
   (fn [form field]
     (t @locale k)))
-    
+
 (defn alt-delayed-t [k]
   (fn [form field k & args]
     ;; get the locale from data sent in to the form as opposed to relying on a
@@ -119,7 +119,7 @@ Help, text, label and error-messages can take functions as values. During evalua
    :label (delayed-t :form.field/name)
    :validation (vlad/attr [:name] (vlad/present))
    :error-messages {:vlad.core/present (delayed-t :form.field/error)}}])
-  
+
 ```
 
 ## helper functions
@@ -159,7 +159,7 @@ Internal decors that are supported are :?wrapper, :?text, :?help, :?error and :?
   (myform nil {}))
 ```
 
-What will happen here is that :?wrapper will be replaced with {:class "error"} **in the event** that errors do exists. If no errors exists it will be removed. 
+What will happen here is that :?wrapper will be replaced with {:class "error"} **in the event** that errors do exists. If no errors exists it will be removed.
 Internally ez-form use decor for text, help and errors allowing for overriding them.
 
 Decor also allows for overriding the content that is used for decorating. In the event of :?wrapper you can do the following:
@@ -189,7 +189,7 @@ Decor also allows for overriding the content that is used for decorating. In the
     :$email.errors
     :$email.field
     :$email.help]
-  (myform nil {} {:decor {:?wrapper {:class nil}}})) 
+  (myform nil {} {:decor {:?wrapper {:class nil}}}))
 ```
 
 ## validation
@@ -216,7 +216,7 @@ Uses a very simple implementation meant to be switched for something else. [Towe
 
 (defn my-t-func [locale path & args]
   (apply t locale path args))
-  
+
 (binding [ez-form.error/*t* my-t-func]
   ;; do your stuff with ez-form within here
   )
