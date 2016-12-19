@@ -5,7 +5,7 @@ Forms for the web. For Clojure(Script).
 ## Dependancy
 
 ```clojure
-[ez-form "0.7.2"]
+[ez-form "0.7.3"]
 ```
 
 ## Usage
@@ -103,11 +103,12 @@ Help, text, label and error-messages can take functions as values. During evalua
 (def locale (atom :en))
 
 (defn delayed-t [k]
-  (fn [form field]
-    (t @locale k)))
+  (fn ([field]      (t @locale k))
+      ([form field] (t @locale k))))
+    
 
 (defn alt-delayed-t [k]
-  (fn [form field k & args]
+  (fn [form field]
     ;; get the locale from data sent in to the form as opposed to relying on a
     ;; global atom, with a default locale of :en
     (apply t (get-in form [:options :data :locale] :en) k args)))
