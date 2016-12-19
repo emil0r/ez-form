@@ -53,7 +53,10 @@
    (into {} (map (fn [[k v]]
                    (if (nil? v)
                      [k v]
-                     [k (if (keyword? v) (name v) v)])) (select-keys field keys)))))
+                     [k (cond
+                          (keyword? v) (name v)
+                          (fn? v) (v field)
+                          :else v)])) (select-keys field keys)))))
 
 
 (defmulti field (fn [field form-options] (:type field)))
