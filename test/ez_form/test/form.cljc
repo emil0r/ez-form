@@ -36,6 +36,22 @@
                             (vlad/present))
                  (vlad/attr [:password]
                             (vlad/length-in 6 100)))}
+   {:type :multiselect
+    :label "Multi select"
+    :name :multi
+    :help "Help text"
+    :text "Text info"
+    :options [[1 "One"]
+              [2 "Two"]
+              [3 "Three"]
+              [4 "Four"]
+              [5 "Five"]
+              [6 "Six"]
+              [7 "Seven"]
+              [8 "Eight"]
+              [9 "Nine"]
+              [10 "Ten"]]
+    :sort-by first}
    {:type :password
     :label (t :form.field/repeat-password)
     :name :repeat-password

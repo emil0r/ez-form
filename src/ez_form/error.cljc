@@ -90,7 +90,8 @@
 
 (defmethod get-error-message :default [form field error]
   [field error]
-  (let [error-message (get-in field [:error-messages (:type error)])]
+  (let [error-message (or (get-in field [:error-messages (:type error)])
+                          (:message error))]
     (or (if (fn? error-message)
           (error-message form field ::unknown-error)
           error-message)

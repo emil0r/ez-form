@@ -1,15 +1,23 @@
 (ns ez-form.field
-  (:require [clojure.string :as str]
+  (:require #?(:clj [clojure.edn :refer [read-string]])
+            [clojure.string :as str]
             [ez-form.common :refer [get-first]]
             [ez-form.decorate :refer [add-decor
                                       add-error-decor
                                       add-help-decor
                                       add-label-decor
                                       add-text-decor]]
-            #?(:cljs [reagent.core :as r])))
+            #?@(:cljs [[cljs.reader :refer [read-string]]
+                       [reagent.core :as r]])))
 
-(defn value-of [element]
-  (-> element .-target .-value))
+(defmulti ->transform (fn [field data] (:transform field)))
+(defmethod ->transform :edn [_ data]
+  (read-string data))
+(defmethod ->transform :default [_ data]
+  data)
+
+(defn value-of [field element]
+  (->transform field (-> element .-target .-value)))
 
 (defn errors
   "Send in a field from a map and get back a list of error messages"
@@ -34,11 +42,17 @@
   (let [[value text] (if (sequential? opt)
                        [(first opt) (second opt)]
                        [opt opt])
+        ;; have selected-value as a set
+        ;; so that we can have multiple options
+        ;; set as true
+        selected-value (if (sequential? selected-value)
+                         (set selected-value)
+                         (set [selected-value]))
         opts
-        #?(:clj  (if (= value selected-value)
+        #?(:clj  (if (some selected-value [value])
                    {:value value :selected true}
                    {:value value}))
-        #?(:cljs (if (= value selected-value)
+        #?(:cljs (if (some selected-value [value])
                    {:value value :key value :selected true}
                    {:value value :key value}))]
     [:option opts text]))
@@ -126,7 +140,7 @@
                                                            {:checked true}))])
     #?(:cljs [:input (merge {:value @c
                              :checked (= @c (:value opts))
-                             :on-change #(reset! c (value-of %))} opts {:id id})])))
+                             :on-change #(reset! c (value-of field %))} opts {:id id})])))
 
 (defmethod field :html [field form-options]
   (if-let [f (:fn field)]
@@ -140,18 +154,21 @@
     #?(:clj
        [:textarea (merge opts {:id id}) (or value "")])
     #?(:cljs
-       [:textarea (merge opts {:id id :on-change #(reset! c (value-of %))}) (or @c "")])))
+       [:textarea (merge opts {:id id :on-change #(reset! c (value-of field %)) :value (or @c "")})])))
 
 (defmethod field :dropdown [field form-options]
   (let [id (get-first field :id :name)
         opts (get-opts field [:class :name] form-options)
         options (:options field)
         #?@(:clj  [value (or (:value field) (:value-added field) "")])
-        #?@(:cljs [c (:cursor field)])]
-    [:select (merge opts {:type :select
-                          :id id
-                          #?@(:cljs [:on-change #(reset! c (value-of %))])
-                          })
+        #?@(:cljs [c (:cursor field)
+                   cljs-opts (cond
+                               (:multiple opts) {:on-change #(reset! c (into (or @c []) [(value-of field %)]))}
+                               :else {:on-change #(reset! c (value-of field %))})])]
+    [:select (merge opts
+                    {:type :select
+                     :id id}
+                    #?(:cljs cljs-opts))
      #?(:cljs
         (if (fn? options)
           (map #(option @c %) (options (:data form-options)))
@@ -161,6 +178,39 @@
           (map #(option value %) (options (:data form-options)))
           (map #(option value %) options)))]))
 
+#?(:cljs
+(defn- multiselect-option [f opt]
+  (let [[value description] (if (sequential? opt) opt [opt opt])]
+    [:div {:key value :on-click (f value)} description])))
+#?(:cljs
+(defmethod field :multiselect [field form-options]
+  (let [id (get-first field :id :name)
+        opts (get-opts field [:class :name] form-options)
+        options (:options field)
+        sorter (or (:sort-by field) second)
+        [add-button remove-button] (or (:buttons field) ["»" "«"])
+        c (:cursor field)
+        add-fn (fn [value] (fn [e]
+                            (swap! c clojure.set/union (set [value]))))
+        remove-fn (fn [value] (fn [e]
+                               (swap! c clojure.set/difference (set [value]))))]
+    (when-not (set? @c)
+      (reset! c #{}))
+    [:table opts
+     [:tbody
+      [:tr
+       [:td [:div (map #(multiselect-option add-fn %) (->> options
+                                                           (filter #(not (some @c [(first %)])))
+                                                           (sort-by sorter)))]]
+       [:td [:div {:on-click #(reset! c #{})}
+             remove-button]]
+       [:td [:div {:on-click #(reset! c (into #{} (map first options)))}
+             add-button]]
+       [:td [:div (map #(multiselect-option remove-fn %) (->> options
+                                                              (filter #(some @c [(first %)]))
+                                                              (sort-by sorter)))]]]]]))
+)
+
 (defmethod field :default [field form-options]
   (let [id (get-first field :id :name)
         opts (get-opts field [:placeholder :class :name :type] form-options)
@@ -168,7 +218,6 @@
         #?@(:cljs [c (:cursor field)])]
     [:input (merge {:type :text
                     #?@(:clj [:value (or value "")])
-                    #?@(:cljs [:key (str "field-" (name (:name field)))
-                               :value (or @c "")
-                               :on-change #(reset! c (value-of %))])
+                    #?@(:cljs [:value (or @c "")
+                               :on-change #(reset! c (value-of field %))])
                     :id id} opts)]))

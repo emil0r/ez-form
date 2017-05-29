@@ -1,4 +1,4 @@
-(defproject ez-form "0.7.3"
+(defproject ez-form "0.7.4-SNAPSHOT"
   :description "Forms for the web"
 
   :url "https://github.com/emil0r/ez-form"
@@ -9,7 +9,7 @@
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [vlad "3.3.0"]
                  [org.clojure/clojurescript "1.9.293"]
-                 [reagent "0.6.0"]]
+                 [reagent "0.6.1"]]
 
   :min-lein-version "2.0.0"
 

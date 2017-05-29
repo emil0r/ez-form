@@ -76,7 +76,7 @@
              (let [display (if (fn? error)
                              (error form field)
                              error)
-                   k (str "errors-" (name (:name field)) "-" (str display))]
+                   k (str "errors-" (:name field) "-" (str display))]
                [(:wrapper material-options) (merge {:key k} (:css material-options))
                 display])) errors)]))
 (defn- wrap-decor [form loc]
@@ -117,7 +117,7 @@
   ;; clojurescript needs to decorate with a key for react's sake
   #?(:cljs (let [node (zip/node loc)
                  field (get-field form node :wrapper)
-                 options (merge {:key (get-first field :id :name)}
+                 options (merge {:key (or (:id field) (:name field))}
                                 (if (and (not (nil?  (:errors field)))
                                          (not (nil? @(:cursor field))))
                                   (get-material form node (material node))))]

@@ -95,6 +95,31 @@ Special types
 
 Everything else goes into the :default multimethod for ez-form.field/field where the :type is used as the type of the field.
 
+### clojurescript fields
+
+- :multiselect
+```clojure
+   {:type :multiselect
+    :label "Multi select"
+    :name :multi
+    :help "Help text"
+    :text "Text info"
+    ;; options must be a vector of vectors
+    :options [[1 "One"]
+              [2 "Two"]
+              [3 "Three"]
+              [4 "Four"]
+              [5 "Five"]
+              [6 "Six"]
+              [7 "Seven"]
+              [8 "Eight"]
+              [9 "Nine"]
+              [10 "Ten"]]
+    ;; optional sort function. defaults to second
+    :sort-by first}
+   
+```
+
 ## help, text, label and error-messages
 
 Help, text, label and error-messages can take functions as values. During evaluation the function for help, text and label will be called with two arguments, form and the current field. Error-messages will be called with at least 3 arguments: form, field, error key and any number of args. Whatever is returned will be used.
@@ -243,7 +268,7 @@ Uses a very simple implementation meant to be switched for something else. [Towe
 
 ## License
 
-Copyright © 2015-2016 Emil Bengtsson
+Copyright © 2015-2017 Emil Bengtsson
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
