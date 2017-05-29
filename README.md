@@ -99,11 +99,15 @@ Everything else goes into the :default multimethod for ez-form.field/field where
 
 - :multiselect
 ```clojure
+   ;; the value in the ratom holding all the values will be a set
    {:type :multiselect
     :label "Multi select"
     :name :multi
     :help "Help text"
     :text "Text info"
+    ;; buttons can be any valid hiccup
+    :buttons ["this button will remove all from the right list"
+              "this button will add all from the left list"]
     ;; options must be a vector of vectors
     :options [[1 "One"]
               [2 "Two"]
