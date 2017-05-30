@@ -178,39 +178,6 @@
           (map #(option value %) (options (:data form-options)))
           (map #(option value %) options)))]))
 
-#?(:cljs
-(defn- multiselect-option [f opt]
-  (let [[value description] (if (sequential? opt) opt [opt opt])]
-    [:div {:key value :on-click (f value)} description])))
-#?(:cljs
-(defmethod field :multiselect [field form-options]
-  (let [id (get-first field :id :name)
-        opts (get-opts field [:class :name] form-options)
-        options (:options field)
-        sorter (or (:sort-by field) second)
-        [add-button remove-button] (or (:buttons field) ["»" "«"])
-        c (:cursor field)
-        add-fn (fn [value] (fn [e]
-                            (swap! c clojure.set/union (set [value]))))
-        remove-fn (fn [value] (fn [e]
-                               (swap! c clojure.set/difference (set [value]))))]
-    (when-not (set? @c)
-      (reset! c #{}))
-    [:table opts
-     [:tbody
-      [:tr
-       [:td [:div (map #(multiselect-option add-fn %) (->> options
-                                                           (filter #(not (some @c [(first %)])))
-                                                           (sort-by sorter)))]]
-       [:td [:div {:on-click #(reset! c #{})}
-             remove-button]]
-       [:td [:div {:on-click #(reset! c (into #{} (map first options)))}
-             add-button]]
-       [:td [:div (map #(multiselect-option remove-fn %) (->> options
-                                                              (filter #(some @c [(first %)]))
-                                                              (sort-by sorter)))]]]]]))
-)
-
 (defmethod field :default [field form-options]
   (let [id (get-first field :id :name)
         opts (get-opts field [:placeholder :class :name :type] form-options)

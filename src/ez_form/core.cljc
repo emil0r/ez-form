@@ -1,6 +1,8 @@
 (ns ez-form.core
   (:require [ez-form.decorate :refer [decorate]]
             [ez-form.error :refer [get-error-message]]
+            #?@(:cljs [[ez-form.field.fileuploader]
+                       [ez-form.field.multiselect]])
             [ez-form.flow :as flow]
             [ez-form.list :as list]
             [ez-form.paragraph :as paragraph]

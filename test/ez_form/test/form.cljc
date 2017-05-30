@@ -52,6 +52,10 @@
               [9 "Nine"]
               [10 "Ten"]]
     :sort-by first}
+   {:type :fileuploader
+    :label "File uploader"
+    :name :fileuploader
+    :help "File uploader"}
    {:type :password
     :label (t :form.field/repeat-password)
     :name :repeat-password
