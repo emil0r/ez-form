@@ -258,7 +258,7 @@ Uses a very simple implementation meant to be switched for something else. [Towe
 (defn my-t-func [locale path & args]
   (apply t locale path args))
 
-(binding [ez-form.error/*t* my-t-func]
+(binding [ez-form.i18n/*t* my-t-func]
   ;; do your stuff with ez-form within here
   )
 ```
@@ -277,7 +277,7 @@ Uses a very simple implementation meant to be switched for something else. [Towe
 ;; wrap ez-form in a ring middleware
 (defn wrap-ez-form-i18n [handler]
   (fn [request]
-    (binding [ez-form.error/*t* ez-form-t]
+    (binding [ez-form.i18n/*t* ez-form-t]
       (handler request))))
 ```
 
