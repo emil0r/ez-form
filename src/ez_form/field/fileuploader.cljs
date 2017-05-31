@@ -2,7 +2,11 @@
   "Field for drag'n'drop file uploads"
   (:require [ez-form.common :as ez.common]
             [ez-form.field :as ez.field]
-            [ez-form.util :as ez.util]))
+            [ez-form.util :as ez.util]
+            [ez-form.i18n :refer [*t* *locale*]]
+            [goog.string :as gstring]
+            [goog.string.format]
+            [reagent.core :as r]))
 
 
 (defn- file-drag-hover [e]
@@ -20,28 +24,66 @@
     (let [files (ez.util/->array (or (-> e .-target .-files) (-> e .-dataTransfer .-files)))]
       (if one?
         (reset! c (take 1 files))
-        (reset! c files)))))
+        (reset! c (into (or @c []) files))))))
 
-(defn- default-show-file [file]
-  [:div.file {:key (.-name file)}
-   [:p "Name: " (.-name file)]
-   [:p "Type: " (.-type file)]
-   [:p "Size: " (.-size file)]])
+(def KiB 1024)
+(def MiB (* 1024 1024))
+(def GiB (* 1024 1024 1024))
+(def TiB (* 1024 1024 1024 1024))
+
+(defn- get-size [file]
+  (let [size (.-size file)]
+    (cond (>= size TiB) [(gstring/format "%.2f" (float (/ size TiB))) "TB"]
+          (>= size GiB) [(gstring/format "%.2f" (float (/ size GiB))) "GB"]
+          (>= size MiB) [(gstring/format "%.2f" (float (/ size MiB))) "MB"]
+          (>= size KiB) [(gstring/format "%.2f" (float (/ size KiB))) "KB"]
+          :else         [size "bytes"])))
+
+(defn- show-image [field form-options file]
+  (let [img-url (r/atom nil)]
+    (fn []
+      (let [
+            [size suffix] (get-size file)
+            reader (js/FileReader.)
+            img (.createElement js/document "IMG")]
+        (.addEventListener reader "load" (fn []
+                                           (reset! img-url (.-result reader))))
+        (.readAsDataURL reader file)
+        [:div.preview {:key (.-name file)}
+         (when @img-url
+           [:div.image
+            [:img {:src @img-url}]])
+         [:div.details
+          [:div.size [:span [:strong size] " " suffix]]
+          [:div.name [:span (.-name file)]]]]))))
+(defmulti show-file (fn [field form-options file] (.-type file)))
+(defmethod show-file "image/jpeg" [field form-options file] [show-image field form-options file])
+(defmethod show-file "image/png" [field form-options file] [show-image field form-options file])
+(defmethod show-file :default [_ _ file]
+  (let [[size suffix] (get-size file)]
+   [:div.preview {:key (.-name file)}
+    [:div.details
+     [:div.size [:span [:strong size] " " suffix]]
+     [:div.name [:span (.-name file)]]]]))
 
 (defmethod ez.field/field :fileuploader [field form-options]
   (let [id (ez.common/get-first field :id :name)
         opts (ez.field/get-opts field [:class :name] form-options)
         c (:cursor field)
-        show-file (or (:show-file field) default-show-file)
         one-file? (if (= (:mode field) :multiple)
                     false
                     true)]
     (if (and (.-File js/window) (.-FileList js/window) (.-FileReader js/window))
-      [:div.dragndrop (merge {:id id} opts)
+      [:div.fileuploader.dragndrop (merge {:id id} opts)
        [:div.zone {:on-change (file-select-handler c one-file?)
                    :on-drag-over file-drag-hover
                    :on-drag-leave file-drag-hover
                    :on-drop (file-select-handler c one-file?)}
-        "Drop here"]
-       (map show-file @c)]
-      [:div "fallback"])))
+        [:span (*t* *locale* ::drop-file-here)]
+        (map #(show-file field form-options %) @c)]]
+      [:div.fileuploader
+       [:input (merge {:id id
+                       :type :file
+                       :value (or @c "")
+                       :on-change (file-select-handler c true)} opts)]
+       (map #(show-file field form-options %) @c)])))

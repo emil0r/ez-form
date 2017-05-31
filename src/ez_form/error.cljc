@@ -1,42 +1,6 @@
 (ns ez-form.error
-  #?(:cljs
-     (:require
-      [goog.string :as gstring]
-      [goog.string.format])))
+  (:require [ez-form.i18n :refer [*t* *locale*]]))
 
-(def dictionary (atom {:en {::present "This field is mandatory"
-                            ::length-under "This field must be under %d characters"
-                            ::length-over "This field must be over %d characters"
-                            ::equals-field "This field must be equal to %s"
-                            ::matches "This field must match %s"
-                            ::equals-value "This field must exactly match %s"
-                            ::unknown-error "Unknown error"}
-                       :no {::present "Feltet er obligatorisk"
-                            ::length-under "Feltet må være under %d tegnet"
-                            ::length-over "Feltet må være over %d tegnet"
-                            ::equals-field "Feltet må være likt felt %s"
-                            ::matches "Feltet må tilsvare %s"
-                            ::equals-value "Dette felt må være likt %s"
-                            ::unknown-error "Ukjent feil"}
-                       :sv {::present "Detta fält är obligatoriskt"
-                            ::length-under "Detta fält måste vara under %d tecken"
-                            ::length-over "Detta fält måste vara över %d tecken"
-                            ::equals-field "Detta fält måste vara det samma som fältet %s"
-                            ::matches "Detta fält måste motsvara %s"
-                            ::equals-value "Detta fält måste vara exakt lika %s"
-                            ::unknown-error "Okänt fel"}
-                       :de {::equals-field, "Dieses Feld muss entsprechen %s"
-                            ::equals-value, "Dieses Feld muss genau entsprechen %s"
-                            ::length-over, "Dieses Feld muss über %d Zeichen betragen"
-                            ::length-under, "Dieses Feld muss unter %d Zeichen betragen"
-                            ::matches, "Dieses Feld muss entsprechen %s"
-                            ::present, "Pflichtfeld"
-                            ::unknown-error, "Unbekannter Fehler"}}))
-(def ^:dynamic *locale* :en)
-#?(:clj  (defn ^:dynamic *t* [locale path & args]
-           (apply format (get-in @dictionary [locale path] "") args)))
-#?(:cljs (defn ^:dynamic *t* [locale path & args]
-           (apply gstring/format (get-in @dictionary [locale path] "") args)))
 
 (defmulti get-error-message (fn [_ _ error] (:type error)))
 

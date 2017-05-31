@@ -55,6 +55,7 @@
    {:type :fileuploader
     :label "File uploader"
     :name :fileuploader
+    :multiple true
     :help "File uploader"}
    {:type :password
     :label (t :form.field/repeat-password)
