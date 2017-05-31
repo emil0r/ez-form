@@ -4,6 +4,7 @@
             #?@(:cljs [[ez-form.field.fileuploader]
                        [ez-form.field.multiselect]])
             [ez-form.flow :as flow]
+            [ez-form.keywordize :refer [keyify]]
             [ez-form.list :as list]
             [ez-form.paragraph :as paragraph]
             [ez-form.table :as table]
@@ -30,29 +31,26 @@
      (validate form params)
      form))
   ([form params]
-   (assoc form
-          :params params
-          :fields
-          (reduce (fn [out field]
-                    (let [{:keys [validation error-messages]} field]
-                      (if (and params validation)
-                        (let [validated (vlad/validate validation params)
-                              errors (map #(get-error-message form field %) validated)]
-                          (conj out (assoc field
-                                           :errors (if (empty? errors) nil errors)
-                                           :validated validated)))
-                        (conj out field))))
-                  [] (:fields form)))))
+   (let [params (keyify params)]
+     (assoc form
+            :params params
+            :fields
+            (reduce (fn [out field]
+                      (let [{:keys [validation error-messages]} field]
+                        (if (and params validation)
+                          (let [validated (vlad/validate validation params)
+                                errors (map #(get-error-message form field %) validated)]
+                            (conj out (assoc field
+                                             :errors (if (empty? errors) nil errors)
+                                             :validated validated)))
+                          (conj out field))))
+                    [] (:fields form))))))
 
 (defn valid?
   "Is the form valid? Runs a validate and checks for errors"
   ([form]
    (and
-    ;; check for both keyword and string because ring's middleware for transforming
-    ;; the params map to keyword/string pairs doesn't seem to work
-    ;; with "_ez-form.form-name"
-    #?(:clj (or (= (get-in form [:params "__ez-form.form-name"]) (get-in form [:options :name]))
-                (= (get-in form [:params :__ez-form.form-name])  (get-in form [:options :name]))))
+    #?(:clj (= (get-in form [:params :__ez-form.form-name])  (get-in form [:options :name])))
     (every? nil? (map :errors (:fields (validate form))))))
   ([form params]
    (and
@@ -87,17 +85,18 @@
 
 (defn form [fields form-options data params-or-fn options]
   #?(:clj
-     (let [fields (if-not (nil? params-or-fn)
-                    (map #(add-value params-or-fn %) fields)
+     (let [params (keyify params-or-fn)
+           fields (if-not (nil? params-or-fn)
+                    (map #(add-value params %) fields)
                     (map #(add-value data %) fields))
-            form (map->Form {:fields fields
-                             :options (assoc form-options :data options)
-                             :data data
-                             :params params-or-fn})]
-        (cond
-          (false? (:validation? options)) form
-          params-or-fn (validate form)
-          :else form)))
+           form (map->Form {:fields fields
+                            :options (assoc form-options :data options)
+                            :data data
+                            :params params})]
+       (cond
+         (false? (:validation? options)) form
+         params (validate form)
+         :else form)))
   #?(:cljs
      (let [fields (map #(add-cursor data %) fields)
            params (r/cursor data [:fields])
@@ -162,6 +161,7 @@
           (:fields form))
      (decorate form tail))))
 
+#?(:clj
 (defn select-fields
   "Return the fields of the form as a map"
   [form]
@@ -170,6 +170,14 @@
                    (or (:id field) (:name field))
                    (or (:value-added field) (:value field))))
           {} (:fields form)))
+)
+
+#?(:cljs
+(defn select-fields
+  "Return the fields of the form as a map"
+  [form]
+  @(get-in form [:data :fields]))
+)
 
 (defmacro defform [-name options fields]
   (let [form-name (name -name)]

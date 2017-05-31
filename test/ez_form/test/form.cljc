@@ -107,7 +107,6 @@
          (list
           [:input {:type "hidden", :name "__ez-form.form-name", :value "testform"}]
           (list [:div.error "foobar"]))
-
          (ez-form/as-flow [:$email.errors] (testform nil))))))
 
 
