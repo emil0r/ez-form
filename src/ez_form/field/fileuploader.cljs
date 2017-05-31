@@ -53,7 +53,7 @@
         (.addEventListener reader "load" (fn []
                                            (reset! img-url (.-result reader))))
         (.readAsDataURL reader file)
-        [:div.preview {:key (.-name file)}
+        [:div.preview
          (when @img-url
            [:div.image
             [:img (merge {:style (:thumbnail field)} {:src @img-url})]])
@@ -64,8 +64,7 @@
           (*t* *locale* ::remove-file)]]))))
 (defn- show-thumbnail2 [field form-options c file]
   (let [file-name (last (str/split file #"/"))]
-    (println file)
-    [:div.preview {:key file}
+    [:div.preview
      [:div.image
       [:img {:style (:thumbnail field) :src file}]]
      [:div.details
@@ -77,13 +76,13 @@
                         (string? file) :image
                         :else (.-type file))))
 (defmethod show-file "image/jpeg" [field form-options c file]
-  [show-thumbnail field form-options c file])
+  ^{:key (.-name file)}[show-thumbnail field form-options c file])
 (defmethod show-file "image/png" [field form-options c file]
-  [show-thumbnail field form-options c file])
+  ^{:key (.-name file)}[show-thumbnail field form-options c file])
 (defmethod show-file "image/gif" [field form-options c file]
-  [show-thumbnail field form-options c file])
+  ^{:key (.-name file)} [show-thumbnail field form-options c file])
 (defmethod show-file :image [field form-options c file]
-  [show-thumbnail2 field form-options c file])
+  ^{:key file} [show-thumbnail2 field form-options c file])
 (defmethod show-file :default [_ _ c file]
   (let [[size suffix] (get-size file)]
     [:div.preview {:key (.-name file)}
