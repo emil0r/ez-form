@@ -23,13 +23,17 @@
     [:table (merge {:id id} opts)
      [:tbody
       [:tr
-       [:td [:div (map #(multiselect-option add-fn %) (->> options
-                                                           (filter #(not (some @c [(first %)])))
-                                                           (sort-by sorter)))]]
-       [:td [:div {:on-click #(reset! c #{})}
-             remove-button]]
-       [:td [:div {:on-click #(reset! c (into #{} (map first options)))}
-             add-button]]
-       [:td [:div (map #(multiselect-option remove-fn %) (->> options
-                                                              (filter #(some @c [(first %)]))
-                                                              (sort-by sorter)))]]]]]))
+       [:td
+        [:div (map #(multiselect-option add-fn %) (->> options
+                                                       (filter #(not (some @c [(first %)])))
+                                                       (sort-by sorter)))]]
+       [:td
+        [:div {:on-click #(reset! c #{})}
+         remove-button]]
+       [:td
+        [:div {:on-click #(reset! c (into #{} (map first options)))}
+         add-button]]
+       [:td
+        [:div (map #(multiselect-option remove-fn %) (->> options
+                                                          (filter #(some @c [(first %)]))
+                                                          (sort-by sorter)))]]]]]))

@@ -20,7 +20,7 @@
     :else
       target))
 
-(defn ->string [k]
+(defn kw->string [k]
   (if (keyword? k)
     (.substring (str k) 1)
     k))

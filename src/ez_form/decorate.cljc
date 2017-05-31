@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [clojure.zip :as zip]
             [ez-form.common :refer [get-field get-first]]
+            [ez-form.keywordize :refer [kw->string]]
             [ez-form.zipper :refer [zipper]]))
 
 
@@ -15,7 +16,7 @@
                                      :wrapper :div}})
 
 (defn add-decor [decor field]
-  (let [-name (name (or (:id field) (:name field)))]
+  (let [-name (kw->string (or (:id field) (:name field)))]
     (keyword (str "?" -name "." (name decor)))))
 
 (defn add-error-decor [field error]
@@ -76,7 +77,7 @@
              (let [display (if (fn? error)
                              (error form field)
                              error)
-                   k (str "errors-" (:name field) "-" (str display))]
+                   k (str "errors-" (kw->string (:name field)) "-" (str display))]
                [(:wrapper material-options) (merge {:key k} (:css material-options))
                 display])) errors)]))
 (defn- wrap-decor [form loc]

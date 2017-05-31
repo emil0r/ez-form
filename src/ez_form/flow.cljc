@@ -5,13 +5,14 @@
             [ez-form.common :refer [get-field]]
             [ez-form.decorate :refer [decor decorate]]
             [ez-form.field :as ez.field]
+            [ez-form.keywordize :refer [kw->string]]
             [ez-form.zipper :refer [zipper]]))
 
 
 (defn marker [n]
   (flatten (map (fn [end]
-                  [(keyword (str (name n) "." end))
-                   (keyword (str "$" (name n) "." end))])
+                  [(keyword (str (kw->string n) "." end))
+                   (keyword (str "$" (kw->string n) "." end))])
                 ["field" "errors" "label" "text" "help"])))
 
 (defn field? [marker]

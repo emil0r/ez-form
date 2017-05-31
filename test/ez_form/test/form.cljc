@@ -13,21 +13,21 @@
 
 
 (defn t [arg]
-  arg)
+  (name arg))
 
 (defform testform
-  {:css {:field {:all :form-control
+  {:css {:field {:all "form-control"
                  :email "form-control email"
                  :dropdown nil}}}
 
   [{:type :email
     :label (t :form.field/email)
-    :name :email
+    :name :email.test/me
     :help "help text"
     :text "text info"
     :placeholder (t :form.placeholder/email)
     :validation (vlad/attr [:email] (vlad/present))
-    :error-messages {:vlad.core/present (fn [_ _] "foobar")}}
+    :error-messages {:vlad.core/present (fn [_ _ _] "foobar")}}
    {:type :password
     :label (t :form.field/password)
     :name :password
@@ -38,7 +38,7 @@
                             (vlad/length-in 6 100)))}
    {:type :multiselect
     :label "Multi select"
-    :name :multi
+    :name :multi/select
     :help "Help text"
     :text "Text info"
     :options [[1 "One"]
@@ -131,10 +131,12 @@
 
   (ez-form/as-flow
    [:table.table
-    [:tr :?email.wrapper
-     [:th :$email.label]
-     [:td.testus :$email.field :$email.errors]]]
+    [:tr :?email.test/me.wrapper
+     [:th :$email.test/me.label]
+     [:td.testus :$email.test/me.field :$email.test/me.errors]]]
    (testform {:email "test@example.com"} {} {:decor {:?wrapper nil}}))
+
+  (ez-form.common/get-field (testform {}) :$email.test/me.field false)
 
   (ez-form/as-flow
    [:table.table

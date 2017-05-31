@@ -63,14 +63,15 @@
          [:div.remove {:on-click (cb-remove-file c file)}
           (*t* *locale* ::remove-file)]]))))
 (defn- show-thumbnail2 [field form-options c file]
-  (let [name (last (str/split #"/" file))]
-   [:div.preview {:key file}
-    [:div.image
-     [:img {:style (:thumbnail field) :src file}]]
-    [:div.details
-     [:div.name [:span last]]]
-    [:div.remove {:on-click (cb-remove-file c file)}
-     (*t* *locale* ::remove-file)]]))
+  (let [file-name (last (str/split file #"/"))]
+    (println file)
+    [:div.preview {:key file}
+     [:div.image
+      [:img {:style (:thumbnail field) :src file}]]
+     [:div.details
+      [:div.name [:span file-name]]]
+     [:div.remove {:on-click (cb-remove-file c file)}
+      (*t* *locale* ::remove-file)]]))
 (defmulti show-file (fn [field form-options c file]
                       (cond
                         (string? file) :image
@@ -85,12 +86,12 @@
   [show-thumbnail2 field form-options c file])
 (defmethod show-file :default [_ _ c file]
   (let [[size suffix] (get-size file)]
-   [:div.preview {:key (.-name file)}
-    [:div.details
-     [:div.size [:span [:strong size] " " suffix]]
-     [:div.name [:span (.-name file)]]]
-    [:div.remove {:on-click (cb-remove-file c file)}
-     (*t* *locale* ::remove-file)]]))
+    [:div.preview {:key (.-name file)}
+     [:div.details
+      [:div.size [:span [:strong size] " " suffix]]
+      [:div.name [:span (.-name file)]]]
+     [:div.remove {:on-click (cb-remove-file c file)}
+      (*t* *locale* ::remove-file)]]))
 
 (defmethod ez.field/field :fileuploader [field form-options]
   (let [id (ez.common/get-first field :id :name)

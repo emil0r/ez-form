@@ -7,6 +7,7 @@
                                       add-help-decor
                                       add-label-decor
                                       add-text-decor]]
+            [ez-form.keywordize :refer [kw->string]]
             #?@(:cljs [[cljs.reader :refer [read-string]]
                        [reagent.core :as r]])))
 
@@ -68,7 +69,7 @@
                    (if (nil? v)
                      [k v]
                      [k (cond
-                          (keyword? v) (name v)
+                          (keyword? v) (kw->string v)
                           (fn? v) (v field)
                           :else v)])) (select-keys field keys)))))
 
@@ -89,7 +90,7 @@
                   (let [[value label] (if (sequential? option)
                                         option
                                         [option option])
-                        id (str (name id) "-" value)]
+                        id (str (kw->string id) "-" value)]
                     [:div
                      [:input (merge {:value value}
                                     opts

@@ -1,6 +1,6 @@
 (ns ez-form.test.keywordize
-  (:require [ez-form.keywordize :as keywordize]
-            [clojure.test :refer [deftest is testing]]))
+  (:require [clojure.test :refer [deftest is testing]]
+            [ez-form.keywordize :as keywordize]))
 
 
 (deftest keywords

@@ -1,19 +1,23 @@
 (ns ez-form.common
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str]
+            [ez-form.keywordize :refer [kw->string]]))
+
+(defn get-keyword [marker wrapper?]
+  (let [re (if wrapper?
+              #"^:(\?)?(.*)\..+"
+              #"^:(\$)?(.*)\..+")]
+    (keyword (last (re-find re (str marker))))))
 
 (defn get-field
   "Get the field in the form based on the marker"
   ([form marker] (get-field form marker false))
   ([form marker wrapper?]
-   (let [re (if wrapper?
-              #"^:(\?)?(.*)\..+"
-              #"^:(\$)?(.*)\..+")
-         field (keyword (last (re-find re (str marker))))]
+   (let [kw (get-keyword marker wrapper?)]
      (->> form
           :fields
           (filter (fn [{:keys [id name]}]
-                    (or (= id field)
-                        (= name field))))
+                    (or (= id kw)
+                        (= name kw))))
           first))))
 
 (defn get-first
@@ -28,7 +32,7 @@
         (cond
           (keyword? value) (if capitalize?
                              (str/capitalize (name value))
-                             (name value))
+                             (kw->string value))
 
           (fn? value) (value field)
 

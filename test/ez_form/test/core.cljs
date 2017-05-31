@@ -8,9 +8,10 @@
 
 
 (defn render-form [data result-fn]
-  [:table
-   [:tbody (form/as-table (testform data result-fn))]])
-
+  [:div
+   [:button {:on-click (fn [e] (println (:fields @data)))} "Print all fields"]
+   [:table
+    [:tbody (form/as-table (testform data result-fn))]]])
 
 (defn ^:export run []
   (println "ez-form.test.core is running")
