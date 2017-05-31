@@ -56,6 +56,7 @@
     :label "File uploader"
     :name :fileuploader
     :multiple true
+    :thumbnail {:max-width "100px"}
     :help "File uploader"}
    {:type :password
     :label (t :form.field/repeat-password)

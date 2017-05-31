@@ -14,6 +14,9 @@
 
 (defn ^:export run []
   (println "ez-form.test.core is running")
-  (let [data (r/atom nil)
+  (let [data (r/atom {:fields {:fileuploader ["img/150x150.png"
+                                              "img/350x150.png"
+                                              "img/400x500.png"
+                                              "img/40x100.png"]}})
         result-fn (fn [data] (println (:status data)))]
     (r/render-component [render-form data result-fn] (.getElementById js/document "form-container"))))

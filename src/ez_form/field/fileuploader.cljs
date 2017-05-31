@@ -1,9 +1,10 @@
 (ns ez-form.field.fileuploader
   "Field for drag'n'drop file uploads"
-  (:require [ez-form.common :as ez.common]
+  (:require [clojure.string :as str]
+            [ez-form.common :as ez.common]
             [ez-form.field :as ez.field]
-            [ez-form.util :as ez.util]
             [ez-form.i18n :refer [*t* *locale*]]
+            [ez-form.util :as ez.util]
             [goog.string :as gstring]
             [goog.string.format]
             [reagent.core :as r]))
@@ -39,11 +40,14 @@
           (>= size KiB) [(gstring/format "%.2f" (float (/ size KiB))) "KB"]
           :else         [size "bytes"])))
 
-(defn- show-image [field form-options file]
+(defn cb-remove-file [c file]
+  (fn [e]
+    (reset! c (remove #(= file %) @c))))
+
+(defn- show-thumbnail [field form-options c file]
   (let [img-url (r/atom nil)]
     (fn []
-      (let [
-            [size suffix] (get-size file)
+      (let [[size suffix] (get-size file)
             reader (js/FileReader.)
             img (.createElement js/document "IMG")]
         (.addEventListener reader "load" (fn []
@@ -52,27 +56,45 @@
         [:div.preview {:key (.-name file)}
          (when @img-url
            [:div.image
-            [:img {:src @img-url}]])
+            [:img (merge {:style (:thumbnail field)} {:src @img-url})]])
          [:div.details
           [:div.size [:span [:strong size] " " suffix]]
-          [:div.name [:span (.-name file)]]]]))))
-(defmulti show-file (fn [field form-options file] (.-type file)))
-(defmethod show-file "image/jpeg" [field form-options file] [show-image field form-options file])
-(defmethod show-file "image/png" [field form-options file] [show-image field form-options file])
-(defmethod show-file :default [_ _ file]
+          [:div.name [:span (.-name file)]]]
+         [:div.remove {:on-click (cb-remove-file c file)}
+          (*t* *locale* ::remove-file)]]))))
+(defn- show-thumbnail2 [field form-options c file]
+  (let [name (last (str/split #"/" file))]
+   [:div.preview {:key file}
+    [:div.image
+     [:img {:style (:thumbnail field) :src file}]]
+    [:div.details
+     [:div.name [:span last]]]
+    [:div.remove {:on-click (cb-remove-file c file)}
+     (*t* *locale* ::remove-file)]]))
+(defmulti show-file (fn [field form-options c file]
+                      (cond
+                        (string? file) :image
+                        :else (.-type file))))
+(defmethod show-file "image/jpeg" [field form-options c file]
+  [show-thumbnail field form-options c file])
+(defmethod show-file "image/png" [field form-options c file]
+  [show-thumbnail field form-options c file])
+(defmethod show-file :image [field form-options c file]
+  [show-thumbnail2 field form-options c file])
+(defmethod show-file :default [_ _ c file]
   (let [[size suffix] (get-size file)]
    [:div.preview {:key (.-name file)}
     [:div.details
      [:div.size [:span [:strong size] " " suffix]]
-     [:div.name [:span (.-name file)]]]]))
+     [:div.name [:span (.-name file)]]]
+    [:div.remove {:on-click (cb-remove-file c file)}
+     (*t* *locale* ::remove-file)]]))
 
 (defmethod ez.field/field :fileuploader [field form-options]
   (let [id (ez.common/get-first field :id :name)
         opts (ez.field/get-opts field [:class :name] form-options)
         c (:cursor field)
-        one-file? (if (= (:mode field) :multiple)
-                    false
-                    true)]
+        one-file? (not (:multiple field))]
     (if (and (.-File js/window) (.-FileList js/window) (.-FileReader js/window))
       [:div.fileuploader.dragndrop (merge {:id id} opts)
        [:div.zone {:on-change (file-select-handler c one-file?)
@@ -80,10 +102,10 @@
                    :on-drag-leave file-drag-hover
                    :on-drop (file-select-handler c one-file?)}
         [:span (*t* *locale* ::drop-file-here)]
-        (map #(show-file field form-options %) @c)]]
+        (map #(show-file field form-options c %) @c)]]
       [:div.fileuploader
        [:input (merge {:id id
                        :type :file
                        :value (or @c "")
                        :on-change (file-select-handler c true)} opts)]
-       (map #(show-file field form-options %) @c)])))
+       (map #(show-file field form-options c %) @c)])))
