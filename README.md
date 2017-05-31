@@ -123,7 +123,7 @@ Everything else goes into the :default multimethod for ez-form.field/field where
     :sort-by first}
 ```
 - :fileuploader
-```
+```clojure
    {:type :fileuploader
     :label "File uploader"
     :name :fileuploader
