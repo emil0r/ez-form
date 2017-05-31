@@ -79,6 +79,8 @@
   [show-thumbnail field form-options c file])
 (defmethod show-file "image/png" [field form-options c file]
   [show-thumbnail field form-options c file])
+(defmethod show-file "image/gif" [field form-options c file]
+  [show-thumbnail field form-options c file])
 (defmethod show-file :image [field form-options c file]
   [show-thumbnail2 field form-options c file])
 (defmethod show-file :default [_ _ c file]

@@ -121,7 +121,18 @@ Everything else goes into the :default multimethod for ez-form.field/field where
               [10 "Ten"]]
     ;; optional sort function. defaults to second
     :sort-by first}
-   
+```
+- :fileuploader
+```
+   {:type :fileuploader
+    :label "File uploader"
+    :name :fileuploader
+    ;; allow multiple files?
+    :multiple true
+    ;; set as the style argument for any images
+    ;; to be shown as thumbnails
+    :thumbnail {:max-width "100px"}
+    :help "File uploader"}
 ```
 
 ## help, text, label and error-messages
