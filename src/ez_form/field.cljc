@@ -54,9 +54,9 @@
                    {:value value :selected true}
                    {:value value}))
         #?(:cljs (if (some selected-value [value])
-                   {:value value :key value :selected true}
-                   {:value value :key value}))]
-    [:option opts text]))
+                   {:value value :selected true}
+                   {:value value}))]
+    ^{:key text} [:option opts text]))
 
 (defn get-opts [field keys form-options]
   (merge
@@ -172,11 +172,11 @@
                     #?(:cljs cljs-opts))
      #?(:cljs
         (if (fn? options)
-          (map #(option @c %) (options (:data form-options)))
+          (map #(option @c %) (options field form-options))
           (map #(option @c %) options)))
      #?(:clj
         (if (fn? options)
-          (map #(option value %) (options (:data form-options)))
+          (map #(option value %) (options field form-options))
           (map #(option value %) options)))]))
 
 (defmethod field :default [field form-options]

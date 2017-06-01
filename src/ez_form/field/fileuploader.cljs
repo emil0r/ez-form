@@ -24,7 +24,7 @@
 
     (let [files (ez.util/->array (or (-> e .-target .-files) (-> e .-dataTransfer .-files)))]
       (if one?
-        (reset! c (take 1 files))
+        (reset! c (first files))
         (reset! c (into (or @c []) files))))))
 
 (def KiB 1024)
@@ -42,7 +42,9 @@
 
 (defn cb-remove-file [c file]
   (fn [e]
-    (reset! c (remove #(= file %) @c))))
+    (if (sequential? @c)
+      (reset! c (remove #(= file %) @c))
+      (reset! c nil))))
 
 (defn- show-thumbnail [field form-options c file]
   (let [img-url (r/atom nil)]
@@ -104,10 +106,14 @@
                    :on-drag-leave file-drag-hover
                    :on-drop (file-select-handler c one-file?)}
         [:span (*t* *locale* ::drop-file-here)]
-        (map #(show-file field form-options c %) @c)]]
+        (if one-file?
+          (map #(show-file field form-options c %) [@c])
+          (map #(show-file field form-options c %) @c))]]
       [:div.fileuploader
        [:input (merge {:id id
                        :type :file
                        :value (or @c "")
                        :on-change (file-select-handler c true)} opts)]
-       (map #(show-file field form-options c %) @c)])))
+       (if one-file?
+          (map #(show-file field form-options c %) [@c])
+          (map #(show-file field form-options c %) @c))])))

@@ -10,7 +10,9 @@
 (defmethod ez.field/field :multiselect [field form-options]
   (let [id (ez.common/get-first field :id :name)
         opts (ez.field/get-opts field [:class :name] form-options)
-        options (:options field)
+        options (if (fn? (:options field))
+                  ((:options field) field form-options)
+                  (:options field))
         sorter (or (:sort-by field) second)
         [add-button remove-button] (or (:buttons field) ["»" "«"])
         c (:cursor field)
@@ -20,20 +22,22 @@
                                (swap! c clojure.set/difference (set [value]))))]
     (when-not (set? @c)
       (reset! c #{}))
-    [:table (merge {:id id} opts)
+    [:table.multiselect (merge {:id id} opts)
      [:tbody
       [:tr
        [:td
-        [:div (map #(multiselect-option add-fn %) (->> options
-                                                       (filter #(not (some @c [(first %)])))
-                                                       (sort-by sorter)))]]
+        [:div.left
+         (map #(multiselect-option add-fn %) (->> options
+                                                  (filter #(not (some @c [(first %)])))
+                                                  (sort-by sorter)))]]
        [:td
-        [:div {:on-click #(reset! c #{})}
+        [:div.move-left {:on-click #(reset! c #{})}
          remove-button]]
        [:td
-        [:div {:on-click #(reset! c (into #{} (map first options)))}
+        [:div.move-right {:on-click #(reset! c (into #{} (map first options)))}
          add-button]]
        [:td
-        [:div (map #(multiselect-option remove-fn %) (->> options
-                                                          (filter #(some @c [(first %)]))
-                                                          (sort-by sorter)))]]]]]))
+        [:div.right
+         (map #(multiselect-option remove-fn %) (->> options
+                                                     (filter #(some @c [(first %)]))
+                                                     (sort-by sorter)))]]]]]))
