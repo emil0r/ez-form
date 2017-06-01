@@ -18,6 +18,7 @@
   (let [data (r/atom {:fields {:fileuploader ["img/150x150.png"
                                               "img/350x150.png"
                                               "img/400x500.png"
-                                              "img/40x100.png"]}})
+                                              "img/40x100.png"]
+                               :multi/select [2 4 6 8 10]}})
         result-fn (fn [data] (println (:status data)))]
     (r/render-component [render-form data result-fn] (.getElementById js/document "form-container"))))

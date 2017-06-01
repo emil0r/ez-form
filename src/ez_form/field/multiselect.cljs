@@ -21,7 +21,9 @@
         remove-fn (fn [value] (fn [e]
                                (swap! c clojure.set/difference (set [value]))))]
     (when-not (set? @c)
-      (reset! c #{}))
+      (reset! c (try (set @c)
+                     (catch js/Error e
+                       #{}))))
     [:table.multiselect (merge {:id id} opts)
      [:tbody
       [:tr
