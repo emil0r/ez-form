@@ -1,5 +1,6 @@
 (ns ez-form.core
-  (:require [ez-form.decorate :refer [decorate]]
+  (:require [ez-form.common :as common]
+            [ez-form.decorate :refer [decorate]]
             [ez-form.error :refer [get-error-message]]
             #?@(:cljs [[ez-form.field.fileuploader]
                        [ez-form.field.multiselect]])
@@ -71,15 +72,15 @@
    (defn- track-focus [form]
      (fn [k _ old-state new-state]
        ;; emit state?
-       (when (and (fn? (:form-fn new-state))
-                  (valid? form (:fields new-state))
-                  (not (valid? form (:fields old-state)))
-                  ;;(true? (::form.valid? new-state))
-                  ;;(not (::form.valid? old-state))
-                  )
+       (if (and (fn? (:form-fn new-state))
+                (valid? form (:fields new-state))
+                (not (valid? form (:fields old-state))))
          ((:form-fn new-state)
           {:status :valid
-           :data (:fields new-state)})))))
+           :form form})
+         ((:form-fn new-state)
+          {:status :invalid
+           :form form})))))
 
 (defrecord Form [fields options data params])
 
@@ -176,7 +177,13 @@
 (defn select-fields
   "Return the fields of the form as a map"
   [form]
-  @(get-in form [:data :fields]))
+  (let [ks (->> form
+                :fields
+                (map #(keyword (common/get-first % :id :name)))
+                (into #{}))]
+    (reduce (fn [out k]
+              (assoc out k (get-in @(:data form) [:fields k])))
+            {} ks)))
 )
 
 (defmacro defform [-name options fields]

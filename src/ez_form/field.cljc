@@ -164,8 +164,8 @@
         #?@(:clj  [value (or (:value field) (:value-added field) "")])
         #?@(:cljs [c (:cursor field)
                    cljs-opts (cond
-                               (:multiple opts) {:on-change #(reset! c (into (or @c []) [(value-of field %)]))}
-                               :else {:on-change #(reset! c (value-of field %))})])]
+                               (:multiple opts) {:value (or @c "") :on-change #(reset! c (into (or @c []) [(value-of field %)]))}
+                               :else {:value (or @c "") :on-change #(reset! c (value-of field %))})])]
     [:select (merge opts
                     {:type :select
                      :id id}

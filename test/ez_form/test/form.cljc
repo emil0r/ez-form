@@ -26,7 +26,7 @@
     :help "help text"
     :text "text info"
     :placeholder (t :form.placeholder/email)
-    :validation (vlad/attr [:email] (vlad/present))
+    :validation (vlad/attr [:email.test/me] (vlad/present))
     :error-messages {:vlad.core/present (fn [_ _ _] "foobar")}}
    {:type :password
     :label (t :form.field/password)
