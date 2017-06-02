@@ -36,6 +36,16 @@
                             (vlad/present))
                  (vlad/attr [:password]
                             (vlad/length-in 6 100)))}
+   {:type :datepicker
+    :label "Date picker"
+    :name :date/picker
+    :input? true}
+   ;; {:type :timepicker
+   ;;  :label "Time picker"
+   ;;  :name :time/picker}
+   ;; {:type :datetimepicker
+   ;;  :label "Datetime picker"
+   ;;  :name :datetime/picker}
    {:type :multiselect
     :label "Multi select"
     :name :multi/select
