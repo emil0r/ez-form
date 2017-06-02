@@ -39,7 +39,7 @@
    {:type :datepicker
     :label "Date picker"
     :name :date/picker
-    :input? true}
+    :mode :popup}
    ;; {:type :timepicker
    ;;  :label "Time picker"
    ;;  :name :time/picker}

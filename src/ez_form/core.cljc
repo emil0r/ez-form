@@ -180,7 +180,7 @@
   [form]
   (let [ks (->> form
                 :fields
-                (map #(keyword (common/get-first % :id :name)))
+                (map #(keyword (common/get-first % :name)))
                 (into #{}))]
     (reduce (fn [out k]
               (assoc out k (get-in @(:data form) [:fields k])))
