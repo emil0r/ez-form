@@ -118,7 +118,7 @@
   ;; clojurescript needs to decorate with a key for react's sake
   #?(:cljs (let [node (zip/node loc)
                  field (get-field form node :wrapper)
-                 options (merge {:key (or (:id field) (:name field))}
+                 options (merge {:key (kw->string (or (:id field) (:name field)))}
                                 (if (and (not (nil?  (:errors field)))
                                          (not (nil? @(:cursor field))))
                                   (get-material form node (material node))))]
