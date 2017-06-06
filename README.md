@@ -134,6 +134,28 @@ Everything else goes into the :default multimethod for ez-form.field/field where
     :thumbnail {:max-width "100px"}
     :help "File uploader"}
 ```
+- :datepicker
+```clojure
+   {:type :datepicker
+    :label "Date picker"
+    :name :date/picker
+    ;; goog->date defaults to js/Date
+    ;; there is a goog<-date multimethod that will
+    ;; need to be extended to convert your date type to goog.date.Date
+    :goog->date (fn [^goog.date.Date date] (convert-to-your-date-type-of-choice date))
+    ;; :mode can be :popup, :raw and :input
+    :mode :popup
+    ;; set properties
+    :props {:date {:show-fixed-num-weeks? true
+                   :show-other-months? true
+                   :show-today? true
+                   :show-weekday-num? true
+                   :show-weekday-names? true
+                   :allow-none? true
+                   :use-narrow-weekday-names? true
+                   :use-allow-simple-navigation-menu? true
+                   :long-date-format?}}}
+```
 
 ## help, text, label and error-messages
 

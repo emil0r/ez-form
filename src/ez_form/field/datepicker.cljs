@@ -1,4 +1,5 @@
 (ns ez-form.field.datepicker
+  "Field for picking dates. Depends on goog.ui.DatePicker and subclasses"
   (:require [ez-form.common :as ez.common]
             [ez-form.field :as ez.field]
             [ez-form.i18n :refer [*t* *locale*]]
