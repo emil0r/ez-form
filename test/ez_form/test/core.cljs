@@ -21,7 +21,7 @@
                                               "img/350x150.png"
                                               "img/400x500.png"
                                               "img/40x100.png"]
-                               :date/picker #inst "2017-06-12"
+                               ;;:date/picker #inst "2017-06-12"
                                :multi/select [2 4 6 8 10]}})
         result-fn (fn [data] (println (:status data)))]
     (r/render-component [render-form data result-fn] (.getElementById js/document "form-container"))))

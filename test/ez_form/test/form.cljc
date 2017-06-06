@@ -40,9 +40,12 @@
     :label "Date picker"
     :name :date/picker
     :mode :popup}
-   ;; {:type :timepicker
-   ;;  :label "Time picker"
-   ;;  :name :time/picker}
+   {:type :timepicker
+    :label "Time picker"
+    :name :time/picker
+    :mode :raw
+    :props {:time {:format :12hr
+                   :seconds? true}}}
    ;; {:type :datetimepicker
    ;;  :label "Datetime picker"
    ;;  :name :datetime/picker}
