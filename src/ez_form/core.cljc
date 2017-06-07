@@ -3,6 +3,7 @@
             [ez-form.decorate :refer [decorate]]
             [ez-form.error :refer [get-error-message]]
             #?@(:cljs [[ez-form.field.datepicker]
+                       [ez-form.field.datetimepicker]
                        [ez-form.field.fileuploader]
                        [ez-form.field.multiselect]
                        [ez-form.field.timepicker]])

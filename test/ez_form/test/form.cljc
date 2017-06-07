@@ -43,12 +43,14 @@
    {:type :timepicker
     :label "Time picker"
     :name :time/picker
-    :mode :raw
     :props {:time {:format :12hr
                    :seconds? true}}}
-   ;; {:type :datetimepicker
-   ;;  :label "Datetime picker"
-   ;;  :name :datetime/picker}
+   {:type :datetimepicker
+    :label "Datetime picker"
+    :name :datetime/picker
+    :mode :popup
+    :props {:time {:format :12hr
+                   :seconds? true}}}
    {:type :multiselect
     :label "Multi select"
     :name :multi/select
