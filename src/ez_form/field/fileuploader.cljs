@@ -115,5 +115,7 @@
                        :value (or @c "")
                        :on-change (file-select-handler c true)} opts)]
        (if one-file?
-          (map #(show-file field form-options c %) [@c])
-          (map #(show-file field form-options c %) @c))])))
+         (map #(show-file field form-options c %) (->> [@c]
+                                                       (remove nil?)))
+         (map #(show-file field form-options c %) (->> @c
+                                                       (remove nil?))))])))
