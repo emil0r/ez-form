@@ -97,7 +97,7 @@ Everything else goes into the :default multimethod for ez-form.field/field where
 
 ### clojurescript fields
 
-- :multiselect
+- :multiselect, gives a set of the values selected as a result
 ```clojure
    ;; the value in the ratom holding all the values will be a set
    {:type :multiselect
@@ -122,7 +122,7 @@ Everything else goes into the :default multimethod for ez-form.field/field where
     ;; optional sort function. defaults to second
     :sort-by first}
 ```
-- :fileuploader
+- :fileuploader, gives javascript file objects or strings (URI) as the result
 ```clojure
    {:type :fileuploader
     :label "File uploader"
@@ -134,7 +134,7 @@ Everything else goes into the :default multimethod for ez-form.field/field where
     :thumbnail {:max-width "100px"}
     :help "File uploader"}
 ```
-- :datepicker
+- :datepicker, gives #inst as the result
 ```clojure
    {:type :datepicker
     :label "Date picker"
@@ -147,6 +147,44 @@ Everything else goes into the :default multimethod for ez-form.field/field where
     :mode :popup
     ;; set properties
     :props {:date {:show-fixed-num-weeks? true
+                   :show-other-months? true
+                   :show-today? true
+                   :show-weekday-num? true
+                   :show-weekday-names? true
+                   :allow-none? true
+                   :use-narrow-weekday-names? true
+                   :use-allow-simple-navigation-menu? true
+                   :long-date-format?}}}
+```
+- :timepicker, will give back the time as number of seconds in a day
+```clojure
+   {:type :timepicker
+    :label "Time picker"
+    :name :time/picker
+    ;; set properties
+    :up "▲"
+    :down "▼"
+    :props {:time {:format :12hr ;; or :24hr
+                   :seconds? true}}}
+```
+
+- :datetimepicker, gives #inst as the result
+```clojure
+   {:type :datepicker
+    :label "Date picker"
+    :name :date/picker
+    ;; goog->datetime defaults to js/Date
+    ;; there is a goog<-datetime multimethod that will
+    ;; need to be extended to convert your date type to goog.date.Date
+    :goog->datetime (fn [^goog.date.Date date] (convert-to-your-date-type-of-choice date))
+    ;; :mode can be :popup, :raw and :input
+    :mode :popup
+    ;; set properties
+    :up "▲"
+    :down "▼"
+    :props {:time {:format :12hr ;; or :24hr
+                   :seconds? true}
+            :date {:show-fixed-num-weeks? true
                    :show-other-months? true
                    :show-today? true
                    :show-weekday-num? true
