@@ -19,7 +19,9 @@
 
               :ez-form.field.datepicker/pick-a-date "Pick a date"
 
-              :ez-form.field.timepicker/reset "Reset"}
+              :ez-form.field.timepicker/reset "Reset"
+
+              :ez-form.field.datetimepicker/reset "Reset"}
          :no {:ez-form.error/present "Feltet er obligatorisk"
               :ez-form.error/length-under "Feltet må være under %d tegnet"
               :ez-form.error/length-over "Feltet må være over %d tegnet"
@@ -33,7 +35,9 @@
 
               :ez-form.field.datepicker/pick-a-date "Velg en dato"
 
-              :ez-form.field.timepicker/reset "Tilbakestill"}
+              :ez-form.field.timepicker/reset "Tilbakestill"
+
+              :ez-form.field.datetimepicker/reset "Tilbakestill"}
          :sv {:ez-form.error/present "Detta fält är obligatoriskt"
               :ez-form.error/length-under "Detta fält måste vara under %d tecken"
               :ez-form.error/length-over "Detta fält måste vara över %d tecken"
@@ -47,7 +51,9 @@
 
               :ez-form.field.datepicker/pick-a-date "Välj ett datum"
 
-              :ez-form.field.timepicker/reset "Återställ"}
+              :ez-form.field.timepicker/reset "Återställ"
+
+              :ez-form.field.datetimepicker/reset "Återställ"}
          :de {:ez-form.error/equals-field, "Dieses Feld muss entsprechen %s"
               :ez-form.error/equals-value, "Dieses Feld muss genau entsprechen %s"
               :ez-form.error/length-over, "Dieses Feld muss über %d Zeichen betragen"
@@ -61,7 +67,9 @@
 
               :ez-form.field.datepicker/pick-a-date "Wählen sie ein Datum"
 
-              :ez-form.field.timepicker/reset "Rücksetzen"}}))
+              :ez-form.field.timepicker/reset "Rücksetzen"
+
+              :ez-form.field.datetimepicker/reset "Rücksetzen"}}))
 (def ^:dynamic *locale* :en)
 #?(:clj  (defn ^:dynamic *t* [locale path & args]
            (apply format (get-in @dictionary [locale path] "") args)))

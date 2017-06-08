@@ -61,9 +61,11 @@
   "Given x seconds, return the numbers repesenting the time"
   [date {:keys [format]}]
   (if date
-    (let [hours (* 3600 (.getHours date))
-          minutes (* 00 (.getMinutes date))
-          seconds (.getSeconds date)]
+    (let [;; new shadow date created and give back the timezone offset
+          date-shadow (js/Date. (+ (.getTime date) (* 1000 60 (.getTimezoneOffset date))))
+          hours (* 3600 (mod (.getHours date-shadow) 24))
+          minutes (* 60 (.getMinutes date-shadow))
+          seconds (.getSeconds date-shadow)]
       [(get-hours2 (= format :12hr) hours)
        (get-hours1 (= format :12hr) hours)
        (get-minutes2 minutes)
@@ -89,9 +91,11 @@
   "Switch between AM/PM (only for the :12hr mode)"
   [c {:keys [format]}]
   (when (= format :12hr)
-    (if (and (some? @c) (>= @c noon))
-      [:div.ampm {:on-click (remove-half-day c)} "PM"]
-      [:div.ampm {:on-click (add-half-day c)} "AM"])))
+    (let [date @c]
+      (if (and (some? date) (>= (+ (* 3600 (.getHours date)) (* 60 (.getMinutes date)) (.getSeconds date))
+                                noon))
+        [:div.ampm {:on-click (remove-half-day c)} "PM"]
+        [:div.ampm {:on-click (add-half-day c)} "AM"]))))
 
 (defn- number-display
   "Display the number of the current position of the digital watch for the selected time"
@@ -248,13 +252,13 @@
                     (and (pos? diff)
                          (allowed-position? numbers k position props))
                     (do
-                      (reset! c (mod (+ @c (* diff (get clock-inc-values position))) full-24hr))
+                      (reset! c (js/Date. (+ (.getTime @c) (* diff (get clock-inc-values position)))))
                       (shift :right data))
 
 
                     (and (neg? diff)
                          (allowed-position? numbers k position props))
-                    (do (reset! c (mod (+ @c (* diff (get clock-inc-values position))) full-24hr))
+                    (do (reset! c (js/Date. (+ (.getTime @c) (* diff (get clock-inc-values position)))))
                         (shift :right data))
 
                     :else
@@ -278,7 +282,11 @@
         [h2 h1 m2 m1 s2 s1] (get-numbers @c props)]
     [:div.time
      [hidden-input {:id id :focus? focus? :c c :props props}]
-     [:span.reset {:on-click #(reset! c 0)} (*t* *locale* ::reset)]
+     [:span.reset {:on-click #(when-let [date @c]
+                                (.setHours date 0)
+                                (.setMinutes date 0)
+                                (.setSeconds date 0)
+                                (reset! c (js/Date. (+ (.getTime date) (* -1000 60 (.getTimezoneOffset date))))))} (*t* *locale* ::reset)]
      [number-display up down 0 h2 c focus?]
      [number-display up down 1 h1 c focus?]
      [number-display up down 2 m2 c focus?]
@@ -304,7 +312,7 @@
    goog.ui.DatePicker.Events/CHANGE
    (fn [e]
      (let [date @c]
-       (when (.-date e)
+       (if (.-date e)
          (reset! c (if date
                      (goog->datetime (.-date e)
                                      (.getHours date)
@@ -313,7 +321,8 @@
                      (goog->datetime (.-date e)
                                      0
                                      0
-                                     0))))))))
+                                     0)))
+         (reset! c nil))))))
 
 (defn- get-props [field form-options]
   (let [id (ez.common/get-first field :id :name)]
@@ -325,11 +334,24 @@
                                (fn [date hours minutes seconds]
                                  (if (some? date)
 
-                                   (let [;; get the javascript date
+                                   (let [offset (-> date .-date .getTimezoneOffset)
+                                         ;; get the javascript date
                                          d (js/Date. (+ (.getTime (.-date date))
                                                         (* 3600 1000 hours)
                                                         (* 60 1000 minutes)
-                                                        (* 1000 seconds)))]
+                                                        (* 1000 seconds)
+                                                        ;; - remove the offset
+                                                        ;;   cljs doesn't seem
+                                                        ;;   too happy with js/Date
+                                                        ;;   and #inst conversion
+                                                        ;;   that involves timezones
+                                                        ;; - in addition, most of the
+                                                        ;;   time you're not super
+                                                        ;;   interested in a timezone
+                                                        ;;   when setting a time in
+                                                        ;;   a datetime picker. so
+                                                        ;;   we aim for a compromise
+                                                        (* -1000 60 offset)))]
                                      d))))
             {:keys [dp parser formatter]}
             (let [pattern (or (:pattern field)

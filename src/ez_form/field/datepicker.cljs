@@ -50,8 +50,9 @@
    dp
    goog.ui.DatePicker.Events/CHANGE
    (fn [e]
-     (when (.-date e)
-       (reset! c (goog->date (.-date e)))))))
+     (if (.-date e)
+       (reset! c (goog->date (.-date e)))
+       (reset! c nil)))))
 
 (defn- get-props [field form-options]
   (let [id (ez.common/get-first field :id :name)]
