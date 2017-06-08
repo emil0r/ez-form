@@ -250,6 +250,7 @@
       (.focus (.getElementById js/document id)))
     [:div {:style {:width 0 :overflow "hidden"}}
      [:input {:id id
+              :type :number
               :on-key-down (handle-keydown-event data)}]]))
 
 (defn- time-field [id up down c focus? {:keys [format seconds?] :as props}]
