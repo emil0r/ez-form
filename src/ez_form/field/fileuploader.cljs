@@ -107,8 +107,10 @@
                    :on-drop (file-select-handler c one-file?)}
         [:span (*t* *locale* ::drop-file-here)]
         (if one-file?
-          (map #(show-file field form-options c %) [@c])
-          (map #(show-file field form-options c %) @c))]]
+          (map #(show-file field form-options c %) (->> [@c]
+                                                        (remove nil?)))
+          (map #(show-file field form-options c %) (->> @c
+                                                        (remove nil?))))]]
       [:div.fileuploader
        [:input (merge {:id id
                        :type :file
