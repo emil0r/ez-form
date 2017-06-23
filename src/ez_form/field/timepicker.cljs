@@ -266,32 +266,26 @@
      (if seconds? [number-display up down 4 s2 c focus?])
      (if seconds? [number-display up down 5 s1 c focus?])]))
 
-(def ^:private -props (r/atom {}))
-
 (defn- get-props [field form-options]
-  (let [id (ez.common/get-first field :id :name)]
-    (if (some? (get-in @-props [id]))
-      (get @-props id)
-      (let [opts (ez.field/get-opts field [:class :name] form-options)
-            ;; number of seconds
-            c (:cursor field)
-            ;; the numbers displayed
-            focus? (r/atom [false false false false false false])
-            ;; -- props --
-            ;; format: #{:24hr :12hr}
-            ;; seconds?: #{true false}
-            props (get-in field [:props :time])
-            up (or (:up field) "▲")
-            down (or (:down field) "▼")
-            data {:id id
-                  :opts opts
-                  :c c
-                  :focus? focus?
-                  :props props
-                  :up up
-                  :down down}]
-        (swap! -props assoc id data)
-        data))))
+  (let [id (ez.common/get-first field :id :name)
+        opts (ez.field/get-opts field [:class :name] form-options)
+        ;; number of seconds
+        c (:cursor field)
+        ;; the numbers displayed
+        focus? (r/atom [false false false false false false])
+        ;; -- props --
+        ;; format: #{:24hr :12hr}
+        ;; seconds?: #{true false}
+        props (get-in field [:props :time])
+        up (or (:up field) "▲")
+        down (or (:down field) "▼")]
+    {:id id
+     :opts opts
+     :c c
+     :focus? focus?
+     :props props
+     :up up
+     :down down}))
 
 (defmethod ez.field/field :timepicker [field form-options]
   (let [{:keys [up down id c focus? props opts]} (get-props field form-options)]

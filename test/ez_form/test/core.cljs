@@ -7,12 +7,14 @@
 (enable-console-print!)
 
 
-(defn render-form [data result-fn]
-  (let [f (testform data result-fn)]
-    [:div
-     [:button {:on-click (fn [e] (println (form/select-fields f)))} "Print all fields"]
-     [:table
-      [:tbody (form/as-table f)]]]))
+(defn render-form [f]
+  [:div
+   [:div [:button
+          {:on-click (fn [e] (println (form/select-fields f)))} "Print all fields"]]
+   [:div [:button
+          {:on-click (fn [e] (println @(:errors f)))} "Print all errors"]]
+   [:table
+    [:tbody (form/as-table f)]]])
 
 (defn ^:export run []
   (println "ez-form.test.core is running")
@@ -23,5 +25,6 @@
                                               "img/40x100.png"]
                                ;;:date/picker #inst "2017-06-12"
                                :multi/select [2 4 6 8 10]}})
-        result-fn (fn [data] (println (:status data)))]
-    (r/render-component [render-form data result-fn] (.getElementById js/document "form-container"))))
+        result-fn (fn [data] (println (:status data)))
+        f (testform data result-fn)]
+    (r/render-component [render-form f] (.getElementById js/document "form-container"))))

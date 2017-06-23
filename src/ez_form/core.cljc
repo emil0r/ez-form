@@ -36,31 +36,42 @@
      form))
   ([form params]
    (let [params (keyify params)]
-     (assoc form
-            :params params
-            :fields
-            (reduce (fn [out field]
-                      (let [{:keys [validation error-messages]} field]
-                        (if (and params validation)
-                          (let [validated (vlad/validate validation params)
-                                errors (map #(get-error-message form field %) validated)]
-                            (conj out (assoc field
-                                             :errors (if (empty? errors) nil errors)
-                                             :validated validated)))
-                          (conj out field))))
-                    [] (:fields form))))))
+     #?(:clj (assoc form
+                    :params params
+                    :fields
+                    (reduce (fn [out field]
+                              (let [{:keys [validation error-messages]} field]
+                                (if (and params validation)
+                                  (let [validated (vlad/validate validation params)
+                                        errors (map #(get-error-message form field %) validated)]
+                                    (conj out (assoc field
+                                                     :errors (if (empty? errors) nil errors)
+                                                     :validated validated)))
+                                  (conj out field))))
+                            [] (:fields form))))
+     #?(:cljs (let [errors (reduce (fn [out field]
+                                     (let [{:keys [name validation error-messages]} field]
+                                       (if (and params validation)
+                                         (let [validated (vlad/validate validation params)
+                                               errors (map #(get-error-message form field %) validated)]
+                                           (assoc out name errors))
+                                         out)))
+                                   {} (:fields form))]
+                (reset! (:errors form) errors)
+                form)))))
 
 (defn valid?
   "Is the form valid? Runs a validate and checks for errors"
   ([form]
-   (and
-    #?(:clj (= (get-in form [:params :__ez-form.form-name])  (get-in form [:options :name])))
-    (every? nil? (map :errors (:fields (validate form))))))
+   #?(:clj (and
+            (= (get-in form [:params :__ez-form.form-name])  (get-in form [:options :name]))
+            (every? nil? (map :errors (:fields (validate form))))))
+   #?(:cljs (every? empty? (vals @(:errors form)))))
   ([form params]
-   (and
-    #?(:clj (or (= (get-in params ["__ez-form.form-name"]) (get-in form [:options :name]))
-                (= (get-in params [:__ez-form.form-name])  (get-in form [:options :name]))))
-    (every? nil? (map :errors (:fields (validate form params)))))))
+   #?(:clj (and
+            (= (get-in params [:__ez-form.form-name])  (get-in form [:options :name]))
+            (every? nil? (map :errors (:fields (validate form params))))))
+   #?(:cljs (every? empty? (vals @(:errors form))))))
 
 
 #?(:clj
@@ -68,22 +79,28 @@
      (assoc field :value-added (get data name))))
 
 #?(:cljs
-   (defn- add-cursor [data {:keys [id name] :as field}]
+   (defn- add-cursor [data {:keys [name] :as field}]
      (assoc field :cursor (r/cursor data [:fields name]))))
 
 #?(:cljs
+   (defn- add-errors [data {:keys [name] :as field}]
+     (assoc field :errors (r/cursor data [name]))))
+
+#?(:cljs
    (defn- track-focus [form]
-     (fn [k _ old-state new-state]
-       ;; emit state?
-       (if (and (fn? (:form-fn new-state))
-                (valid? form (:fields new-state))
-                (not (valid? form (:fields old-state))))
-         ((:form-fn new-state)
-          {:status :valid
-           :form form})
-         ((:form-fn new-state)
-          {:status :invalid
-           :form form})))))
+     (let [form-fn (:fn form)]
+       (fn [k _ old-state new-state]
+         (when (fn? form-fn)
+           (let [old-errors @(:errors form)]
+             (validate form (:fields new-state))
+             ;; emit state?
+             (if (valid? form)
+               (form-fn
+                {:status :valid
+                 :form form})
+               (form-fn
+                {:status :invalid
+                 :form form}))))))))
 
 (defrecord Form [fields options data params])
 
@@ -102,18 +119,21 @@
          params (validate form)
          :else form)))
   #?(:cljs
-     (let [fields (map #(add-cursor data %) fields)
+     (let [errors (r/atom nil)
+           fields (->> fields
+                       (map #(add-cursor data %))
+                       (map #(add-errors errors %)))
            params (r/cursor data [:fields])
            form (map->Form {:fields fields
                             :options (assoc form-options :data options)
                             :data data
                             :params @params
+                            :errors errors
                             :fn params-or-fn})]
 
        (when-not (:initialized? @data)
          (swap! data assoc
                 :initialized? true
-                :form-fn params-or-fn
                 :fields (assoc (:fields @data) :__ez-form.form-name (:name form-options)))
          (add-watch data :track-focus (track-focus form)))
 

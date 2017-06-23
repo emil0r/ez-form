@@ -18,8 +18,6 @@
             [reagent.core :as r]))
 
 
-(def props (r/atom {}))
-
 ;; -- time part --
 
 (def ^:private full-24hr (* 24 60 60))
@@ -326,129 +324,125 @@
          (reset! c nil))))))
 
 (defn- get-props [field form-options]
-  (let [id (ez.common/get-first field :id :name)]
-    (if (some? (get @props id))
-      (get @props id)
-      (let [opts (ez.field/get-opts field [:class :name] form-options)
-            c (:cursor field)
-            goog->datetime (or (:goog->datetime field)
-                               (fn [date hours minutes seconds]
-                                 (if (some? date)
+  (let [id (ez.common/get-first field :id :name)
+        opts (ez.field/get-opts field [:class :name] form-options)
+        c (:cursor field)
+        goog->datetime (or (:goog->datetime field)
+                           (fn [date hours minutes seconds]
+                             (if (some? date)
 
-                                   (let [offset (-> date .-date .getTimezoneOffset)
-                                         ;; get the javascript date
-                                         d (js/Date. (+ (.getTime (.-date date))
-                                                        (* 3600 1000 hours)
-                                                        (* 60 1000 minutes)
-                                                        (* 1000 seconds)
-                                                        ;; - remove the offset
-                                                        ;;   cljs doesn't seem
-                                                        ;;   too happy with js/Date
-                                                        ;;   and #inst conversion
-                                                        ;;   that involves timezones
-                                                        ;; - in addition, most of the
-                                                        ;;   time you're not super
-                                                        ;;   interested in a timezone
-                                                        ;;   when setting a time in
-                                                        ;;   a datetime picker. so
-                                                        ;;   we aim for a compromise
-                                                        (* -1000 60 offset)))]
-                                     d))))
-            {:keys [dp parser formatter]}
-            (let [pattern (or (:pattern field)
-                              "yyyy'-'MM'-'dd")
-                  formatter (goog.i18n.DateTimeFormat. pattern)
-                  parser (goog.i18n.DateTimeParse. pattern)]
-              (cond (= :input (:mode field))
-                    {:dp (goog.ui.InputDatePicker. formatter parser)
-                     :formatter formatter
-                     :parser parser}
+                               (let [offset (-> date .-date .getTimezoneOffset)
+                                     ;; get the javascript date
+                                     d (js/Date. (+ (.getTime (.-date date))
+                                                    (* 3600 1000 hours)
+                                                    (* 60 1000 minutes)
+                                                    (* 1000 seconds)
+                                                    ;; - remove the offset
+                                                    ;;   cljs doesn't seem
+                                                    ;;   too happy with js/Date
+                                                    ;;   and #inst conversion
+                                                    ;;   that involves timezones
+                                                    ;; - in addition, most of the
+                                                    ;;   time you're not super
+                                                    ;;   interested in a timezone
+                                                    ;;   when setting a time in
+                                                    ;;   a datetime picker. so
+                                                    ;;   we aim for a compromise
+                                                    (* -1000 60 offset)))]
+                                 d))))
+        {:keys [dp parser formatter]}
+        (let [pattern (or (:pattern field)
+                          "yyyy'-'MM'-'dd")
+              formatter (goog.i18n.DateTimeFormat. pattern)
+              parser (goog.i18n.DateTimeParse. pattern)]
+          (cond (= :input (:mode field))
+                {:dp (goog.ui.InputDatePicker. formatter parser)
+                 :formatter formatter
+                 :parser parser}
 
-                    (= :popup (:mode field))
-                    {:dp (goog.ui.PopupDatePicker.)
-                     :formatter formatter
-                     :parser parser}
+                (= :popup (:mode field))
+                {:dp (goog.ui.PopupDatePicker.)
+                 :formatter formatter
+                 :parser parser}
 
-                    :else
-                    {:dp (goog.ui.DatePicker.)
-                     :formatter formatter
-                     :parser parser}))
-            _ (when-let [b (get-in field [:props :date :show-fixed-num-weeks?])] (.setShowFixedNumWeeks dp b))
-            _ (when-let [b (get-in field [:props :date :show-other-months?])] (.setShowOtherMonths dp b))
-            _ (when-let [b (get-in field [:props :date :show-today?])] (.setShowToday dp b))
-            _ (when-let [b (get-in field [:props :date :show-weekday-num?])] (.setShowWeekdayNum dp b))
-            _ (when-let [b (get-in field [:props :date :show-weekday-names?])] (.setShowWeekdayNames dp b))
-            _ (when-let [b (get-in field [:props :date :allow-none?])] (.setAllowNone dp b))
-            _ (when-let [b (get-in field [:props :date :use-narrow-weekday-names?])] (.setUseNarrowWeekdayNames dp b))
-            _ (when-let [b (get-in field [:props :date :use-allow-simple-navigation-menu?])] (.setUseAllowSimpleNavigationMenu dp b))
-            _ (when-let [b (get-in field [:props :date :long-date-format?])] (.setLongDateFormat dp b))
-            f (cond (= :input (:mode field))
-                    (with-meta datepicker/anchor-input
-                      {:component-did-mount
-                       #(when (some? (get-in @props [id]))
-                          ;; set up event for updating the ratom
-                          (let [e (goog.dom/getElement (str "anchor-" id))]
-                            ;; set up event for updating the ratom
-                            (handle-dp-event goog->datetime dp c)
-                            ;; render the datepicker
-                            (.render dp e)
-                            ;; set the date, do this after the date picker has been rendered
-                            ;; if done before the rendering the date picked will not be set
-                            ;; in the rendered widget
-                            (if-let [d @c]
-                              (.setDate dp (goog<-datetime d) true)
-                              (.setDate dp (goog<-datetime (js/Date.)) true))))})
+                :else
+                {:dp (goog.ui.DatePicker.)
+                 :formatter formatter
+                 :parser parser}))
+        _ (when-let [b (get-in field [:props :date :show-fixed-num-weeks?])] (.setShowFixedNumWeeks dp b))
+        _ (when-let [b (get-in field [:props :date :show-other-months?])] (.setShowOtherMonths dp b))
+        _ (when-let [b (get-in field [:props :date :show-today?])] (.setShowToday dp b))
+        _ (when-let [b (get-in field [:props :date :show-weekday-num?])] (.setShowWeekdayNum dp b))
+        _ (when-let [b (get-in field [:props :date :show-weekday-names?])] (.setShowWeekdayNames dp b))
+        _ (when-let [b (get-in field [:props :date :allow-none?])] (.setAllowNone dp b))
+        _ (when-let [b (get-in field [:props :date :use-narrow-weekday-names?])] (.setUseNarrowWeekdayNames dp b))
+        _ (when-let [b (get-in field [:props :date :use-allow-simple-navigation-menu?])] (.setUseAllowSimpleNavigationMenu dp b))
+        _ (when-let [b (get-in field [:props :date :long-date-format?])] (.setLongDateFormat dp b))
+        f (cond (= :input (:mode field))
+                (with-meta datepicker/anchor-input
+                  {:component-did-mount
+                   #(do
+                      ;; set up event for updating the ratom
+                      (let [e (goog.dom/getElement (str "anchor-" id))]
+                        ;; set up event for updating the ratom
+                        (handle-dp-event goog->datetime dp c)
+                        ;; render the datepicker
+                        (.render dp e)
+                        ;; set the date, do this after the date picker has been rendered
+                        ;; if done before the rendering the date picked will not be set
+                        ;; in the rendered widget
+                        (if-let [d @c]
+                          (.setDate dp (goog<-datetime d) true)
+                          (.setDate dp (goog<-datetime (js/Date.)) true))))})
 
-                    (= :popup (:mode field))
-                    (with-meta datepicker/anchor-popup
-                      {:component-did-mount
-                       #(when (some? (get-in @props [id]))
-                          ;; set up event for updating the ratom
-                          (let [e (goog.dom/getElement (str "date-" id))]
-                            ;; set up event for updating the ratom
-                            (handle-dp-event goog->datetime dp c)
-                            ;; render the datepicker
-                            (.render dp)
-                            ;; attach to the element
-                            (.attach dp e)
+                (= :popup (:mode field))
+                (with-meta datepicker/anchor-popup
+                  {:component-did-mount
+                   #(do
+                      ;; set up event for updating the ratom
+                      (let [e (goog.dom/getElement (str "date-" id))]
+                        ;; set up event for updating the ratom
+                        (handle-dp-event goog->datetime dp c)
+                        ;; render the datepicker
+                        (.render dp)
+                        ;; attach to the element
+                        (.attach dp e)
 
-                            ;; set the date if set
-                            (goog.events/listen
-                             dp
-                             goog.ui.PopupBase.EventType/SHOW
-                             (fn [e]
-                               (if-let [d @c]
-                                 (.setDate dp (goog<-datetime d) true)
-                                 (.setDate dp (goog<-datetime (js/Date.)) true))))))})
+                        ;; set the date if set
+                        (goog.events/listen
+                         dp
+                         goog.ui.PopupBase.EventType/SHOW
+                         (fn [e]
+                           (if-let [d @c]
+                             (.setDate dp (goog<-datetime d) true)
+                             (.setDate dp (goog<-datetime (js/Date.)) true))))))})
 
-                    :else
-                    (with-meta datepicker/anchor-datepicker
-                      {:component-did-mount
-                       #(when (some? (get-in @props [id]))
-                          ;; set up event for updating the ratom
-                          (handle-dp-event goog->datetime dp c)
+                :else
+                (with-meta datepicker/anchor-datepicker
+                  {:component-did-mount
+                   #(do
+                      ;; set up event for updating the ratom
+                      (handle-dp-event goog->datetime dp c)
 
-                          ;; render the datepicker
-                          (.render dp (goog.dom/getElement (str "anchor-" id)))
+                      ;; render the datepicker
+                      (.render dp (goog.dom/getElement (str "anchor-" id)))
 
-                          ;; set the date, either today or what was sent in
-                          (if-let [d @c]
-                            (.setDate dp (goog<-datetime d) true)
-                            (.setDate dp (goog<-datetime (js/Date.)) true)))}))
-            data {:id id
-                  :opts opts
-                  :focus? (r/atom [false false false false false false])
-                  :c c
-                  :dp dp
-                  :up (or (:up field) "▲")
-                  :down (or (:down field) "▼")
-                  :parser parser
-                  :formatter formatter
-                  :time-props (get-in field [:props :time])
-                  :f f
-                  :goog->datetime goog->datetime}]
-        (swap! props assoc id data)
-        data))))
+                      ;; set the date, either today or what was sent in
+                      (if-let [d @c]
+                        (.setDate dp (goog<-datetime d) true)
+                        (.setDate dp (goog<-datetime (js/Date.)) true)))}))]
+    {:id id
+     :opts opts
+     :focus? (r/atom [false false false false false false])
+     :c c
+     :dp dp
+     :up (or (:up field) "▲")
+     :down (or (:down field) "▼")
+     :parser parser
+     :formatter formatter
+     :time-props (get-in field [:props :time])
+     :f f
+     :goog->datetime goog->datetime}))
 
 (defmethod ez.field/field :datetimepicker [field form-options]
   (let [{:keys [id down up time-props focus? opts c dp f formatter]} (get-props field form-options)]

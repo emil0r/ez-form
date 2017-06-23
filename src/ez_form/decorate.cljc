@@ -104,7 +104,7 @@
            (let [node (zip/node loc)
                  field (get-field form node :error)
                  options (get-material form node (material node))
-                 errors (:errors field)]
+                 errors @(:errors field)]
              (zip/replace loc (display-error-messages form field options errors)))))
 (defmethod decor :?label [form loc]
   (let [node (zip/node loc)
@@ -119,7 +119,7 @@
   #?(:cljs (let [node (zip/node loc)
                  field (get-field form node :wrapper)
                  options (merge {:key (kw->string (or (:id field) (:name field)))}
-                                (if (and (not (nil?  (:errors field)))
+                                (if (and (not (empty? @(:errors field)))
                                          (not (nil? @(:cursor field))))
                                   (get-material form node (material node))))]
              (zip/replace loc options)))
