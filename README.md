@@ -232,6 +232,17 @@ Help, text, label and error-messages can take functions as values. During evalua
 
 ```
 
+## transform
+
+Add :transform to a field for transformations. Default support for :edn. Multimethod located in fields.cljc.
+
+```clojure
+  {:name :age
+   :type :number
+   :transform :edn
+   :validation (validations/number? [:age])}
+```
+
 ## decor
 
 ez-form has a concept of decor for decorating the markup being returned with optional classes/markup and allowing for a post-process of the output.

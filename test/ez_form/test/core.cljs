@@ -8,6 +8,7 @@
 
 
 (defn render-form [f]
+  (println "render-form")
   [:div
    [:div [:button
           {:on-click (fn [e] (println (form/select-fields f)))} "Print all fields"]]
@@ -27,4 +28,5 @@
                                :multi/select [2 4 6 8 10]}})
         result-fn (fn [data] (println (:status data)))
         f (testform data result-fn)]
+    (println "run")
     (r/render-component [render-form f] (.getElementById js/document "form-container"))))
