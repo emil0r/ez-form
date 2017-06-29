@@ -53,9 +53,7 @@
         #?(:clj  (if (some selected-value [value])
                    {:value value :selected true}
                    {:value value}))
-        #?(:cljs (if (some selected-value [value])
-                   {:value value :selected true}
-                   {:value value}))]
+        #?(:cljs {:value (str value)})]
     ^{:key text} [:option opts text]))
 
 (defn get-opts [field keys form-options]
@@ -157,15 +155,26 @@
     #?(:cljs
        [:textarea (merge opts {:id id :on-change #(reset! c (value-of field %)) :value (or @c "")})])))
 
+#?(:cljs
+   (defn ->options-checkup [args]
+     (reduce (fn [out v]
+               (let [[value text] (if (sequential? v) v [v v])]
+                 (assoc out (str value) value)))
+             {} args)))
 (defmethod field :dropdown [field form-options]
   (let [id (get-first field :id :name)
         opts (get-opts field [:class :name] form-options)
         options (:options field)
         #?@(:clj  [value (or (:value field) (:value-added field) "")])
         #?@(:cljs [c (:cursor field)
+                   options-checkup (->options-checkup (if (fn? options)
+                                                        (options field form-options)
+                                                        options))
                    cljs-opts (cond
-                               (:multiple opts) {:value (or @c "") :on-change #(reset! c (into (or @c []) [(value-of field %)]))}
-                               :else {:value (or @c "") :on-change #(reset! c (value-of field %))})])]
+                               (:multiple opts) {:value (or @c "")
+                                                 :on-change #(reset! c (into (or @c []) [(get options-checkup (value-of field %))]))}
+                               :else {:value (or @c "")
+                                      :on-change #(reset! c (get options-checkup (value-of field %)))})])]
     [:select (merge opts
                     {:type :select
                      :id id}

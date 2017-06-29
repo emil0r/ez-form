@@ -18,6 +18,8 @@ ClojureScript works roughly the same way, with the exception of how the form is 
 2. You are sending in as first argument a ratom
 3. You are sending in as a second argument a function that will be called when the form is valid. The function will only be called once per valid confirmation.
 
+**Word of warning on Clojurescript**: CLJS works, but it's slow (relatively speaking) due to ez-form first being a Clojure library. If the slowness is not a problem it works quite well.
+
 ```clojure
 (ns some-namespace
   (:require [ez-form.core :as form :refer [defform]]

@@ -82,8 +82,8 @@
    {:type :dropdown
     :label "my dropdown"
     :name :dropdown
-    :options ["opt 1"
-              "opt 2"
+    :options [[:opt1 "opt 1"]
+              [2 "opt 2"]
               "opt 3"]}
    {:type :checkbox
     :name :checkbox

@@ -11,7 +11,8 @@
   (println "render-form")
   [:div
    [:div [:button
-          {:on-click (fn [e] (println (form/select-fields f)))} "Print all fields"]]
+          {:on-click (fn [e] (println (->> (form/select-fields f)
+                                          (map (juxt first last #(-> % last type))))))} "Print all fields"]]
    [:div [:button
           {:on-click (fn [e] (println @(:errors f)))} "Print all errors"]]
    [:table
@@ -25,7 +26,8 @@
                                               "img/400x500.png"
                                               "img/40x100.png"]
                                ;;:date/picker #inst "2017-06-12"
-                               :multi/select [2 4 6 8 10]}})
+                               :multi/select [2 4 6 8 10]
+                               :dropdown 2}})
         result-fn (fn [data] (println (:status data)))
         f (testform data result-fn)]
     (println "run")
