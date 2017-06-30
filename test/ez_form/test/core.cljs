@@ -27,7 +27,7 @@
                                               "img/40x100.png"]
                                ;;:date/picker #inst "2017-06-12"
                                :multi/select [2 4 6 8 10]
-                               :dropdown 2}})
+                               :dropdown :opt2}})
         result-fn (fn [data] (println (:status data)))
         f (testform data result-fn)]
     (println "run")

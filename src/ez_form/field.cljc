@@ -170,11 +170,8 @@
                    options-checkup (->options-checkup (if (fn? options)
                                                         (options field form-options)
                                                         options))
-                   cljs-opts (cond
-                               (:multiple opts) {:value (or @c "")
-                                                 :on-change #(reset! c (into (or @c []) [(get options-checkup (value-of field %))]))}
-                               :else {:value (or @c "")
-                                      :on-change #(reset! c (get options-checkup (value-of field %)))})])]
+                   cljs-opts {:value (or (str @c) "")
+                              :on-change #(reset! c (get options-checkup (value-of field %)))}])]
     [:select (merge opts
                     {:type :select
                      :id id}
