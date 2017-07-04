@@ -25,7 +25,7 @@
                                               "img/350x150.png"
                                               "img/400x500.png"
                                               "img/40x100.png"]
-                               ;;:date/picker #inst "2017-06-12"
+                               :datetime/picker #inst "2017-06-12"
                                :multi/select [2 4 6 8 10]
                                :dropdown :opt2}})
         result-fn (fn [data] (println (:status data)))

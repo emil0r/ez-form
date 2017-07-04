@@ -301,7 +301,8 @@
 (defmethod goog<-datetime :default [date]
   (if (some? date)
     ;; javascript... why oh why?!
-    (goog.date.Date. (.getFullYear date) (.getMonth date) (.getDate date))
+    (goog.date.Date. date ;;(.getFullYear date) (.getMonth date) (.getDate date)
+     )
     nil))
 
 
@@ -310,33 +311,34 @@
    dp
    goog.ui.DatePicker.Events/CHANGE
    (fn [e]
-     (let [date @c]
-       (if (.-date e)
-         (reset! c (if date
-                     (goog->datetime (.-date e)
-                                     (.getHours date)
-                                     (.getMinutes date)
-                                     (.getSeconds date))
-                     (goog->datetime (.-date e)
-                                     0
-                                     0
-                                     0)))
-         (reset! c nil))))))
+     (let [date @c
+           new-date (goog->datetime (.-date e) date)]
+       (when (or (nil? new-date)
+                 (not= js/Date (type date))
+                 (not= (.getTime date) (.getTime new-date)))
+         (reset! c new-date))))))
 
 (defn- get-props [field form-options]
   (let [id (ez.common/get-first field :id :name)
         opts (ez.field/get-opts field [:class :name] form-options)
         c (:cursor field)
         goog->datetime (or (:goog->datetime field)
-                           (fn [date hours minutes seconds]
-                             (if (some? date)
-
-                               (let [offset (-> date .-date .getTimezoneOffset)
+                           (fn [goog-date js-date]
+                             (if (some? goog-date)
+                               (let [offset (if js-date
+                                              (-> goog-date .-date .getTimezoneOffset)
+                                              0)
                                      ;; get the javascript date
-                                     d (js/Date. (+ (.getTime (.-date date))
-                                                    (* 3600 1000 hours)
-                                                    (* 60 1000 minutes)
-                                                    (* 1000 seconds)
+                                     d (js/Date. (+ (.getTime (.-date goog-date))
+                                                    (* 3600 1000 (if js-date
+                                                                   (.getHours js-date)
+                                                                   0))
+                                                    (* 60 1000 (if js-date
+                                                                 (.getMinutes js-date)
+                                                                 0))
+                                                    (* 1000 (if js-date
+                                                              (.getSeconds js-date)
+                                                              0))
                                                     ;; - remove the offset
                                                     ;;   cljs doesn't seem
                                                     ;;   too happy with js/Date
@@ -349,7 +351,8 @@
                                                     ;;   a datetime picker. so
                                                     ;;   we aim for a compromise
                                                     (* -1000 60 offset)))]
-                                 d))))
+                                 d)
+                               nil)))
         {:keys [dp parser formatter]}
         (let [pattern (or (:pattern field)
                           "yyyy'-'MM'-'dd")
