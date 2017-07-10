@@ -7,12 +7,19 @@
 (enable-console-print!)
 
 
+(defn datetime-println [f]
+  (fn [_]
+    (let [dt (get-in (form/select-fields f) [:datetime/picker])]
+      (println dt))))
+
 (defn render-form [f]
   (println "render-form")
   [:div
    [:div [:button
           {:on-click (fn [e] (println (->> (form/select-fields f)
                                           (map (juxt first last #(-> % last type))))))} "Print all fields"]]
+   [:div [:button
+          {:on-click (datetime-println f)} "Print datetime"]]
    [:div [:button
           {:on-click (fn [e] (println @(:errors f)))} "Print all errors"]]
    [:table
@@ -29,6 +36,7 @@
                                :multi/select [2 4 6 8 10]
                                :dropdown :opt2}})
         result-fn (fn [data] (println (:status data)))
-        f (testform data result-fn)]
+        f (testform data result-fn)
+        datetime (get-in @data [:fields :datetime/picker])]
     (println "run")
     (r/render-component [render-form f] (.getElementById js/document "form-container"))))

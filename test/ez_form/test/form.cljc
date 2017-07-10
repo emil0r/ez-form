@@ -49,7 +49,7 @@
     :label "Datetime picker"
     :name :datetime/picker
     :mode :popup
-    :props {:time {:format :12hr
+    :props {:time {:format :24hr
                    :seconds? true}}}
    {:type :multiselect
     :label "Multi select"

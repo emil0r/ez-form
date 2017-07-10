@@ -28,7 +28,7 @@
   [:div.date-picker
    [:div
     (if-let [value @c]
-      (.format formatter value)
+      (.format formatter (js/Date. (+ (.getTime value) (* 1000 60 (.getTimezoneOffset value)))))
       (*t* *locale* ::pick-a-date))]
    [:div {:id (str "anchor-" id)}]])
 
@@ -36,7 +36,7 @@
   [:div.popup-date-picker
    [:div.date {:id (str "date-" id)}
     (if-let [value @c]
-      (.format formatter value)
+      (.format formatter (js/Date. (+ (.getTime value) (* 1000 60 (.getTimezoneOffset value)))))
       (*t* *locale* ::pick-a-date))]
    [:div {:id (str "anchor-" id)}]])
 

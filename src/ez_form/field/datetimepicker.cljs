@@ -300,9 +300,7 @@
 (defmulti goog<-datetime type)
 (defmethod goog<-datetime :default [date]
   (if (some? date)
-    ;; javascript... why oh why?!
-    (goog.date.Date. date ;;(.getFullYear date) (.getMonth date) (.getDate date)
-     )
+    (goog.date.Date. date)
     nil))
 
 
@@ -310,13 +308,7 @@
   (goog.events/listen
    dp
    goog.ui.DatePicker.Events/CHANGE
-   (fn [e]
-     (let [date @c
-           new-date (goog->datetime (.-date e) date)]
-       (when (or (nil? new-date)
-                 (not= js/Date (type date))
-                 (not= (.getTime date) (.getTime new-date)))
-         (reset! c new-date))))))
+   #(reset! c (goog->datetime (.-date %) @c))))
 
 (defn- get-props [field form-options]
   (let [id (ez.common/get-first field :id :name)
@@ -325,20 +317,15 @@
         goog->datetime (or (:goog->datetime field)
                            (fn [goog-date js-date]
                              (if (some? goog-date)
-                               (let [offset (if js-date
-                                              (-> goog-date .-date .getTimezoneOffset)
-                                              0)
+                               (let [hours (if js-date (.getHours js-date) 0)
+                                     minutes (if js-date (.getMinutes js-date) 0)
+                                     seconds (if js-date (.getSeconds js-date) 0)
+                                     offset (-> goog-date .-date .getTimezoneOffset)
                                      ;; get the javascript date
                                      d (js/Date. (+ (.getTime (.-date goog-date))
-                                                    (* 3600 1000 (if js-date
-                                                                   (.getHours js-date)
-                                                                   0))
-                                                    (* 60 1000 (if js-date
-                                                                 (.getMinutes js-date)
-                                                                 0))
-                                                    (* 1000 (if js-date
-                                                              (.getSeconds js-date)
-                                                              0))
+                                                    (* 3600 1000 hours)
+                                                    (* 60 1000 minutes)
+                                                    (* 1000 seconds)
                                                     ;; - remove the offset
                                                     ;;   cljs doesn't seem
                                                     ;;   too happy with js/Date
