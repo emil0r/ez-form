@@ -1,4 +1,4 @@
-(defproject ez-form "0.8.0-SNAPSHOT"
+(defproject ez-form "0.8.0"
   :description "Forms for the web"
 
   :url "https://github.com/emil0r/ez-form"

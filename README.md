@@ -5,7 +5,7 @@ Forms for the web. For Clojure(Script).
 ## Dependancy
 
 ```clojure
-[ez-form "0.7.3"]
+[ez-form "0.8.0"]
 ```
 
 ## Usage
