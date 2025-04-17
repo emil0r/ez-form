@@ -3,4 +3,5 @@
  :aliases {:dev  {:extra-deps {com.github.gnl/playback {:mvn/version "0.5.4"}}}
            :test {:extra-paths ["test"]
                   :extra-deps  {com.github.seancorfield/expectations {:mvn/version "2.2.214"}
-                                no.cjohansen/lookup                  {:mvn/version "2024.12.23"}}}}}
+                                no.cjohansen/lookup                  {:mvn/version "2024.12.23"}
+                                metosin/malli                        {:mvn/version "0.17.0"}}}}}
