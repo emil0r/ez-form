@@ -3,6 +3,20 @@
             [clojure.walk :as walk]
             [ez-form.field :as field]))
 
+(defn post-process-form [form params]
+  (let [validate-fn (requiring-resolve
+                     (get (get-in form [:meta :validation-fns])
+                          (get-in form [:meta :validation] :spec)
+                          'ez-form.validation/validate))]
+    (reduce (fn [form [field-k field]]
+              (when-let [value (get params (get-in field [:attributes :name]))]
+                (assoc-in form [:ez-form/fields field-k]
+                          (-> field
+                              (assoc-in [:attributes :value] value)
+                              (assoc :value value)
+                              (validate-fn value)))))
+            form (:ez-form/fields form))))
+
 (defn- walk-errors [layout error-kw error]
   (walk/postwalk (fn [x]
                    (if (= error-kw x)

@@ -1,6 +1,7 @@
 {:paths   ["src"]
  :deps    {}
- :aliases {:dev  {:extra-deps {com.github.gnl/playback {:mvn/version "0.5.4"}}}
+ :aliases {:dev  {:extra-deps {org.clojure/clojure     {:mvn/version "1.12.0"}
+                               com.github.gnl/playback {:mvn/version "0.5.4"}}}
            :test {:extra-paths ["test"]
                   :extra-deps  {com.github.seancorfield/expectations {:mvn/version "2.2.214"}
                                 no.cjohansen/lookup                  {:mvn/version "2024.12.23"}
