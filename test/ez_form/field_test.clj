@@ -8,7 +8,8 @@
             :name        :test
             :value       "value"
             :placeholder "placeholder"}]
-   (sut/input-field {:attributes {:name        :test
+   (sut/input-field {:type       :text
+                     :attributes {:name        :test
                                   :value       "value"
                                   :placeholder "placeholder"}})
    "text input")
@@ -33,12 +34,29 @@
                       :options    [["" "..."]
                                    ["option-1" "Option 1"]
                                    ["option-2" "Option 2"]]})
-   "select"))
+   "select")
+  (expect
+   [:input {:type        :text
+            :name        :test
+            :value       "value"
+            :placeholder "placeholder"}]
+   (sut/render {:type       :text
+                :attributes {:name        :test
+                             :value       "value"
+                             :placeholder "placeholder"}})
+   "render function")
+  (expect
+   "I am missing the field :test"
+   (sut/render {:type       :foo
+                :attributes {:name        :test
+                             :value       "value"
+                             :placeholder "placeholder"}})
+   "render function - field type does not exist"))
 
 (defexpect textarea-field-test
   (expect
    [:textarea {:name :textarea :rows 3 :cols 4} "value"]
-   (sut/textarea-field {:attributes {:name :textarea
-                                     :rows 3
-                                     :cols 4
+   (sut/textarea-field {:attributes {:name  :textarea
+                                     :rows  3
+                                     :cols  4
                                      :value "value"}})))

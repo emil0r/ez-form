@@ -42,3 +42,9 @@
              :week           input-field
              :select         select-field
              :textarea       textarea-field})
+
+(defn render [field]
+  (if-let [field-fn (fields (:type field))]
+    (field-fn field)
+    (str "I am missing the field " (pr-str (or (get-in field [:attributes :name])
+                                               field)))))
