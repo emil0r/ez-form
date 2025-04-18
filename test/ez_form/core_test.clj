@@ -5,7 +5,7 @@
             [lookup.core :as lookup]))
 
 (defexpect render-test
-  (let [form {:field-fns {:errors sut/render-field-errors}
+  (let [form {:meta {:field-fns {:errors sut/render-field-errors}}
               :fields {::username {:type       :text
                                    :errors     ["Error 1"
                                                 "Error 2"]
@@ -185,7 +185,13 @@
           (lookup/select '[input])
           (map (comp :value second))))
     (expect
-     [:div {:class #{"error"}} "Username cannot be foobar"]
+     [:div {:class #{"error"}}
+      "Username cannot be foobar"]
      (->> (sut/as-table form)
           (lookup/select ["div.error"])
-          (first)))))
+          (first)))
+    (expect
+     {:username "foobar"
+      :email "john.doe@example.com"}
+     (sut/get-fields form)
+     "get-fields on the form gives me a map of all values for the fields in the form")))

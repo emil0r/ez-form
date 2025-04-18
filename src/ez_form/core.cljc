@@ -3,6 +3,14 @@
             [clojure.walk :as walk]
             [ez-form.field :as field]))
 
+(defn get-fields
+  "Return the fields of the form as a map"
+  [form]
+  (->> (:fields form)
+       (map (fn [[k field]]
+              [(keyword (name k)) (:value field)]))
+       (into {})))
+
 (defn valid?
   ([form]
    (every? empty? (map :errors (vals (:fields form))))))
@@ -70,8 +78,8 @@
             (qualified-keyword? (first x))
             (>= (count x) 2)
             (get-in form (into [:fields] (take 2 x)))
-            (get-in form [:field-fns (second x)]))
-       (let [f     (get-in form [:field-fns (second x)])
+            (get-in form [:meta :field-fns (second x)]))
+       (let [f     (get-in form [:meta :field-fns (second x)])
              field (get-in form [:fields (first x)])]
          (f form field x))
 
@@ -136,6 +144,7 @@
                  {:form-name       ~form-name*
                   :field-data      (raw-data->field-data ~'data)
                   :field-order     ~field-order
+                  :field-fns       {:errors render-field-errors}
                   :validation      :spec
                   :validations-fns {:spec  'ez-form.validation/validate
                                     :malli 'ez-form.validation.validation-malli/validate}}
