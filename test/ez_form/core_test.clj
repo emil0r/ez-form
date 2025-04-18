@@ -1,12 +1,14 @@
 (ns ez-form.core-test
-  (:require [ez-form.core :as sut]
+  (:require [clojure.string :as str]
             [expectations.clojure.test :refer :all]
-            [clojure.string :as str]))
+            [ez-form.core :as sut]
+            [lookup.core :as lookup]))
 
 (defexpect render-test
   (let [form {:fields {::username {:type       :text
                                    :errors     ["Error 1"
                                                 "Error 2"]
+                                   :help       [:div.help "My help text"]
                                    :attributes {:name        :username
                                                 :value       "johndoe"
                                                 :placeholder :ui.username/placeholder}}}}]
@@ -31,9 +33,20 @@
         ([:div.error "Error 2"]))]
      (sut/render form [:div
                        [::username]
-                       [::username.errors
-                        [:div.error ::username.error]]])
-     "Field is rendered with errors")))
+                       [::username :errors
+                        [:div.error :error]]])
+     "Field is rendered with errors")
+    (expect
+     [:div
+      [:input {:type        :text
+               :name        :username
+               :value       "johndoe"
+               :placeholder :ui.username/placeholder}]
+      [:div.help "My help text"]]
+     (sut/render form [:div
+                       [::username]
+                       [::username :help]])
+     "field is rendered with help text")))
 
 (defexpect post-process-form-test
   (let [email          "john.doe@example.com"
@@ -121,10 +134,13 @@
 (defexpect defform-test
   (sut/defform testform
     {}
-    [{:name ::username
-      :type :text}
-     {:name ::email
-      :type :email}])
+    [{:name   ::username
+      :validation [{:spec #(not= % "foobar")
+                    :error-msg [:div.error "Username cannot be foobar"]}]
+      :type   :text}
+     {:name  ::email
+      :label [:i18n ::email-label]
+      :type  :email}])
   (let [form (testform {:username "foobar"}
                        {:__ez-form.form-name "testform"
                         :email               "john.doe@example.com"})]
@@ -145,27 +161,30 @@
      (get-in form [:meta :field-order])
      "field order is set according to the order in which fields are sent in")
     (expect
-     true
+     false
      (sut/valid? form)
-     "Form is valid")))
-
-
-
-;; (def form-test1
-;;   [{:type               :text
-;;     :name               "username"
-;;     :value              "my initial value"
-;;     :placeholder        ""
-;;     :ez-form/validation #()}])
-
-;; (def form-test2
-;;   {::username {:type       :text
-;;                :css        ["foo" "bar" "baz"]
-;;                :attributes {:name        "username"
-;;                             :value       "my initial value"
-;;                             :placeholder ""}
-;;                :validation #()}})
-
-;; [:div {:class [::username :css]}
-;;  [::username]
-;;  [::username :errors]]
+     "Form is invalid - name is foobar which breaks the validation for ::username")
+    (expect
+     "Username"
+     (->> (sut/as-table form)
+          (lookup/select '[th])
+          (first)
+          (lookup/text))
+     "th value for ::username is the capitalized name of ::username")
+    (expect
+     (str ::email-label)
+     (->> (sut/as-table form)
+          (lookup/select '[th])
+          (second)
+          (lookup/text))
+     "th value for ::email is the keyword ::email-label (lookup picks it up with text)")
+    (expect
+     ["testform" "foobar" "john.doe@example.com"]
+     (->> (sut/as-table form)
+          (lookup/select '[input])
+          (map (comp :value second))))
+    (expect
+     [:div {:class #{"error"}} "Username cannot be foobar"]
+     (->> (sut/as-table form)
+          (lookup/select ["div.error"])
+          (first)))))
