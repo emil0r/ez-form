@@ -42,6 +42,10 @@
                      x))
                  layout))
 
+(defn render-field-errors [_form field layout]
+  (map #(walk-errors (drop 2 layout) %)
+       (:errors field)))
+
 (defn render [form layout]
   (walk/postwalk
    (fn [x]
@@ -53,6 +57,7 @@
             (get-in form [:fields (first x)]))
        (field/render (get-in form [:fields (first x)]))
 
+       ;; render lookup
        (and (vector? x)
             (qualified-keyword? (first x))
             (= (count x) 2)
@@ -60,13 +65,15 @@
             (get-in form (into [:fields] x)))
        (get-in form (into [:fields] x))
 
-       ;; render errors associated with field
+       ;; render field functions
        (and (vector? x)
             (qualified-keyword? (first x))
             (>= (count x) 2)
-            (get-in form (into [:fields] (take 2 x))))
-       (map #(walk-errors (drop 2 x) %)
-            (get-in form [:fields (first x) :errors]))
+            (get-in form (into [:fields] (take 2 x)))
+            (get-in form [:field-fns (second x)]))
+       (let [f     (get-in form [:field-fns (second x)])
+             field (get-in form [:fields (first x)])]
+         (f form field x))
 
        :else
        x))

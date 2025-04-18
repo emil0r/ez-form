@@ -5,7 +5,8 @@
             [lookup.core :as lookup]))
 
 (defexpect render-test
-  (let [form {:fields {::username {:type       :text
+  (let [form {:field-fns {:errors sut/render-field-errors}
+              :fields {::username {:type       :text
                                    :errors     ["Error 1"
                                                 "Error 2"]
                                    :help       [:div.help "My help text"]
