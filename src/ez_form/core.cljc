@@ -97,6 +97,7 @@
            :name  :__ez-form.form-name}])
 
 (defn as-table
+  "Render the form as a table"
   ([form]
    (as-table nil form))
   ([table-opts form]
@@ -115,6 +116,20 @@
                   [field-k]
                   [field-k :errors :error]]])
               field-order)]])))))
+
+(defn as-template
+  "Render the form according to the template layout"
+  [form template-layout]
+  (let [field-order (get-in form [:meta :field-order])]
+    (->> field-order
+         (map (fn [field-k]
+                (walk/postwalk (fn [x]
+                                 (if (= x :field)
+                                   field-k
+                                   x))
+                               template-layout)))
+         (concat [(form-name-input form)])
+         (render form))))
 
 (defn ->form
   "Create a form"

@@ -183,13 +183,15 @@
      ["testform" "foobar" "john.doe@example.com"]
      (->> (sut/as-table form)
           (lookup/select '[input])
-          (map (comp :value second))))
+          (map (comp :value second)))
+     "field values show up in as-table")
     (expect
      [:div {:class #{"error"}}
       "Username cannot be foobar"]
      (->> (sut/as-table form)
           (lookup/select ["div.error"])
-          (first)))
+          (first))
+     "Error shows up in as-table")
     (expect
      {:table-by-correct-class?   true
       :table-by-incorrect-class? false}
@@ -201,9 +203,27 @@
         :table-by-incorrect-class? (->> hiccup
                                         (lookup/select ["table[class=faulty-css]"])
                                         (seq)
-                                        (some?))}))
+                                        (some?))})
+     "as-table correctly injects table-opts")
     (expect
      {:username "foobar"
       :email    "john.doe@example.com"}
      (sut/fields->map form)
-     "get-fields on the form gives me a map of all values for the fields in the form")))
+     "fields->map on the form gives me a map of all values for the fields in the form")
+    (expect
+     ["testform" "foobar" "john.doe@example.com"]
+     (->> (sut/as-template form [:div.layout
+                                 [:field]
+                                 [:field :errors :error]])
+          (lookup/select '[input])
+          (map (comp :value second)))
+     "field values show up in as-template")
+    (expect
+     [:div {:class #{"error"}}
+      "Username cannot be foobar"]
+     (->> (sut/as-template form [:div.layout
+                                 [:field]
+                                 [:field :errors :error]])
+          (lookup/select ["div.error"])
+          (first))
+     "Error shows up in as-template")))
