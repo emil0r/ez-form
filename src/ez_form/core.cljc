@@ -3,12 +3,17 @@
             [clojure.walk :as walk]
             [ez-form.field :as field]))
 
+(defn- get-field-name [field-k field]
+  (get-in field [:attributes :name]
+          (keyword (name field-k))))
+
 (defn fields->map
   "Return the fields of the form as a map"
   [form]
   (->> (:fields form)
-       (map (fn [[k field]]
-              [(keyword (name k)) (:value field)]))
+       (map (fn [[field-k field]]
+              [(get-field-name field-k field)
+               (:value field)]))
        (into {})))
 
 (defn valid?
@@ -26,8 +31,7 @@
                           'ez-form.validation/validate))
         posted?     (is-posted? form params)]
     (reduce (fn [form [field-k field]]
-              (let [field-name (get-in field [:attributes :name]
-                                       (keyword (name field-k)))
+              (let [field-name (get-field-name field-k field)
                     label      (get-in field [:label]
                                        (str/capitalize (name field-name)))
                     value      (if posted?
