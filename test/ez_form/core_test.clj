@@ -5,7 +5,7 @@
             [lookup.core :as lookup]))
 
 (defexpect render-test
-  (let [form {:meta {:field-fns {:errors sut/render-field-errors}}
+  (let [form {:meta   {:field-fns {:errors sut/render-field-errors}}
               :fields {::username {:type       :text
                                    :errors     ["Error 1"
                                                 "Error 2"]
@@ -135,10 +135,10 @@
 (defexpect defform-test
   (sut/defform testform
     {}
-    [{:name   ::username
-      :validation [{:spec #(not= % "foobar")
+    [{:name       ::username
+      :validation [{:spec      #(not= % "foobar")
                     :error-msg [:div.error "Username cannot be foobar"]}]
-      :type   :text}
+      :type       :text}
      {:name  ::email
       :label [:i18n ::email-label]
       :type  :email}])
@@ -191,7 +191,19 @@
           (lookup/select ["div.error"])
           (first)))
     (expect
+     {:table-by-correct-class?   true
+      :table-by-incorrect-class? false}
+     (let [hiccup (sut/as-table {:class ["table"]} form)]
+       {:table-by-correct-class?   (->> hiccup
+                                        (lookup/select ["table[class=table]"])
+                                        (seq)
+                                        (some?))
+        :table-by-incorrect-class? (->> hiccup
+                                        (lookup/select ["table[class=faulty-css]"])
+                                        (seq)
+                                        (some?))}))
+    (expect
      {:username "foobar"
-      :email "john.doe@example.com"}
+      :email    "john.doe@example.com"}
      (sut/fields->map form)
      "get-fields on the form gives me a map of all values for the fields in the form")))

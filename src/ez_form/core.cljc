@@ -96,22 +96,25 @@
            :value (get-in form [:meta :form-name])
            :name  :__ez-form.form-name}])
 
-(defn as-table [form]
-  (let [field-order (get-in form [:meta :field-order])]
-    (render
-     form
-     (list
-      (form-name-input form)
-      [:table
-       [:tbody
-        (map (fn [field-k]
-               [:tr
-                [:th
-                 [field-k :label]]
-                [:td
-                 [field-k]
-                 [field-k :errors :error]]])
-             field-order)]]))))
+(defn as-table
+  ([form]
+   (as-table nil form))
+  ([table-opts form]
+   (let [field-order (get-in form [:meta :field-order])]
+     (render
+      form
+      (list
+       (form-name-input form)
+       [:table table-opts
+        [:tbody
+         (map (fn [field-k]
+                [:tr
+                 [:th
+                  [field-k :label]]
+                 [:td
+                  [field-k]
+                  [field-k :errors :error]]])
+              field-order)]])))))
 
 (defn ->form
   "Create a form"
