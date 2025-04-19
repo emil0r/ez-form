@@ -1,0 +1,64 @@
+(ns ez-form.i18n.tongue-test
+  (:require [expectations.clojure.test :refer :all]
+            [ez-form.core :as sut]
+            [lookup.core :as lookup]
+            [tongue.core :as tongue]))
+
+(def dictionaries
+  {:en              {:form/username "Username"
+                     :form/email    "Email"}
+   :se              {:form/username "Användarnamn"
+                     :form/email    "Emejl"}
+   :no              {:form/username "Brukernavn"
+                     :form/email    "Epost"}
+   :tongue/fallback :en})
+
+(def t
+  (tongue/build-translate dictionaries))
+
+(defn translate [form _field [_ i18n-k]]
+  (let [locale (get-in form [:meta :locale])]
+    (t locale i18n-k)))
+
+
+(defexpect tongue-test
+  (sut/defform testform
+    {:field-fns {:fn/t translate}}
+    [{:name       ::username
+      :label      [:fn/t :form/username]
+      :validation [{:spec      #(not= % "foobar")
+                    :error-msg [:div.error "Username cannot be foobar"]}]
+      :type       :text}
+     {:name  ::email
+      :label [:fn/t :form/email]
+      :type  :email}])
+  (let [hiccup-en (sut/as-table (testform {:locale :en}
+                                          {:username "foobar"}
+                                          {:__ez-form.form-name "testform"
+                                           :email               "john.doe@example.com"}))
+        hiccup-se (sut/as-table (testform {:locale :se}
+                                          {:username "foobar"}
+                                          {:__ez-form.form-name "testform"
+                                           :email               "john.doe@example.com"}))
+        hiccup-no (sut/as-table (testform {:locale :no}
+                                          {:username "foobar"}
+                                          {:__ez-form.form-name "testform"
+                                           :email               "john.doe@example.com"}))]
+    (expect
+     ["Username" "Email"]
+     (->> hiccup-en
+          (lookup/select '[th])
+          (map second))
+     ":en locale")
+    (expect
+     ["Användarnamn" "Emejl"]
+     (->> hiccup-se
+          (lookup/select '[th])
+          (map second))
+     ":se locale")
+    (expect
+     ["Brukernavn" "Epost"]
+     (->> hiccup-no
+          (lookup/select '[th])
+          (map second))
+     ":no locale")))

@@ -75,7 +75,14 @@
             (= (count x) 2)
             (not= :errors (second x))
             (get-in form (into [:fields] x)))
-       (get-in form (into [:fields] x))
+       ;; TODO: Write test for this piece of logic
+       (let [value (get-in form (into [:fields] x))]
+         (if (and (vector? value)
+                  (get-in form [:meta :field-fns (first value)]))
+           (let [f     (get-in form [:meta :field-fns (first value)])
+                 field (get-in form [:fields (first x)])]
+             (f form field value))
+           value))
 
        ;; render field functions
        (and (vector? x)
@@ -99,9 +106,12 @@
 (defn as-table
   "Render the form as a table"
   ([form]
-   (as-table nil form))
-  ([table-opts form]
-   (let [field-order (get-in form [:meta :field-order])]
+   (as-table form nil nil))
+  ([form table-opts]
+   (as-table form table-opts nil))
+  ([form table-opts meta-opts]
+   (let [form        (update form :meta merge meta-opts)
+         field-order (get-in form [:meta :field-order])]
      (render
       form
       (list
@@ -119,17 +129,20 @@
 
 (defn as-template
   "Render the form according to the template layout"
-  [form template-layout]
-  (let [field-order (get-in form [:meta :field-order])]
-    (->> field-order
-         (map (fn [field-k]
-                (walk/postwalk (fn [x]
-                                 (if (= x :field)
-                                   field-k
-                                   x))
-                               template-layout)))
-         (concat [(form-name-input form)])
-         (render form))))
+  ([form template-layout]
+   (as-template form template-layout nil))
+  ([form template-layout meta-opts]
+   (let [form        (update form :meta merge meta-opts)
+         field-order (get-in form [:meta :field-order])]
+     (->> field-order
+          (map (fn [field-k]
+                 (walk/postwalk (fn [x]
+                                  (if (= x :field)
+                                    field-k
+                                    x))
+                                template-layout)))
+          (concat [(form-name-input form)])
+          (render form)))))
 
 (defn ->form
   "Create a form"
@@ -149,19 +162,20 @@
 (defmacro defform
   "Define a form. The form becomes a function that you can call with
    everything setup using ->form"
-  [form-name form-opts fields]
-  (let [form-name*  (name form-name)
-        fields*     (->> fields
+  [form-name meta-opts fields]
+  (let [form-name*           (name form-name)
+        fields*              (->> fields
                          (map (juxt :name #(dissoc % :name)))
                          (into (sorted-map)))
-        field-order (mapv :name fields)]
+        field-order          (mapv :name fields)
+        meta-opts-from-macro meta-opts]
     ;; TODO: Fix linting
     `(defn ~form-name
        ([~'data]
         (~form-name nil ~'data nil))
        ([~'data ~'params]
         (~form-name nil ~'data ~'params))
-       ([~'opts ~'data ~'params]
+       ([~'meta-opts ~'data ~'params]
         (->form (merge
                  {:form-name       ~form-name*
                   :field-data      (raw-data->field-data ~'data)
@@ -170,7 +184,7 @@
                   :validation      :spec
                   :validations-fns {:spec  'ez-form.validation/validate
                                     :malli 'ez-form.validation.validation-malli/validate}}
-                 ~form-opts
-                 ~'opts)
+                 ~meta-opts-from-macro
+                 ~'meta-opts)
                 ~fields*
                 ~'params)))))

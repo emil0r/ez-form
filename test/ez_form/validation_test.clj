@@ -7,8 +7,8 @@
 
 (spec/def ::int int?)
 (spec/def ::int>100 #(and (number? %)
-                          (> % 100)))
 
+                          (> % 100)))
 (defexpect validation-spec-test
   (let [error-msg    "Must be an integer"
         number-field {:validation [{:spec      ::int

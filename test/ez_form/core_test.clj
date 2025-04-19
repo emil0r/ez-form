@@ -5,7 +5,9 @@
             [lookup.core :as lookup]))
 
 (defexpect render-test
-  (let [form {:meta   {:field-fns {:errors sut/render-field-errors}}
+  (let [form {:meta   {:field-fns {:errors sut/render-field-errors
+                                   :fn/t   (fn [_form _field [_ label]]
+                                             (name label))}}
               :fields {::username {:type       :text
                                    :errors     ["Error 1"
                                                 "Error 2"]
@@ -195,7 +197,7 @@
     (expect
      {:table-by-correct-class?   true
       :table-by-incorrect-class? false}
-     (let [hiccup (sut/as-table {:class ["table"]} form)]
+     (let [hiccup (sut/as-table form {:class ["table"]})]
        {:table-by-correct-class?   (->> hiccup
                                         (lookup/select ["table[class=table]"])
                                         (seq)
