@@ -8,4 +8,5 @@
                                 metosin/malli                        {:mvn/version "0.17.0"}
                                 ;; i18n libraries
                                 no.cjohansen/m1p                     {:mvn/version "2024.03.15"}
-                                tongue/tongue                        {:mvn/version "0.4.4"}}}}}
+                                tongue/tongue                        {:mvn/version "0.4.4"}
+                                com.taoensso/tempura                 {:mvn/version "1.5.4"}}}}}

@@ -1,26 +1,24 @@
-(ns ez-form.i18n.tongue-test
+(ns ez-form.i18n.tempura-test
   (:require [expectations.clojure.test :refer :all]
             [ez-form.core :as sut]
             [lookup.core :as lookup]
-            [tongue.core :as tongue]))
+            [taoensso.tempura :as tempura :refer [tr]]))
 
 (def dictionaries
-  {:en              {:form/username "Username"
-                     :form/email    "Email"}
-   :se              {:form/username "Användarnamn"
-                     :form/email    "Emejl"}
-   :no              {:form/username "Brukernavn"
-                     :form/email    "Epost"}
-   :tongue/fallback :en})
-
-(def t
-  (tongue/build-translate dictionaries))
+  {:en {:form/username "Username"
+        :form/email    "Email"}
+   :se {:form/username "Användarnamn"
+        :form/email    "Emejl"}
+   :no {:form/username "Brukernavn"
+        :form/email    "Epost"}})
 
 (defn translate [form _field [_ i18n-k]]
   (let [locale (get-in form [:meta :locale])]
-    (t locale i18n-k)))
+    (tr {:dict dictionaries}
+        [locale]
+        [i18n-k])))
 
-(defexpect tongue-test
+(defexpect tempura-test
   (sut/defform testform
     {:field-fns {:fn/t translate}}
     [{:name       ::username
