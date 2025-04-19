@@ -3,7 +3,7 @@
             [clojure.walk :as walk]
             [ez-form.field :as field]))
 
-(defn get-fields
+(defn fields->map
   "Return the fields of the form as a map"
   [form]
   (->> (:fields form)

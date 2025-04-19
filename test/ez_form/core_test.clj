@@ -193,5 +193,5 @@
     (expect
      {:username "foobar"
       :email "john.doe@example.com"}
-     (sut/get-fields form)
+     (sut/fields->map form)
      "get-fields on the form gives me a map of all values for the fields in the form")))
