@@ -33,7 +33,7 @@
     :label   "Which treat is the best?"
     :options [["Chocolate" "I choco with tears whenever I eat chocolate"]
               ["Ice cream" "I scream for ice cream. ALL THE TIME"]
-              ["Cinnamon buns" "Cinnamon buns. Nuff' said."]]}
+              ["Cinnamon buns" "Treat yourself some cinnamon buns. Nuff' said."]]}
    {:name    ::which-greek-letters-are-badass
     :type    :checkbox
     :label   "Which greek letters are badass?"
