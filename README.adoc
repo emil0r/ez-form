@@ -1,14 +1,14 @@
-# ez-form
+= ez-form
 
 Forms for the web. For Clojure(Script).
 
-## Dependancy
+== Dependancy
 
 ```clojure
 [ez-form "0.8.0"]
 ```
 
-## Usage
+== Usage
 
 Clojure works as below.
 
@@ -85,7 +85,7 @@ ClojureScript works roughly the same way, with the exception of how the form is 
 
 ```
 
-## fields
+== fields
 
 Special types
 
@@ -97,7 +97,7 @@ Special types
 
 Everything else goes into the :default multimethod for ez-form.field/field where the :type is used as the type of the field.
 
-### clojurescript fields
+=== clojurescript fields
 
 - :multiselect, gives a set of the values selected as a result
 ```clojure
@@ -197,7 +197,7 @@ Everything else goes into the :default multimethod for ez-form.field/field where
                    :long-date-format?}}}
 ```
 
-## help, text, label and error-messages
+== help, text, label and error-messages
 
 Help, text, label and error-messages can take functions as values. During evaluation the function for help, text and label will be called with two arguments, form and the current field. Error-messages will be called with at least 3 arguments: form, field, error key and any number of args. Whatever is returned will be used.
 
@@ -207,7 +207,7 @@ Help, text, label and error-messages can take functions as values. During evalua
 (defn delayed-t [k]
   (fn ([field]      (t @locale k))
       ([form field] (t @locale k))))
-    
+
 
 (defn alt-delayed-t [k]
   (fn [form field]
@@ -225,7 +225,7 @@ Help, text, label and error-messages can take functions as values. During evalua
 
 ```
 
-## helper functions
+== helper functions
 
 ```clojure
 
@@ -234,7 +234,7 @@ Help, text, label and error-messages can take functions as values. During evalua
 
 ```
 
-## transform
+== transform
 
 Add :transform to a field for transformations. Default support for :edn. Multimethod located in fields.cljc.
 
@@ -245,7 +245,7 @@ Add :transform to a field for transformations. Default support for :edn. Multime
    :validation (validations/number? [:age])}
 ```
 
-## decor
+== decor
 
 ez-form has a concept of decor for decorating the markup being returned with optional classes/markup and allowing for a post-process of the output.
 See ez-form.decorate for implementation details. Decor must always be a keyword starting with a ? sign (ie, :?decor or :?my-decor, :?wrapper, etc)
@@ -306,7 +306,7 @@ Decor also allows for overriding the content that is used for decorating. In the
   (myform nil {} {:decor {:?wrapper {:class nil}}}))
 ```
 
-## validation
+== validation
 Uses [vlad](https://github.com/logaan/vlad) for validation. See documentation there. Creating new validation fields is done by following vlad's documentation.
 
 ```clojure
@@ -318,7 +318,7 @@ Uses [vlad](https://github.com/logaan/vlad) for validation. See documentation th
   (form/valid? (myform default-data parmas)))
 ```
 
-## i18n
+== i18n
 Uses a very simple implementation meant to be switched for something else. [Tower](https://github.com/ptaoussanis/tower) is recommended.
 
 
@@ -354,12 +354,11 @@ Uses a very simple implementation meant to be switched for something else. [Towe
       (handler request))))
 ```
 
-## License
+== License
 
-Copyright © 2015-2017 Emil Bengtsson
+Copyright © 2015-2025 Emil Bengtsson
 
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
+Distributed under the MIT License.
 
 
 ---
