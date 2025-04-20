@@ -6,12 +6,15 @@
             [ring.middleware.anti-forgery :refer [*anti-forgery-token*]]))
 
 (defexpect render-test
-  (let [form {:meta   {:field-fns {:errors sut/render-field-errors
+  (let [form {:meta   {:posted?   true
+                       :fns       {:fn/test (fn [_ _] "This is a meta function")}
+                       :field-fns {:errors sut/render-field-errors
                                    :fn/t   (fn [_form _field [_ label]]
-                                             (name label))}}
+                                             (str/capitalize (name label)))}}
               :fields {::username {:type       :text
                                    :errors     ["Error 1"
                                                 "Error 2"]
+                                   :label      [:fn/t ::username]
                                    :help       [:div.help "My help text"]
                                    :attributes {:name        :username
                                                 :value       "johndoe"
@@ -24,7 +27,7 @@
                :placeholder :ui.username/placeholder}]]
      (sut/render form [:div
                        [::username]])
-     "Field is rendered")
+     "Field is rendered (field lookup)")
     (expect
      [:div
       [:input {:type        :text
@@ -39,7 +42,20 @@
                        [::username]
                        [::username :errors
                         [:div.error :error]]])
-     "Field is rendered with errors")
+     "Field is rendered with errors (:posted? is true)")
+    (expect
+     [:div
+      [:input {:type        :text
+               :name        :username
+               :value       "johndoe"
+               :placeholder :ui.username/placeholder}]
+      nil]
+     (sut/render (assoc-in form [:meta :posted?] false)
+                 [:div
+                  [::username]
+                  [::username :errors
+                   [:div.error :error]]])
+     "Field is rendered with no errors (:posted? is false)")
     (expect
      [:div
       [:input {:type        :text
@@ -50,7 +66,31 @@
      (sut/render form [:div
                        [::username]
                        [::username :help]])
-     "field is rendered with help text")))
+     "field is rendered with help text (field :key lookup)")
+    (expect
+     [:div
+      [:label
+       [:input {:type        :text
+                :name        :username
+                :value       "johndoe"
+                :placeholder :ui.username/placeholder}]
+       "Username"]]
+     (sut/render form [:div
+                       [:label
+                        [::username]
+                        [::username :label]]])
+     "field is rendered with a field-fn [field :key lookup]")
+    (expect
+     [:div
+      [:input {:type        :text
+               :name        :username
+               :value       "johndoe"
+               :placeholder :ui.username/placeholder}]
+      "This is a meta function"]
+     (sut/render form [:div
+                       [::username]
+                       [:fn/test]])
+     "field is rendered with a meta function")))
 
 (defexpect post-process-form-test
   (let [email          "john.doe@example.com"
@@ -231,3 +271,31 @@
             (lookup/select ["div.error"])
             (first))
        "Error shows up in as-template"))))
+
+(defexpect defform-changed-defaults-test
+  (sut/defform testform
+    {:fns {:fn/anti-forgery nil}}
+    [{:name       ::username
+      :validation [{:spec      #(not= % "foobar")
+                    :error-msg [:div.error "Username cannot be foobar"]}]
+      :type       :text}
+     {:name  ::email
+      :label [:i18n ::email-label]
+      :type  :email}])
+  (let [form (testform {:username "foobar"}
+                       {:__ez-form_form-name "testform"
+                        :email               "john.doe@example.com"})]
+    (expect
+     ["testform" "foobar" "john.doe@example.com"]
+     (->> (sut/as-table form)
+          (lookup/select '[input])
+          (map (comp :value second)))
+     "field values show up in as-table")
+    (expect
+     ["testform" "foobar" "john.doe@example.com"]
+     (->> (sut/as-template form [:div.layout
+                                 [:field]
+                                 [:field :errors :error]])
+          (lookup/select '[input])
+          (map (comp :value second)))
+     "field values show up in as-template")))

@@ -90,7 +90,6 @@
             (= (count x) 2)
             (not= :errors (second x))
             (get-in form (into [:fields] x)))
-       ;; TODO: Write test for this piece of logic
        (let [value (get-in form (into [:fields] x))]
          (if (and (vector? value)
                   (get-in form [:meta :field-fns (first value)]))
@@ -106,7 +105,7 @@
             (get-in form (into [:fields] (take 2 x)))
             (get-in form [:meta :field-fns (second x)]))
        (cond (and (= :errors (second x))
-                  (false? (get-in form [:meta :posted?])))
+                  (not (get-in form [:meta :posted?])))
              nil
 
              :else
