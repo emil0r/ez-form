@@ -1,13 +1,15 @@
 {:paths   ["src"]
  :deps    {}
  :aliases {:dev  {:extra-paths ["dev" "dev-resources"]
-                  :extra-deps  {org.clojure/clojure     {:mvn/version "1.12.0"}
-                                com.github.gnl/playback {:mvn/version "0.5.4"}
+                  :extra-deps  {org.clojure/clojure         {:mvn/version "1.12.0"}
+                                com.github.gnl/playback     {:mvn/version "0.5.4"}
                                 ;; for manual testing
-                                ring/ring               {:mvn/version "2.0.0-alpha1"}
-                                http-kit/http-kit       {:mvn/version "2.8.0"}
-                                hiccup/hiccup           {:mvn/version "2.0.0-RC5"}
-                                ring/ring-anti-forgery  {:mvn/version "1.4.0"}}}
+                                ring/ring                   {:mvn/version "2.0.0-alpha1"}
+                                http-kit/http-kit           {:mvn/version "2.8.0"}
+                                hiccup/hiccup               {:mvn/version "2.0.0-RC5"}
+                                ring/ring-anti-forgery      {:mvn/version "1.4.0"}
+                                ;; run tests from REPL
+                                org.clojure/tools.namespace {:mvn/version "1.5.0"}}}
            :test {:extra-paths ["test"]
                   :extra-deps  {com.github.seancorfield/expectations {:mvn/version "2.2.214"}
                                 no.cjohansen/lookup                  {:mvn/version "2024.12.23"}
