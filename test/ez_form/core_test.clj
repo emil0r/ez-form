@@ -2,7 +2,8 @@
   (:require [clojure.string :as str]
             [expectations.clojure.test :refer :all]
             [ez-form.core :as sut]
-            [lookup.core :as lookup]))
+            [lookup.core :as lookup]
+            [ring.middleware.anti-forgery :refer [*anti-forgery-token*]]))
 
 (defexpect render-test
   (let [form {:meta   {:field-fns {:errors sut/render-field-errors
@@ -63,7 +64,7 @@
                          ::email    {:type       :email
                                      :attributes {:placeholder :ui.email/placeholder}}}}
         processed-form (sut/post-process-form form {:email               email
-                                                    :__ez-form.form-name "test"})]
+                                                    :__ez-form_form-name "test"})]
     (expect
      {:name        :username
       :value       username
@@ -96,7 +97,7 @@
                                                   :placeholder :ui.email/placeholder}}}}
         processed-form (sut/post-process-form form {:username            ""
                                                     :email               email
-                                                    :__ez-form.form-name "test"})]
+                                                    :__ez-form_form-name "test"})]
     (expect
      [user-error1]
      (get-in processed-form [:fields ::username :errors])
@@ -126,7 +127,7 @@
                                                   :placeholder :ui.email/placeholder}}}}
         processed-form (sut/post-process-form form {:username            ""
                                                     :email               email
-                                                    :__ez-form.form-name "test"})]
+                                                    :__ez-form_form-name "test"})]
     (expect
      [user-error1]
      (get-in processed-form [:fields ::username :errors]))
@@ -144,88 +145,89 @@
      {:name  ::email
       :label [:i18n ::email-label]
       :type  :email}])
-  (let [form (testform {:username "foobar"}
-                       {:__ez-form.form-name "testform"
-                        :email               "john.doe@example.com"})]
-    (expect
-     "testform"
-     (get-in form [:meta :form-name])
-     "form-name is set based on the name of the form in defform")
-    (expect
-     "foobar"
-     (get-in form [:fields ::username :value])
-     "username's value is set on the data being sent in")
-    (expect
-     "john.doe@example.com"
-     (get-in form [:fields ::email :value])
-     "email's value is set on the params being sent in")
-    (expect
-     [::username ::email]
-     (get-in form [:meta :field-order])
-     "field order is set according to the order in which fields are sent in")
-    (expect
-     false
-     (sut/valid? form)
-     "Form is invalid - name is foobar which breaks the validation for ::username")
-    (expect
-     "Username"
-     (->> (sut/as-table form)
-          (lookup/select '[th])
-          (first)
-          (lookup/text))
-     "th value for ::username is the capitalized name of ::username")
-    (expect
-     (str ::email-label)
-     (->> (sut/as-table form)
-          (lookup/select '[th])
-          (second)
-          (lookup/text))
-     "th value for ::email is the keyword ::email-label (lookup picks it up with text)")
-    (expect
-     ["testform" "foobar" "john.doe@example.com"]
-     (->> (sut/as-table form)
-          (lookup/select '[input])
-          (map (comp :value second)))
-     "field values show up in as-table")
-    (expect
-     [:div {:class #{"error"}}
-      "Username cannot be foobar"]
-     (->> (sut/as-table form)
-          (lookup/select ["div.error"])
-          (first))
-     "Error shows up in as-table")
-    (expect
-     {:table-by-correct-class?   true
-      :table-by-incorrect-class? false}
-     (let [hiccup (sut/as-table form {:class ["table"]})]
-       {:table-by-correct-class?   (->> hiccup
-                                        (lookup/select ["table[class=table]"])
-                                        (seq)
-                                        (some?))
-        :table-by-incorrect-class? (->> hiccup
-                                        (lookup/select ["table[class=faulty-css]"])
-                                        (seq)
-                                        (some?))})
-     "as-table correctly injects table-opts")
-    (expect
-     {:username "foobar"
-      :email    "john.doe@example.com"}
-     (sut/fields->map form)
-     "fields->map on the form gives me a map of all values for the fields in the form")
-    (expect
-     ["testform" "foobar" "john.doe@example.com"]
-     (->> (sut/as-template form [:div.layout
-                                 [:field]
-                                 [:field :errors :error]])
-          (lookup/select '[input])
-          (map (comp :value second)))
-     "field values show up in as-template")
-    (expect
-     [:div {:class #{"error"}}
-      "Username cannot be foobar"]
-     (->> (sut/as-template form [:div.layout
-                                 [:field]
-                                 [:field :errors :error]])
-          (lookup/select ["div.error"])
-          (first))
-     "Error shows up in as-template")))
+  (binding [*anti-forgery-token* "anti-forgery-token"]
+    (let [form (testform {:username "foobar"}
+                         {:__ez-form_form-name "testform"
+                          :email               "john.doe@example.com"})]
+      (expect
+       "testform"
+       (get-in form [:meta :form-name])
+       "form-name is set based on the name of the form in defform")
+      (expect
+       "foobar"
+       (get-in form [:fields ::username :value])
+       "username's value is set on the data being sent in")
+      (expect
+       "john.doe@example.com"
+       (get-in form [:fields ::email :value])
+       "email's value is set on the params being sent in")
+      (expect
+       [::username ::email]
+       (get-in form [:meta :field-order])
+       "field order is set according to the order in which fields are sent in")
+      (expect
+       false
+       (sut/valid? form)
+       "Form is invalid - name is foobar which breaks the validation for ::username")
+      (expect
+       "Username"
+       (->> (sut/as-table form)
+            (lookup/select '[th])
+            (first)
+            (lookup/text))
+       "th value for ::username is the capitalized name of ::username")
+      (expect
+       (str ::email-label)
+       (->> (sut/as-table form)
+            (lookup/select '[th])
+            (second)
+            (lookup/text))
+       "th value for ::email is the keyword ::email-label (lookup picks it up with text)")
+      (expect
+       ["testform" "anti-forgery-token" "foobar" "john.doe@example.com"]
+       (->> (sut/as-table form)
+            (lookup/select '[input])
+            (map (comp :value second)))
+       "field values show up in as-table")
+      (expect
+       [:div {:class #{"error"}}
+        "Username cannot be foobar"]
+       (->> (sut/as-table form)
+            (lookup/select ["div.error"])
+            (first))
+       "Error shows up in as-table")
+      (expect
+       {:table-by-correct-class?   true
+        :table-by-incorrect-class? false}
+       (let [hiccup (sut/as-table form {:class ["table"]})]
+         {:table-by-correct-class?   (->> hiccup
+                                          (lookup/select ["table[class=table]"])
+                                          (seq)
+                                          (some?))
+          :table-by-incorrect-class? (->> hiccup
+                                          (lookup/select ["table[class=faulty-css]"])
+                                          (seq)
+                                          (some?))})
+       "as-table correctly injects table-opts")
+      (expect
+       {:username "foobar"
+        :email    "john.doe@example.com"}
+       (sut/fields->map form)
+       "fields->map on the form gives me a map of all values for the fields in the form")
+      (expect
+       ["testform" "anti-forgery-token" "foobar" "john.doe@example.com"]
+       (->> (sut/as-template form [:div.layout
+                                   [:field]
+                                   [:field :errors :error]])
+            (lookup/select '[input])
+            (map (comp :value second)))
+       "field values show up in as-template")
+      (expect
+       [:div {:class #{"error"}}
+        "Username cannot be foobar"]
+       (->> (sut/as-template form [:div.layout
+                                   [:field]
+                                   [:field :errors :error]])
+            (lookup/select ["div.error"])
+            (first))
+       "Error shows up in as-template"))))

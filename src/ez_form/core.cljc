@@ -3,6 +3,13 @@
             [clojure.walk :as walk]
             [ez-form.field :as field]))
 
+(defn anti-forgery [_ _]
+  (require 'ring.middleware.anti-forgery)
+  [:input {:id    :__anti-forgery-token
+           :name  :__anti-forgery-token
+           :value (force ring.middleware.anti-forgery/*anti-forgery-token*)
+           :type  :hidden}])
+
 (defn- get-field-name [field-k field]
   (get-in field [:attributes :name]
           (keyword (name field-k))))
@@ -21,7 +28,7 @@
    (every? empty? (map :errors (vals (:fields form))))))
 
 (defn- is-posted? [form params]
-  (= (:__ez-form.form-name params)
+  (= (:__ez-form_form-name params)
      (get-in form [:meta :form-name])))
 
 (defn post-process-form [form params]
@@ -30,22 +37,23 @@
                           (get-in form [:meta :validation] :spec)
                           'ez-form.validation/validate))
         posted?     (is-posted? form params)]
-    (reduce (fn [form [field-k field]]
-              (let [field-name (get-field-name field-k field)
-                    label      (get-in field [:label]
-                                       (str/capitalize (name field-name)))
-                    value      (if posted?
-                                 (or (get params field-name)
-                                     (get-in form [:meta :field-data field-name]))
-                                 (get-in form [:meta :field-data field-name]))]
-                (assoc-in form [:fields field-k]
-                          (-> field
-                              (assoc-in [:attributes :value] value)
-                              (assoc-in [:attributes :name] field-name)
-                              (assoc :value value)
-                              (assoc :label label)
-                              (validate-fn value)))))
-            form (:fields form))))
+    (-> (reduce (fn [form [field-k field]]
+                  (let [field-name (get-field-name field-k field)
+                        label      (get-in field [:label]
+                                           (str/capitalize (name field-name)))
+                        value      (if posted?
+                                     (or (get params field-name)
+                                         (get-in form [:meta :field-data field-name]))
+                                     (get-in form [:meta :field-data field-name]))]
+                    (assoc-in form [:fields field-k]
+                              (-> field
+                                  (assoc-in [:attributes :value] value)
+                                  (assoc-in [:attributes :name] field-name)
+                                  (assoc :value value)
+                                  (assoc :label label)
+                                  (validate-fn value)))))
+                form (:fields form))
+        (assoc-in [:meta :posted?] posted?))))
 
 (defn- walk-errors [layout error]
   (walk/postwalk (fn [x]
@@ -62,6 +70,13 @@
   (walk/postwalk
    (fn [x]
      (cond
+       ;; meta functions
+       (and (vector? x)
+            (keyword? (first x))
+            (get-in form [:meta :fns (first x)]))
+       (let [f (get-in form [:meta :fns (first x)])]
+         (f form x))
+
        ;; render field
        (and (vector? x)
             (qualified-keyword? (first x))
@@ -90,9 +105,14 @@
             (>= (count x) 2)
             (get-in form (into [:fields] (take 2 x)))
             (get-in form [:meta :field-fns (second x)]))
-       (let [f     (get-in form [:meta :field-fns (second x)])
-             field (get-in form [:fields (first x)])]
-         (f form field x))
+       (cond (and (= :errors (second x))
+                  (false? (get-in form [:meta :posted?])))
+             nil
+
+             :else
+             (let [f     (get-in form [:meta :field-fns (second x)])
+                   field (get-in form [:fields (first x)])]
+               (f form field x)))
 
        :else
        x))
@@ -101,7 +121,7 @@
 (defn form-name-input [form]
   [:input {:type  :hidden
            :value (get-in form [:meta :form-name])
-           :name  :__ez-form.form-name}])
+           :name  :__ez-form_form-name}])
 
 (defn as-table
   "Render the form as a table"
@@ -116,6 +136,7 @@
       form
       (list
        (form-name-input form)
+       [:fn/anti-forgery]
        [:table table-opts
         [:tbody
          (map (fn [field-k]
@@ -141,7 +162,8 @@
                                     field-k
                                     x))
                                 template-layout)))
-          (concat [(form-name-input form)])
+          (concat [(form-name-input form)
+                   [:fn/anti-forgery]])
           (render form)))))
 
 (defn ->form
@@ -165,8 +187,8 @@
   [form-name meta-opts fields]
   (let [form-name*           (name form-name)
         fields*              (->> fields
-                         (map (juxt :name #(dissoc % :name)))
-                         (into (sorted-map)))
+                                  (map (juxt :name #(dissoc % :name)))
+                                  (into (sorted-map)))
         field-order          (mapv :name fields)
         meta-opts-from-macro meta-opts]
     ;; TODO: Fix linting
@@ -181,6 +203,7 @@
                   :field-data      (raw-data->field-data ~'data)
                   :field-order     ~field-order
                   :field-fns       {:errors render-field-errors}
+                  :fns             {:fn/anti-forgery anti-forgery}
                   :validation      :spec
                   :validations-fns {:spec  'ez-form.validation/validate
                                     :malli 'ez-form.validation.validation-malli/validate}}
