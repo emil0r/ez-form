@@ -27,7 +27,13 @@
     :validation [{:spec      #(and
                                (string? %)
                                (str/includes? % "@"))
-                  :error-msg [:div.error "Email must have an @ character"]}]}])
+                  :error-msg [:div.error "Email must have an @ character"]}]}
+   {:name    ::is-the-best
+    :type    :radio
+    :label   "Which treat is the best?"
+    :options [["Chocolate" "I choco with tears whenever I eat chocolate"]
+              ["Ice cream" "I scream for ice cream. ALL THE TIME"]
+              ["Cinnamon buns" "Cinnamon buns. Nuff' said."]]}])
 
 
 (defn sl-input-color-picker [{:keys [type attributes]}]
@@ -73,7 +79,10 @@
                  [:meta {:charset "UTF-8"}]
                  [:title "ez-form test page"]
                  [:style {:type "text/css"}
-                  ".error {color: red;}"]
+                  "
+.error {color: red;}
+label {display: block;}
+"]
                  [:link {:rel  "stylesheet"
                          :href "https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/themes/light.css"}]
                  [:script {:type "module"
