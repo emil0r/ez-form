@@ -87,7 +87,7 @@
 
        ;; render field
        (and (vector? x)
-            (qualified-keyword? (first x))
+            (keyword? (first x))
             (= 1 (count x))
             (get-in form [:fields (first x)]))
        (field/render (get-in form [:fields (first x)])
@@ -95,7 +95,7 @@
 
        ;; render lookup
        (and (vector? x)
-            (qualified-keyword? (first x))
+            (keyword? (first x))
             (= (count x) 2)
             (not= :errors (second x))
             (get-in form (into [:fields] x)))
@@ -109,7 +109,7 @@
 
        ;; render field functions
        (and (vector? x)
-            (qualified-keyword? (first x))
+            (keyword? (first x))
             (>= (count x) 2)
             (get-in form (into [:fields] (take 2 x)))
             (get-in form [:meta :field-fns (second x)]))
@@ -198,7 +198,7 @@
   [form-name meta-opts fields]
   (let [form-name*           (name form-name)
         fields*              (->> fields
-                                  (map (juxt :name #(dissoc % :name)))
+                                  (map (juxt :name identity))
                                   (into (sorted-map)))
         field-order          (mapv :name fields)
         meta-opts-from-macro meta-opts]
