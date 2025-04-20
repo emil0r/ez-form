@@ -6,9 +6,7 @@
 
 
 (defn sl-input-color-picker [{:keys [type attributes]}]
-  (let [type* (name type)]
-    [type (merge attributes
-                 {:type (subs type* 3 (count type*))})]))
+  [type attributes])
 
 (defn sl-input [{:keys [type attributes]}]
   (let [type* (name type)]

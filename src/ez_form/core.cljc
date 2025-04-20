@@ -184,7 +184,11 @@
                       :fields fields}
                      params))
 
-(defn raw-data->field-data [data]
+(defn raw-data->field-data
+  "Transform data from namespaced keywords to keywords.
+  wrap-keyword-params is typically not used with keyword namespaces, and so
+  this is a sensible default for now"
+  [data]
   (->> data
        (map (fn [[k v]]
               (if (qualified-keyword? k)
