@@ -43,14 +43,16 @@
    (sut/render {:type       :text
                 :attributes {:name        :test
                              :value       "value"
-                             :placeholder "placeholder"}})
+                             :placeholder "placeholder"}}
+               sut/fields)
    "render function")
   (expect
    "I am missing the field :test"
    (sut/render {:type       :foo
                 :attributes {:name        :test
                              :value       "value"
-                             :placeholder "placeholder"}})
+                             :placeholder "placeholder"}}
+               sut/fields)
    "render function - field type does not exist"))
 
 (defexpect textarea-field-test

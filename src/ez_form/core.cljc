@@ -82,7 +82,8 @@
             (qualified-keyword? (first x))
             (= 1 (count x))
             (get-in form [:fields (first x)]))
-       (field/render (get-in form [:fields (first x)]))
+       (field/render (get-in form [:fields (first x)])
+                     (get-in form [:meta :fields]))
 
        ;; render lookup
        (and (vector? x)
@@ -168,7 +169,9 @@
 (defn ->form
   "Create a form"
   [opts fields params]
-  (post-process-form {:meta   opts
+  (post-process-form {:meta   (-> opts
+                                  (update :fields merge (:extra-fields opts))
+                                  (dissoc :extra-fields))
                       :fields fields}
                      params))
 
@@ -202,6 +205,7 @@
                   :field-data      (raw-data->field-data ~'data)
                   :field-order     ~field-order
                   :field-fns       {:errors render-field-errors}
+                  :fields          field/fields
                   :fns             {:fn/anti-forgery anti-forgery}
                   :validation      :spec
                   :validations-fns {:spec  'ez-form.validation/validate

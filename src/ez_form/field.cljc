@@ -44,10 +44,9 @@
              :textarea       textarea-field})
 
 (defn render
-  ([field]
-   (render field fields))
-  ([field fields]
-   (if-let [field-fn (fields (:type field))]
-     (field-fn field)
-     (str "I am missing the field " (pr-str (or (get-in field [:attributes :name])
-                                                field))))))
+  "Render a field according to type"
+  [field fields]
+  (if-let [field-fn (fields (:type field))]
+    (field-fn field)
+    (str "I am missing the field " (pr-str (or (get-in field [:attributes :name])
+                                               field)))))

@@ -2,11 +2,13 @@
   (:require [clojure.string :as str]
             [expectations.clojure.test :refer :all]
             [ez-form.core :as sut]
+            [ez-form.field :as field]
             [lookup.core :as lookup]
             [ring.middleware.anti-forgery :refer [*anti-forgery-token*]]))
 
 (defexpect render-test
   (let [form {:meta   {:posted?   true
+                       :fields    field/fields
                        :fns       {:fn/test (fn [_ _] "This is a meta function")}
                        :field-fns {:errors sut/render-field-errors
                                    :fn/t   (fn [_form _field [_ label]]
