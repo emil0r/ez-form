@@ -1,14 +1,21 @@
 (ns ez-form.core
   (:require [clojure.string :as str]
             [clojure.walk :as walk]
-            [ez-form.field :as field]))
+            [ez-form.field :as field]
+            [ez-form.validation]))
 
-(defn anti-forgery [_ _]
-  (require 'ring.middleware.anti-forgery)
-  [:input {:id    :__anti-forgery-token
-           :name  :__anti-forgery-token
-           :value (force ring.middleware.anti-forgery/*anti-forgery-token*)
-           :type  :hidden}])
+(defn anti-forgery [form _]
+  #?(:clj
+     (do (require 'ring.middleware.anti-forgery)
+         [:input {:id    :__anti-forgery-token
+                  :name  :__anti-forgery-token
+                  :value (force @(resolve 'ring.middleware.anti-forgery/*anti-forgery-token*))
+                  :type  :hidden}])
+     :cljs
+     [:input {:id    :__anti-forgery-token
+              :name  :__anti-forgery-token
+              :value (get-in form [:meta :anti-forgery-token])
+              :type  :hidden}]))
 
 (defn- get-field-name [field-k field]
   (get-in field [:attributes :name]
@@ -32,11 +39,12 @@
      (get-in form [:meta :form-name])))
 
 (defn post-process-form [form params]
-  (let [validate-fn (requiring-resolve
-                     (get (get-in form [:meta :validation-fns])
-                          (get-in form [:meta :validation] :spec)
-                          'ez-form.validation/validate))
+  (let [validate-fn (get (get-in form [:meta :validation-fns])
+                         (get-in form [:meta :validation] :spec))
         posted?     (is-posted? form params)]
+    (when (nil? validate-fn)
+      (throw (ex-info "Missing validate-fn" {:validation     (get-in form [:meta :validation] :spec)
+                                             :validation-fns (get-in form [:meta :validation-fns])})))
     (-> (reduce (fn [form [field-k field]]
                   (let [field-name (get-field-name field-k field)
                         label      (get-in field [:label]
@@ -171,7 +179,8 @@
   [opts fields params]
   (post-process-form {:meta   (-> opts
                                   (update :fields merge (:extra-fields opts))
-                                  (dissoc :extra-fields))
+                                  (update :validation-fns merge (:extra-validation-fns opts))
+                                  (dissoc :extra-fields :extra-validation-fns))
                       :fields fields}
                      params))
 
@@ -201,15 +210,14 @@
         (~form-name nil ~'data ~'params))
        ([~'meta-opts ~'data ~'params]
         (->form (merge
-                 {:form-name       ~form-name*
-                  :field-data      (raw-data->field-data ~'data)
-                  :field-order     ~field-order
-                  :field-fns       {:errors render-field-errors}
-                  :fields          field/fields
-                  :fns             {:fn/anti-forgery anti-forgery}
-                  :validation      :spec
-                  :validations-fns {:spec  'ez-form.validation/validate
-                                    :malli 'ez-form.validation.validation-malli/validate}}
+                 {:form-name      ~form-name*
+                  :field-data     (raw-data->field-data ~'data)
+                  :field-order    ~field-order
+                  :field-fns      {:errors render-field-errors}
+                  :fields         field/fields
+                  :fns            {:fn/anti-forgery anti-forgery}
+                  :validation     :spec
+                  :validation-fns {:spec ez-form.validation/validate}}
                  ~meta-opts-from-macro
                  ~'meta-opts)
                 ~fields*

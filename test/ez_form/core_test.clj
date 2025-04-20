@@ -3,6 +3,8 @@
             [expectations.clojure.test :refer :all]
             [ez-form.core :as sut]
             [ez-form.field :as field]
+            [ez-form.validation]
+            [ez-form.validation.validation-malli]
             [lookup.core :as lookup]
             [ring.middleware.anti-forgery :refer [*anti-forgery-token*]]))
 
@@ -97,9 +99,10 @@
 (defexpect post-process-form-test
   (let [email          "john.doe@example.com"
         username       "john.doe"
-        form           {:meta {:validation :spec
-                               :form-name  "test"
-                               :field-data {:username username}}
+        form           {:meta {:validation     :spec
+                               :form-name      "test"
+                               :validation-fns {:spec ez-form.validation/validate}
+                               :field-data     {:username username}}
                         :fields
                         {::username {:type       :text
                                      :attributes {:placeholder :ui.username/placeholder}}
@@ -124,8 +127,9 @@
   (let [user-error1    :error.username/must-exist
         email-error1   :error.email/must-exist
         email          "john.doe@example.com"
-        form           {:meta {:validation :spec
-                               :form-name  "test"}
+        form           {:meta {:validation     :spec
+                               :validation-fns {:spec ez-form.validation/validate}
+                               :form-name      "test"}
                         :fields
                         {::username {:type       :text
                                      :validation [{:spec      #(not (str/blank? %))
@@ -155,7 +159,7 @@
         email          "john.doe@example.com"
         form           {:meta {:validation     :malli
                                :form-name      "test"
-                               :validation-fns {:malli 'ez-form.validation.validation-malli/validate}}
+                               :validation-fns {:malli ez-form.validation.validation-malli/validate}}
                         :fields
                         {::username {:type       :text
                                      :validation [{:spec      [:fn #(not (str/blank? %))]
