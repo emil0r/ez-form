@@ -18,6 +18,22 @@
             option-label]))
        options))
 
+(defn input-checkbox-field [{:keys [value options attributes]}]
+  (let [values (set (if (sequential? value)
+                      value
+                      [value]))]
+    (map (fn [option]
+           (let [[option-value option-label] (if (vector? option)
+                                               option
+                                               [option option])]
+             [:label
+              [:input (merge attributes
+                             {:type    :checkbox
+                              :value   option-value
+                              :checked (contains? values option-value)})]
+              option-label]))
+         options)))
+
 (defn textarea-field [{:keys [attributes]}]
   [:textarea (dissoc attributes :value)
    (:value attributes)])
@@ -33,7 +49,7 @@
 
 
 (def fields {:button         input-field
-             :checkbox       input-field
+             :checkbox       input-checkbox-field
              :color          input-field
              :date           input-field
              :datetime-local input-field

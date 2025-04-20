@@ -28,12 +28,20 @@
                                (string? %)
                                (str/includes? % "@"))
                   :error-msg [:div.error "Email must have an @ character"]}]}
-   {:name    ::is-the-best
+   {:name    ::which-dessert-is-the-best
     :type    :radio
     :label   "Which treat is the best?"
     :options [["Chocolate" "I choco with tears whenever I eat chocolate"]
               ["Ice cream" "I scream for ice cream. ALL THE TIME"]
-              ["Cinnamon buns" "Cinnamon buns. Nuff' said."]]}])
+              ["Cinnamon buns" "Cinnamon buns. Nuff' said."]]}
+   {:name    ::which-greek-letters-are-badass
+    :type    :checkbox
+    :label   "Which greek letters are badass?"
+    :options ["α"
+              "β"
+              "γ"
+              "δ"
+              "ε"]}])
 
 
 (defn sl-input-color-picker [{:keys [type attributes]}]

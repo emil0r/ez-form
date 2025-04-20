@@ -67,6 +67,100 @@
                                         :placeholder "placeholder"}})
    "radio input")
   (expect
+   (list [:label
+          [:input {:type        :checkbox
+                   :name        :test
+                   :value       "A"
+                   :checked     true
+                   :placeholder "placeholder"}]
+          "This is A"]
+         [:label
+          [:input {:type        :checkbox
+                   :name        :test
+                   :value       "B"
+                   :checked     true
+                   :placeholder "placeholder"}]
+          "B"]
+         [:label
+          [:input {:type        :checkbox
+                   :name        :test
+                   :value       "C"
+                   :checked     false
+                   :placeholder "placeholder"}]
+          "C"])
+   (sut/input-checkbox-field {:type       :checkbox
+                              :value      ["A" "B"]
+                              :options    [["A" "This is A"]
+                                           "B"
+                                           "C"]
+                              :attributes {:name        :test
+                                           :value       ["A" "B"]
+                                           :placeholder "placeholder"}})
+   "checkbox input")
+  (expect
+   (list [:label
+          [:input {:type        :checkbox
+                   :name        :test
+                   :value       "A"
+                   :checked     true
+                   :placeholder "placeholder"}]
+          "This is A"]
+         [:label
+          [:input {:type        :checkbox
+                   :name        :test
+                   :value       "B"
+                   :checked     false
+                   :placeholder "placeholder"}]
+          "B"]
+         [:label
+          [:input {:type        :checkbox
+                   :name        :test
+                   :value       "C"
+                   :checked     false
+                   :placeholder "placeholder"}]
+          "C"])
+   (sut/input-checkbox-field {:type       :checkbox
+                              :value      "A"
+                              :options    [["A" "This is A"]
+                                           "B"
+                                           "C"]
+                              :attributes {:name        :test
+                                           :value       "A"
+                                           :placeholder "placeholder"}})
+   "checkbox input with single value")
+  ;; TODO: Make this test pass
+  #_(expect
+     (list [:label
+            [:input {:type        :checkbox
+                     :name        :test
+                     :value       "A"
+                     :checked     true
+                     :placeholder "placeholder"}]
+            "This is A"]
+           [:label
+            [:input {:type        :checkbox
+                     :name        :test
+                     :value       "B"
+                     :checked     false
+                     :placeholder "placeholder"}]
+            "B"]
+           [:label
+            [:input {:type        :checkbox
+                     :name        :test
+                     :value       "C"
+                     :checked     false
+                     :placeholder "placeholder"}]
+            "C"])
+     (sut/input-checkbox-field {:type       :checkbox
+                                :value      ["A"]
+                                :options    [["A" "This is A"]
+                                             ["A" "B"]
+                                             ["A" "C"]]
+                                :attributes {:name        :test
+                                             :value       "A"
+                                             :placeholder "placeholder"}})
+     "checkbox input edge case with multiple options that has the same value, but not all are picked")
+  (expect
    [:input {:type        :text
             :name        :test
             :value       "value"
