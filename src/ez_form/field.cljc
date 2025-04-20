@@ -3,7 +3,20 @@
 
 (defn input-field [{:keys [type attributes]}]
   [:input (merge attributes
-                 {:type (or type :text)})])
+                 {:type type})])
+
+(defn input-radio-field [{:keys [value options attributes]}]
+  (map (fn [option]
+         (let [[option-value option-label] (if (vector? option)
+                                             option
+                                             [option option])]
+           [:label
+            [:input (merge attributes
+                           {:type    :radio
+                            :value   option-value
+                            :checked (= option-value value)})]
+            option-label]))
+       options))
 
 (defn textarea-field [{:keys [attributes]}]
   [:textarea (dissoc attributes :value)
@@ -30,7 +43,7 @@
              :month          input-field
              :number         input-field
              :password       input-field
-             :radio          input-field
+             :radio          input-radio-field
              :range          input-field
              :reset          input-field
              :search         input-field

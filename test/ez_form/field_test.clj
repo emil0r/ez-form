@@ -36,6 +36,37 @@
                                    ["option-2" "Option 2"]]})
    "select")
   (expect
+   (list [:label
+          [:input {:type        :radio
+                   :name        :test
+                   :value       "A"
+                   :checked     false
+                   :placeholder "placeholder"}]
+          "This is A"]
+         [:label
+          [:input {:type        :radio
+                   :name        :test
+                   :value       "B"
+                   :checked     true
+                   :placeholder "placeholder"}]
+          "B"]
+         [:label
+          [:input {:type        :radio
+                   :name        :test
+                   :value       "C"
+                   :checked     false
+                   :placeholder "placeholder"}]
+          "C"])
+   (sut/input-radio-field {:type       :radio
+                           :value      "B"
+                           :options    [["A" "This is A"]
+                                        "B"
+                                        "C"]
+                           :attributes {:name        :test
+                                        :value       "B"
+                                        :placeholder "placeholder"}})
+   "radio input")
+  (expect
    [:input {:type        :text
             :name        :test
             :value       "value"
