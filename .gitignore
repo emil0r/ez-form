@@ -14,3 +14,6 @@ pom.xml.asc
 /resources/test/compiled.js
 /repl
 *.log
+node_modules
+.shadow-cljs
+dev-resources/public

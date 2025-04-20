@@ -1,13 +1,16 @@
 (ns dev
   (:require [clojure.string :as str]
             [ez-form.core :as ezform :refer [defform]]
-            [ez-form.field :as field]
+            [ez-form-test.forms :refer [replicant-form]]
             [hiccup.page :refer [doctype]]
             [hiccup2.core :as h]
             [org.httpkit.server :as server]
-            [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]
+            [playback.core]
+            [ring.middleware.anti-forgery :refer [*anti-forgery-token*
+                                                  wrap-anti-forgery]]
             [ring.middleware.keyword-params :refer [wrap-keyword-params]]
             [ring.middleware.params :refer [wrap-params]]
+            [ring.middleware.resource :refer [wrap-resource]]
             [ring.middleware.session :refer [wrap-session]]))
 
 
@@ -60,7 +63,8 @@
 (defn handler [request]
   #_(def request request)
   (let [form    (signup-form {} (:params request))
-        sl-form (shoelace-form {} (:params request))]
+        sl-form (shoelace-form {} (:params request))
+        r-form  (replicant-form {} (:params request))]
     {:status 200
      :body   (str
               (h/html
@@ -73,7 +77,9 @@
                  [:link {:rel  "stylesheet"
                          :href "https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/themes/light.css"}]
                  [:script {:type "module"
-                           :src  "https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/shoelace.js"}]]
+                           :src  "https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.20.1/cdn/shoelace.js"}]
+                 [:script {:type "text/javascript"
+                           :src  "/js/main.js"}]]
                 [:body
                  [:h1 "Test signup-form"]
                  (when (ezform/valid? form)
@@ -89,7 +95,20 @@
                          [:pre (pr-str (ezform/fields->map sl-form))]))
                  [:form {:method :post}
                   (ezform/as-table sl-form)
-                  [:input {:type :submit :value "Sumbit"}]]]))}))
+                  [:input {:type :submit :value "Sumbit"}]]
+
+                 [:h1 "Test replicant-form (copy of shoelace-form)"]
+                 [:p "This will be rendered by hiccup on the backend and replicant on the frontend"]
+                 [:div#replicant-app
+                  [:form {:method :post}
+                   (ezform/as-table r-form)
+                   [:input {:type :submit :value "Submit"}]]]
+                 [:script
+                  {:type "text/javascript"}
+                  (h/raw (str "ez_form_test.core.init('" *anti-forgery-token*
+                              "','"
+                              (pr-str (:params request))
+                              "');"))]]))}))
 
 
 (defonce server-instance (atom nil))
@@ -101,12 +120,19 @@
                 (wrap-anti-forgery)
                 (wrap-session)
                 (wrap-keyword-params)
-                (wrap-params))]
+                (wrap-params)
+                (wrap-resource "public"))]
     (reset! server-instance (server/run-server app {:port 5555})))
   (println "dev server started on port 5555"))
 
 (comment
 
   (start)
+
+  (do
+    ;; Ensure all tests are imported
+    ((requiring-resolve 'test/require-all-tests))
+    ;; Run all tests
+    ((requiring-resolve 'test/run-all-tests)))
 
   )
