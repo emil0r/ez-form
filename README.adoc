@@ -1,6 +1,7 @@
 = ez-form
 
-Forms for the web using Hiccup. Tested with Hiccup and Replicant for both Clojure and Clojurescript.
+Forms for the web using hiccup. Tested with Hiccup and Replicant for
+both Clojure and Clojurescript.
 
 image::https://img.shields.io/clojars/v/ez-form.svg[https://clojars.org/ez-form,link=https://clojars.org/ez-form]
 
@@ -8,8 +9,10 @@ image::https://img.shields.io/clojars/v/ez-form.svg[https://clojars.org/ez-form,
 
 `defform` takes three arguments.
 
-* `form-name` - The name of the form. This is used internally to keep track of which form is being used when the backend version is used
-* `meta-opts` - This goes into the `:meta` keyword in the form for controlling how the form behaves
+* `form-name` - The name of the form. This is used internally to keep
+  track of which form is being used when the backend version is used
+* `meta-opts` - This goes into the `:meta` keyword in the form for
+  controlling how the form behaves
 * `fielda`    - Which fields the form has
 
 .Example usage
@@ -98,7 +101,7 @@ Here we add a shoelace web component for color picking.
     :type       :sl-color-picker
     :validation [{:spec      #(not (str/blank? %))
                   :error-msg [:div.error "Color must be picked"]}]}]}
-  
+
 ```
 
 == label and error messages
@@ -116,16 +119,19 @@ Default support for labels and error messages in as-table and as-template.
 
 == validation
 
-Validation is done by spec as default. Validation is extendible. Each new validation
-will need a validate function that is 2-arity and takes `field` and `value` as arguments.
+Validation is done by spec as default. Validation is extendible. Each
+new validation type will need a validate function that is 2-arity and
+takes `field` and `value` as arguments.
 
 Malli is supported out of the box.
 
 == i18n
 
-i18n is supported and does not have a default implementation. link:../test/ez_form/i18n/m1p_test.clj[m1p], 
-link:../test/ez_form/i18n/tongue_test.clj[tongue] and link:test/ez_form/i18n/tempura_test.clj[tempura] have 
-implementation examples in the test suite.
+i18n is supported and does not have a default
+implementation. link:../test/ez_form/i18n/m1p_test.clj[m1p],
+link:../test/ez_form/i18n/tongue_test.clj[tongue] and
+link:test/ez_form/i18n/tempura_test.clj[tempura] have implementation
+examples in the test suite.
 
 == Examples
 
