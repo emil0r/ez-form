@@ -5,6 +5,18 @@ both Clojure and Clojurescript.
 
 image::https://img.shields.io/clojars/v/ez-form.svg[https://clojars.org/ez-form,link=https://clojars.org/ez-form]
 
+== Out of the box
+
+* Declare how you want forms to work
+* Generate hiccup based on a declared form
+* Handle errors
+* i18n support
+* Extendible
+* anti-forgery support (can be turned off, but don't do this)
+* Clojure (using https://github.com/weavejester/hiccup[Hiccup],
+  https://replicant.fun/[Replicant] or some other library)
+* Clojurescript (using https://replicant.fun/[Replicant])
+
 == defform
 
 `defform` takes three arguments.
@@ -18,7 +30,7 @@ image::https://img.shields.io/clojars/v/ez-form.svg[https://clojars.org/ez-form,
 .Example usage
 ```clojure
 (require '[clojures.string :as str])
-(require '[ez-form.core :as form :refer [defform]])
+(require '[ez-form.core :as ezform :refer [defform]])
 
 (defn present [s]
   (not (str/blank? s)))
@@ -49,10 +61,10 @@ image::https://img.shields.io/clojars/v/ez-form.svg[https://clojars.org/ez-form,
 (let [data       {:firstname "John"
                   :lastname  "Doe"
                   :email     "john.doe@example.com"}
-      table-opts {:id    "myform"
-                  :class ["table" "striped"]}]
+      table-opts {:attributes {:id    "myform"
+                               :class ["table" "striped"]}}]
   [:form {:method :post :action "/myform"}
-   (form/as-table (myform data (:params request)) table-opts)
+   (ezform/as-table (myform data (:params request)) table-opts)
    [:input {:type :submit :value "Submit"}]])
 ```
 
@@ -101,20 +113,122 @@ Here we add a shoelace web component for color picking.
     :type       :sl-color-picker
     :validation [{:spec      #(not (str/blank? %))
                   :error-msg [:div.error "Color must be picked"]}]}]}
-
 ```
 
-== label and error messages
+== rendering
 
-Default support for labels and error messages in as-table and as-template.
+`render` is the function that handles the actual rendering of the form
+into hiccup. It deals with either a lookup which is expected to give
+back hiccup or a function that gives back hiccup when run.
+
+Render supports `meta functions`, `rendering of the actual
+field`, `lookup per field` and `lookup functions per field`. If none
+of the above are hit, it gives back the same hiccup as before.
+
+=== rendering meta functions
+
+Can be used for arbitrarily putting in hiccup. Default implementation
+includes anti-forgery. The meta functions only work for the entire
+form.
+
+=== rendering of the actual field
+
+Hiccup that looks like this `[:my-field-name]`, will trigger the
+rendering of the field and give back valid hiccup for the type that
+hte field has. This is what gives back an input text, radio buttons or
+a color picker.
+
+=== lookup per field
+
+Hiccup that looks like this `[:my-field-name :label]` will trigger a
+lookup for that field as defined in defform and return the value
+therein.
+
+In the below field a lookup via `[:email :label]` will give back `"My
+email"`. The lookup can be any valid hiccup, and so we can return
+`[:label "My email"]` or `[:i18n :email/label]` for i18n translations.
+
+```clojure
+{:type       :email
+ :name       :myemail
+ :label      "My email"
+ :validation [{:spec      present
+               :error-msg "Email must be present"}
+              {:spec      #(and (string? %)
+                                (str/contains? % "@"))
+               :error-msg "Email must contain a @ character"}]}
+```
+
+=== lookup functions per field
+
+Hiccup that has the form of `lookup per field` and **also** has a key
+in `[:meta :field-fns]` in the form will run the function in there for
+the field and replace the value with what is returned from the
+function. The contrived example below shows how this can be done. Real
+usage is for things like i18n, where some i18n libraries don't operate
+on pure hiccup, but instead needs to have functions run.
+
+```clojure
+(defform myform
+  {:extra-field-fns {:fn/t (fn [_form _field [_ label]]
+                             (str/capitalize (name label)))}}
+  [{:type       :email
+    :name       :myemail
+    :label      [:fn/t :email/label]
+    :validation [{:spec      present
+                  :error-msg "Email must be present"}
+                 {:spec      #(and (string? %)
+                                   (str/contains? % "@"))
+                  :error-msg "Email must contain a @ character"}]}])
+```
+
+
+== as-table
+
+Tables are a very common way of rendering a form. ez-form has a
+function for helping with that.
+
+```clojure
+(ezform/as-table (myform {} (:params request))
+                 {;; attributes will show up attributes for the table
+                  :attributes {:class ["table" "striped"]}
+                  ;; row-layout allows for switching out the rendering
+                  ;; of the rows in the table
+                  :row-layout (fn [field-k]
+                               [:tr
+                                [:th [field-k :label]]
+                                [:td
+                                  [field-k]
+                                  [field-k :help]
+                                  [field-k :errors [:div.error :error]]
+                                ]])})
+```
+
+
+=== label and error messages
+
+Default support for labels and error messages in as-table.
+
+== as-template
+
+You can also render a form with as-template. In as-template the lookup
+key is substituted with `:field`. as-template will go through all
+fields in the form and render it according to the layout provided.
+
+```clojure
+(as-template form [:div.layout
+                    [:field]
+                    [:field :errors :error]])
+```
 
 
 == helper functions
 
 ```clojure
 ;; will return a map of all the fields along with their associated values
-(form/fields->map (myform nil (:params request))
- => {:firstname "Firstname", :lastname "Lastname", :myemail "firstname@lastname.com"}
+
+  (ezform/fields->map (myform nil (:params request))
+  => {:firstname "Firstname", :lastname "Lastname", :myemail "firstname@lastname.com"}
 ```
 
 == validation
