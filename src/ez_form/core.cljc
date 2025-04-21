@@ -98,7 +98,7 @@
             (keyword? (first x))
             (= (count x) 2)
             (not= :errors (second x))
-            (get-in form (into [:fields] x)))
+            (get-in form [:fields (first x)]))
        (let [value (get-in form (into [:fields] x))]
          (if (and (vector? value)
                   (get-in form [:meta :field-fns (first value)]))
@@ -139,22 +139,23 @@
    (as-table form table-opts nil))
   ([form table-opts meta-opts]
    (let [form        (update form :meta merge meta-opts)
-         field-order (get-in form [:meta :field-order])]
+         field-order (get-in form [:meta :field-order])
+         row-layout  (:row-layout table-opts
+                                  (fn [field-k]
+                                    [:tr
+                                     [:th
+                                      [field-k :label]]
+                                     [:td
+                                      [field-k]
+                                      [field-k :errors :error]]]))]
      (render
       form
       (list
        (form-name-input form)
        [:fn/anti-forgery]
-       [:table table-opts
+       [:table (:attributes table-opts)
         [:tbody
-         (map (fn [field-k]
-                [:tr
-                 [:th
-                  [field-k :label]]
-                 [:td
-                  [field-k]
-                  [field-k :errors :error]]])
-              field-order)]])))))
+         (map row-layout field-order)]])))))
 
 (defn as-template
   "Render the form according to the template layout"

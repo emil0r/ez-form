@@ -70,7 +70,19 @@
      (sut/render form [:div
                        [::username]
                        [::username :help]])
-     "field is rendered with help text (field :key lookup)")
+     "field is rendered with :help (field :key lookup)")
+    (expect
+     [:div
+      [:input {:type        :text
+               :name        :username
+               :value       "johndoe"
+               :placeholder :ui.username/placeholder}]
+      ;; :text does not exist in the field, so we want nil back
+      nil]
+     (sut/render form [:div
+                       [::username]
+                       [::username :text]])
+     "field is rendered with :text (field :key lookup)")
     (expect
      [:div
       [:label
@@ -185,6 +197,7 @@
   (sut/defform testform
     {}
     [{:name       ::username
+      :help       [:i18n :ui.username/help]
       :validation [{:spec      #(not= % "foobar")
                     :error-msg [:div.error "Username cannot be foobar"]}]
       :type       :text}
@@ -245,7 +258,7 @@
       (expect
        {:table-by-correct-class?   true
         :table-by-incorrect-class? false}
-       (let [hiccup (sut/as-table form {:class ["table"]})]
+       (let [hiccup (sut/as-table form {:attributes {:class ["table"]}})]
          {:table-by-correct-class?   (->> hiccup
                                           (lookup/select ["table[class=table]"])
                                           (seq)
@@ -255,6 +268,20 @@
                                           (seq)
                                           (some?))})
        "as-table correctly injects table-opts")
+      (expect
+       [:i18n :ui.username/help]
+       (let [hiccup (sut/as-table form {:row-layout (fn [field-k]
+                                                      [:tr
+                                                       [:th
+                                                        [field-k :label]]
+                                                       [:td
+                                                        [field-k]
+                                                        [field-k :help]
+                                                        [field-k :errors :error]]])})]
+         (->> hiccup
+              (lookup/select '[i18n])
+              (first)))
+       "as-table rendered with an alternative row layout")
       (expect
        {:username "foobar"
         :email    "john.doe@example.com"}
