@@ -27,7 +27,7 @@ image::https://img.shields.io/clojars/v/ez-form.svg[https://clojars.org/ez-form,
   track of which form is being used when the backend version is used
 * `meta-opts` - This goes into the `:meta` keyword in the form for
   controlling how the form behaves
-* `fielda`    - Which fields the form has
+* `fields`    - Which fields the form has
 
 .Example usage
 ```clojure
@@ -69,6 +69,26 @@ image::https://img.shields.io/clojars/v/ez-form.svg[https://clojars.org/ez-form,
    (ezform/as-table (myform data (:params request)) table-opts)
    [:input {:type :submit :value "Submit"}]])
 ```
+
+=== defform meta-options
+
+`defform` has support for the following meta options
+
+* `form-name` - What is the name of the form. Defaults to the name 
+   used when you use the `defform` macro. This controls if a form is 
+   actually being used or not in the scenario of multiple forms on 
+   the same page.
+* `field-order` - In which order should the fields be rendered. Defaults 
+   to the order they were specified in.
+* `field-fns` - Which field fns are available. Defaults to the errors field fn.
+* `extra-field-fns` - Merged with `field-fns`.
+* `fields` - Which fields are supported (based on the `:type` specified in the field)
+* `extra-fields` - Merged with `fields`
+* `fns` - Which meta functions are supported. Default includes the CSRF machinery
+* `extra-fns` - Merged with `fns`
+* `validation` - Which validation to use. Default is `:spec`.
+* `validation-fns` - Validation fns. Default is the `:spec` validate function.
+* `extra-validation-fns` - Merged with `validation-fns`
 
 == fields
 
@@ -188,10 +208,14 @@ on pure hiccup, but instead needs to have functions run.
 
 == as-table
 
-Tables are a very common way of rendering a form. ez-form has a
-function for helping with that.
+Tables are a very common way of rendering a form. as-table can be used
+to render a compact table form, with the option of changing the row layout.
 
 ```clojure
+;; render as is
+(ezform/as-table (myform {} (:params request)))
+
+;; render with table-opts
 (ezform/as-table (myform {} (:params request))
                  {;; attributes will show up attributes for the table
                   :attributes {:class ["table" "striped"]}
@@ -206,6 +230,25 @@ function for helping with that.
                                   [field-k]
                                   [field-k :help]
                                   [field-k :errors [:div.error :error]]]])})
+
+;; render with table-opts and meta-opts
+(ezform/as-table (myform {} (:params request))
+                 ;; table opts
+                 {;; attributes will show up attributes for the table
+                  :attributes {:class ["table" "striped"]}
+                  ;; row-layout allows for switching out the rendering
+                  ;; of the rows in the table
+                  :row-layout (fn [field-k]
+                               [:tr
+                                [:th
+                                  [:label {:for [field-k :attributes :id]}
+                                   [field-k :label]]]
+                                [:td
+                                  [field-k]
+                                  [field-k :help]
+                                  [field-k :errors [:div.error :error]]]])}
+                 ;; meta opts
+                 {:field-order [:email :firstname :lastname]})
 ```
 
 
