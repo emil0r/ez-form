@@ -74,11 +74,11 @@ image::https://img.shields.io/clojars/v/ez-form.svg[https://clojars.org/ez-form,
 
 `defform` has support for the following meta options
 
-* `form-name` - What is the name of the form. Defaults to the name 
-   used when you use the `defform` macro. This controls if a form is 
-   actually being used or not in the scenario of multiple forms on 
+* `form-name` - What is the name of the form. Defaults to the name
+   used when you use the `defform` macro. This controls if a form is
+   actually being used or not in the scenario of multiple forms on
    the same page.
-* `field-order` - In which order should the fields be rendered. Defaults 
+* `field-order` - In which order should the fields be rendered. Defaults
    to the order they were specified in.
 * `field-fns` - Which field fns are available. Defaults to the errors field fn.
 * `extra-field-fns` - Merged with `field-fns`.
@@ -326,12 +326,19 @@ Alternative approaches:
 
 There are example implementations in link:../dev/dev.clj[dev/dev.clj]
 
+== linting
+
+Import ez-form's linting for defform with this.
+
+```
+clj-kondo --lint "$(clojure -Spath)" --copy-configs --skip-lint
+```
+
 == License
 
 Copyright © 2015-2025 Emil Bengtsson
 
 Distributed under the MIT License.
-
 
 ---
 

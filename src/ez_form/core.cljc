@@ -202,8 +202,7 @@
        (into {})))
 
 (defmacro defform
-  "Define a form. The form becomes a function that you can call with
-everything setup using ->form"
+  "Define a form. `meta-opts` are static in defform.`"
   [form-name meta-opts fields]
   (let [form-name*           (name form-name)
         fields*              (->> fields
@@ -215,7 +214,7 @@ everything setup using ->form"
        "
 - `data`` is the form data you wish to use initially (database, etc)
 - `params`` is the form data that has arrived from outside (POST request, AJAX call, etc)
-- `meta-opts`` control the form. See documentation for more info"
+- `meta-opts` control the form. See documentation for more info"
        ([~'data]
         (~form-name ~'data nil nil))
        ([~'data ~'params]
