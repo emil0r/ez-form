@@ -31,18 +31,18 @@
      {:name  ::email
       :label [:fn/t :form/email]
       :type  :email}])
-  (let [hiccup-en (sut/as-table (testform {:locale :en}
-                                          {:username "foobar"}
+  (let [hiccup-en (sut/as-table (testform {:username "foobar"}
                                           {:__ez-form.form-name "testform"
-                                           :email               "john.doe@example.com"}))
-        hiccup-se (sut/as-table (testform {:locale :se}
-                                          {:username "foobar"}
+                                           :email               "john.doe@example.com"}
+                                          {:locale :en}))
+        hiccup-se (sut/as-table (testform {:username "foobar"}
                                           {:__ez-form.form-name "testform"
-                                           :email               "john.doe@example.com"}))
-        hiccup-no (sut/as-table (testform {:locale :no}
-                                          {:username "foobar"}
+                                           :email               "john.doe@example.com"}
+                                          {:locale :se}))
+        hiccup-no (sut/as-table (testform {:username "foobar"}
                                           {:__ez-form.form-name "testform"
-                                           :email               "john.doe@example.com"}))]
+                                           :email               "john.doe@example.com"}
+                                          {:locale :no}))]
     (expect
      ["Username" "Email"]
      (->> hiccup-en

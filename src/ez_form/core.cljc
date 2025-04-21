@@ -4,7 +4,7 @@
             [ez-form.field :as field]
             [ez-form.validation]))
 
-(defn anti-forgery [form _]
+(defn anti-forgery [#?(:clj _form :cljs form) _]
   #?(:clj
      (do (require 'ring.middleware.anti-forgery)
          [:input {:id    :__anti-forgery-token
@@ -203,7 +203,7 @@
 
 (defmacro defform
   "Define a form. The form becomes a function that you can call with
-   everything setup using ->form"
+everything setup using ->form"
   [form-name meta-opts fields]
   (let [form-name*           (name form-name)
         fields*              (->> fields
@@ -211,13 +211,16 @@
                                   (into (sorted-map)))
         field-order          (mapv :name fields)
         meta-opts-from-macro meta-opts]
-    ;; TODO: Fix linting
     `(defn ~form-name
+       "
+- `data`` is the form data you wish to use initially (database, etc)
+- `params`` is the form data that has arrived from outside (POST request, AJAX call, etc)
+- `meta-opts`` control the form. See documentation for more info"
        ([~'data]
-        (~form-name nil ~'data nil))
+        (~form-name ~'data nil nil))
        ([~'data ~'params]
-        (~form-name nil ~'data ~'params))
-       ([~'meta-opts ~'data ~'params]
+        (~form-name ~'data ~'params nil))
+       ([~'data ~'params ~'meta-opts]
         (->form (merge
                  {:form-name      ~form-name*
                   :field-data     (raw-data->field-data ~'data)
