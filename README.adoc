@@ -1,7 +1,9 @@
 = ez-form
 
-Forms for the web using hiccup. Tested with Hiccup and Replicant for
-both Clojure and Clojurescript.
+ez-form is a data-driven library for forms using hiccup. With ez-form
+you declare your forms with data and renders them as data.
+
+Tested with Hiccup and Replicant for both Clojure and Clojurescript.
 
 image::https://img.shields.io/clojars/v/ez-form.svg[https://clojars.org/ez-form,link=https://clojars.org/ez-form]
 
