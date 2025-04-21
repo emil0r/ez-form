@@ -164,8 +164,9 @@ email"`. The lookup can be any valid hiccup, and so we can return
 Hiccup that has the form of `lookup per field` and **also** has a key
 in `[:meta :field-fns]` in the form will run the function in there for
 the field and replace the value with what is returned from the
-function. The contrived example below shows how this can be done. Real
-usage is for things like i18n, where some i18n libraries don't operate
+function. The contrived example below shows how this can be done.
+
+Usage is for things like i18n, where some i18n libraries don't operate
 on pure hiccup, but instead needs to have functions run.
 
 ```clojure
@@ -196,12 +197,13 @@ function for helping with that.
                   ;; of the rows in the table
                   :row-layout (fn [field-k]
                                [:tr
-                                [:th [field-k :label]]
+                                [:th
+                                  [:label {:for [field-k :attributes :id]}
+                                   [field-k :label]]]
                                 [:td
                                   [field-k]
                                   [field-k :help]
-                                  [field-k :errors [:div.error :error]]
-                                ]])})
+                                  [field-k :errors [:div.error :error]]]])})
 ```
 
 
@@ -228,7 +230,7 @@ fields in the form and render it according to the layout provided.
 ;; will return a map of all the fields along with their associated values
 
   (ezform/fields->map (myform nil (:params request))
-  => {:firstname "Firstname", :lastname "Lastname", :myemail "firstname@lastname.com"}
+  => {:firstname "Firstname", :lastname "Lastname", :email "firstname@lastname.com"}
 ```
 
 == validation
@@ -246,6 +248,34 @@ implementation. link:../test/ez_form/i18n/m1p_test.clj[m1p],
 link:../test/ez_form/i18n/tongue_test.clj[tongue] and
 link:test/ez_form/i18n/tempura_test.clj[tempura] have implementation
 examples in the test suite.
+
+== anti-forgery
+
+ez-form uses ring.middleware.anti-forgery out of the box, but does not
+include it as a dependancy. As such, it needs to be included in any
+backend that uses ez-form, unless you specifically turn off CSRF
+protection (not advised).
+
+For Clojure, CSRF protection will work seamlessly as long as the
+middleware is included in the middleware chain. For Clojurescript the
+anti-forgery token needs to be included in the meta options when a
+form is being rendered.
+
+=== anti-forgery Clojurescript
+
+A POC exists in the dev directory, but it's not fully fleshed out as
+it uses a normal POST which hooks in to the rest of the flow.
+
+```clojure
+;; inside clojurescript
+(myform {:anti-forgery-token <anti-forgery-token-here>} {} params)
+```
+
+Alternative approaches:
+
+* Grab the form data on a click and send an AJAX call with
+  a header that holds the CSRF token and the form data in the body.
+* Grab the form data when a submit happens and submit as FormData.
 
 == Examples
 
