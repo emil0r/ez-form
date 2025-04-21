@@ -1,0 +1,1 @@
+{:lint-as {ez-form.core/defform clj-kondo.lint-as/def-catch-all}}
