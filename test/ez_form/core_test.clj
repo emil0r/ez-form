@@ -22,11 +22,13 @@
                                    :help       [:div.help "My help text"]
                                    :attributes {:name        :username
                                                 :value       "johndoe"
+                                                :id          "testform-username"
                                                 :placeholder :ui.username/placeholder}}}}]
     (expect
      [:div
       [:input {:type        :text
                :name        :username
+               :id          "testform-username"
                :value       "johndoe"
                :placeholder :ui.username/placeholder}]]
      (sut/render form [:div
@@ -36,6 +38,7 @@
      [:div
       [:input {:type        :text
                :name        :username
+               :id          "testform-username"
                :value       "johndoe"
                :placeholder :ui.username/placeholder}]
       ;; this looks horrible, but it allows for arbitrary hiccup
@@ -51,6 +54,7 @@
      [:div
       [:input {:type        :text
                :name        :username
+               :id          "testform-username"
                :value       "johndoe"
                :placeholder :ui.username/placeholder}]
       nil]
@@ -64,6 +68,7 @@
      [:div
       [:input {:type        :text
                :name        :username
+               :id          "testform-username"
                :value       "johndoe"
                :placeholder :ui.username/placeholder}]
       [:div.help "My help text"]]
@@ -73,8 +78,25 @@
      "field is rendered with :help (field :key lookup)")
     (expect
      [:div
+      [:label {:for "testform-username"}
+       "Username"]
       [:input {:type        :text
                :name        :username
+               :id          "testform-username"
+               :value       "johndoe"
+               :placeholder :ui.username/placeholder}]
+      [:div.help "My help text"]]
+     (sut/render form [:div
+                       [:label {:for [::username :attributes :id]}
+                        [::username :label]]
+                       [::username]
+                       [::username :help]])
+     "field is a :label that targets the field")
+    (expect
+     [:div
+      [:input {:type        :text
+               :name        :username
+               :id          "testform-username"
                :value       "johndoe"
                :placeholder :ui.username/placeholder}]
       ;; :text does not exist in the field, so we want nil back
@@ -88,6 +110,7 @@
       [:label
        [:input {:type        :text
                 :name        :username
+                :id          "testform-username"
                 :value       "johndoe"
                 :placeholder :ui.username/placeholder}]
        "Username"]]
@@ -100,6 +123,7 @@
      [:div
       [:input {:type        :text
                :name        :username
+               :id          "testform-username"
                :value       "johndoe"
                :placeholder :ui.username/placeholder}]
       "This is a meta function"]
@@ -119,17 +143,20 @@
                         {::username {:type       :text
                                      :attributes {:placeholder :ui.username/placeholder}}
                          ::email    {:type       :email
-                                     :attributes {:placeholder :ui.email/placeholder}}}}
+                                     :attributes {:id "email-id"
+                                                  :placeholder :ui.email/placeholder}}}}
         processed-form (sut/post-process-form form {:email               email
                                                     :__ez-form_form-name "test"})]
     (expect
      {:name        :username
+      :id          "test-username"
       :value       username
       :placeholder :ui.username/placeholder}
      (get-in processed-form [:fields ::username :attributes])
      "username has value given by [:meta :field-data :username]")
     (expect
      {:name        :email
+      :id          "email-id"
       :value       email
       :placeholder :ui.email/placeholder}
      (get-in processed-form [:fields ::email :attributes])

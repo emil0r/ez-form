@@ -33,18 +33,18 @@
     (expect
      ["Username" "Email"]
      (->> (m1p/interpolate hiccup (get-dictionaries dictionaries :en))
-          (lookup/select '[th])
-          (map second))
+          (lookup/select '[label])
+          (map last))
      ":en locale")
     (expect
      ["Användarnamn" "Emejl"]
      (->> (m1p/interpolate hiccup (get-dictionaries dictionaries :se))
-          (lookup/select '[th])
-          (map second))
+          (lookup/select '[label])
+          (map last))
      ":se locale")
     (expect
      ["Brukernavn" "Epost"]
      (->> (m1p/interpolate hiccup (get-dictionaries dictionaries :no))
-          (lookup/select '[th])
-          (map second))
+          (lookup/select '[label])
+          (map last))
      ":no locale")))

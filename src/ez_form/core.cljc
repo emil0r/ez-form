@@ -47,6 +47,10 @@
                                              :validation-fns (get-in form [:meta :validation-fns])})))
     (-> (reduce (fn [form [field-k field]]
                   (let [field-name (get-field-name field-k field)
+                        field-id   (get-in field [:attributes :id]
+                                           (str (get-in form [:meta :form-name])
+                                                "-"
+                                                (name field-name)))
                         label      (get-in field [:label]
                                            (str/capitalize (name field-name)))
                         value      (if posted?
@@ -57,6 +61,7 @@
                               (-> field
                                   (assoc-in [:attributes :value] value)
                                   (assoc-in [:attributes :name] field-name)
+                                  (assoc-in [:attributes :id] field-id)
                                   (assoc :value value)
                                   (assoc :label label)
                                   (validate-fn value)))))
@@ -93,24 +98,8 @@
        (field/render (get-in form [:fields (first x)])
                      (get-in form [:meta :fields]))
 
-       ;; render lookup
-       (and (vector? x)
-            (keyword? (first x))
-            (= (count x) 2)
-            (not= :errors (second x))
-            (get-in form [:fields (first x)]))
-       (let [value (get-in form (into [:fields] x))]
-         (if (and (vector? value)
-                  (get-in form [:meta :field-fns (first value)]))
-           (let [f     (get-in form [:meta :field-fns (first value)])
-                 field (get-in form [:fields (first x)])]
-             (f form field value))
-           value))
-
        ;; render field functions
        (and (vector? x)
-            (keyword? (first x))
-            (>= (count x) 2)
             (get-in form (into [:fields] (take 2 x)))
             (get-in form [:meta :field-fns (second x)]))
        (cond (and (= :errors (second x))
@@ -121,6 +110,18 @@
              (let [f     (get-in form [:meta :field-fns (second x)])
                    field (get-in form [:fields (first x)])]
                (f form field x)))
+
+       ;; render lookup
+       (and (vector? x)
+            (not= :errors (second x))
+            (get-in form [:fields (first x)]))
+       (let [value (get-in form (into [:fields] x))]
+         (if (and (vector? value)
+                  (get-in form [:meta :field-fns (first value)]))
+           (let [f     (get-in form [:meta :field-fns (first value)])
+                 field (get-in form [:fields (first x)])]
+             (f form field value))
+           value))
 
        :else
        x))
@@ -144,7 +145,8 @@
                                   (fn [field-k]
                                     [:tr
                                      [:th
-                                      [field-k :label]]
+                                      [:label {:for [field-k :attributes :id]}
+                                       [field-k :label]]]
                                      [:td
                                       [field-k]
                                       [field-k :errors :error]]]))]

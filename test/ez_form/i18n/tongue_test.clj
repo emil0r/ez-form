@@ -46,18 +46,18 @@
     (expect
      ["Username" "Email"]
      (->> hiccup-en
-          (lookup/select '[th])
-          (map second))
+          (lookup/select '[label])
+          (map last))
      ":en locale")
     (expect
      ["Användarnamn" "Emejl"]
      (->> hiccup-se
-          (lookup/select '[th])
-          (map second))
+          (lookup/select '[label])
+          (map last))
      ":se locale")
     (expect
      ["Brukernavn" "Epost"]
      (->> hiccup-no
-          (lookup/select '[th])
-          (map second))
+          (lookup/select '[label])
+          (map last))
      ":no locale")))
