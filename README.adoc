@@ -15,9 +15,9 @@ image::https://img.shields.io/clojars/v/ez-form.svg[https://clojars.org/ez-form,
 * i18n support
 * Extendible
 * anti-forgery support (can be turned off, but don't do this)
-* Clojure (using https://github.com/weavejester/hiccup[Hiccup],
+* Clojure support (using https://github.com/weavejester/hiccup[Hiccup],
   https://replicant.fun/[Replicant] or some other library)
-* Clojurescript (using https://replicant.fun/[Replicant])
+* Clojurescript support (using https://replicant.fun/[Replicant])
 
 == defform
 
