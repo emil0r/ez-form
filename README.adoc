@@ -11,7 +11,7 @@ image::https://img.shields.io/clojars/v/ez-form.svg[https://clojars.org/ez-form,
 
 * Declare how you want forms to work
 * Generate hiccup based on a declared form
-* Handle errors
+* Validation with error messages
 * i18n support
 * Extendible
 * anti-forgery support (can be turned off, but don't do this)
