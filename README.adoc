@@ -147,6 +147,52 @@ Render supports `meta functions`, `rendering of the actual
 field`, `lookup per field` and `lookup functions per field`. If none
 of the above are hit, it gives back the same hiccup as before.
 
+```clojure
+(ezform/render form layout) => <hiccup to be rendered by a hiccup library>
+
+(defform signupform
+  {}
+  [{:name       :username
+    :type       :text
+    :help       [:i18n :ui.username/help]
+    :validation [{:spec      #(not (str/blank? %))
+                  :error-msg [:div.error :ui.username/not-blank]}]}
+   {:name       :email
+    :type       :email
+    :validation [{:spec      #(not (str/blank? %))
+                  :error-msg [:div.error :ui.email/not-blank]}]}]}
+
+(let [form (myform {} (:params request))]
+  (ezform/render form
+    [:div.signup-form
+      [:h1 [:i18n :form.signup/title]]
+      [:h2 [:i18n :ui/username]]
+      [:div
+        [:username]
+        [:div.help [:username :help]]
+        [:username :errors [:div.error :error]]]
+      [:div
+        [:email]
+        [:email :errors [:div.error :error]]]]))
+=>
+    [:div.signup-form
+      [:h1 [:i18n :form.signup/title]]
+      [:h2 [:i18n :ui/username]]
+      [:div
+        [:input {:type :text
+                 :id "signup-form-username"
+                 :value nil
+                 :name :username}]
+        [:div.help [:i18n :ui.username/help]]
+        ()]
+      [:div
+        [:input {:type :email
+                 :id "signup-form-email"
+                 :value nil
+                 :name :email}]
+        ()]]
+```
+
 === rendering meta functions
 
 Can be used for arbitrarily putting in hiccup. Default implementation
