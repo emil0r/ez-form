@@ -334,7 +334,7 @@
 
 (defexpect defform-changed-defaults-test
   (sut/defform testform
-    {:fns {:fn/anti-forgery nil}}
+    {:extra-fns {:fn/anti-forgery nil}}
     [{:name       ::username
       :validation [{:spec      #(not= % "foobar")
                     :error-msg [:div.error "Username cannot be foobar"]}]

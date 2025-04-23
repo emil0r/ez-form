@@ -167,6 +167,8 @@ of the above are hit, it gives back the same hiccup as before.
     [:div.signup-form
       [:h1 [:i18n :form.signup/title]]
       [:h2 [:i18n :ui/username]]
+      [:fn/input-form-name]
+      [:fn/anti-forgery]
       [:div
         [:username]
         [:div.help [:username :help]]
@@ -178,6 +180,11 @@ of the above are hit, it gives back the same hiccup as before.
     [:div.signup-form
       [:h1 [:i18n :form.signup/title]]
       [:h2 [:i18n :ui/username]]
+      [:input {:type :hidden :name :__ez-form_form-name :value "signup-form"}]
+      [:input {:id    :__anti-forgery-token
+               :name  :__anti-forgery-token
+               :value "my anti forgery token"
+               :type  :hidden}]
       [:div
         [:input {:type :text
                  :id "signup-form-username"

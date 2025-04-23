@@ -17,6 +17,12 @@
               :value (get-in form [:meta :anti-forgery-token])
               :type  :hidden}]))
 
+(defn input-form-name [form _]
+  [:input {:type  :hidden
+           :value (get-in form [:meta :form-name])
+           :name  :__ez-form_form-name}])
+
+
 (defn- get-field-name [field-k field]
   (get-in field [:attributes :name]
           (keyword (name field-k))))
@@ -127,11 +133,6 @@
        x))
    layout))
 
-(defn form-name-input [form]
-  [:input {:type  :hidden
-           :value (get-in form [:meta :form-name])
-           :name  :__ez-form_form-name}])
-
 (defn as-table
   "Render the form as a table"
   ([form]
@@ -153,7 +154,7 @@
      (render
       form
       (list
-       (form-name-input form)
+       [:fn/input-form-name]
        [:fn/anti-forgery]
        [:table (:attributes table-opts)
         [:tbody
@@ -173,7 +174,7 @@
                                     field-k
                                     x))
                                 template-layout)))
-          (concat [(form-name-input form)
+          (concat [[:fn/input-form-name]
                    [:fn/anti-forgery]])
           (render form)))))
 
@@ -226,7 +227,8 @@
                   :field-order    ~field-order
                   :field-fns      {:errors render-field-errors}
                   :fields         field/fields
-                  :fns            {:fn/anti-forgery anti-forgery}
+                  :fns            {:fn/anti-forgery anti-forgery
+                                   :fn/input-form-name input-form-name}
                   :validation     :spec
                   :validation-fns {:spec ez-form.validation/validate}}
                  ~meta-opts-from-macro
