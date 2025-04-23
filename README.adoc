@@ -9,7 +9,7 @@ image::https://img.shields.io/clojars/v/ez-form.svg[https://clojars.org/ez-form,
 
 == Out of the box
 
-* Declare how you want forms to work
+* Declarative forms
 * Generate hiccup based on a declared form
 * Validation with error messages
 * i18n support
