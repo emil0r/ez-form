@@ -2,7 +2,8 @@
   (:require [clojure.string :as str]
             [clojure.walk :as walk]
             [ez-form.field :as field]
-            [ez-form.validation]))
+            [ez-form.validation])
+  #?(:cljs (:require-macros [ez-form.core])))
 
 (defn anti-forgery [#?(:clj _form :cljs form) _]
   #?(:clj
@@ -205,6 +206,10 @@
 (defmacro defform
   "Define a form. `meta-opts` are static in defform.`"
   [form-name meta-opts fields]
+  (assert (symbol? form-name) "form-name must be a symbol")
+  (assert (map? meta-opts) "meta-opts must be a map")
+  (assert (sequential? fields) "fields must be sequential")
+  (assert (every? map? fields) "all fields must be maps")
   (let [form-name*           (name form-name)
         fields*              (->> fields
                                   (map (juxt :name identity))

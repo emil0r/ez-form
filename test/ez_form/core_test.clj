@@ -143,7 +143,7 @@
                         {::username {:type       :text
                                      :attributes {:placeholder :ui.username/placeholder}}
                          ::email    {:type       :email
-                                     :attributes {:id "email-id"
+                                     :attributes {:id          "email-id"
                                                   :placeholder :ui.email/placeholder}}}}
         processed-form (sut/post-process-form form {:email               email
                                                     :__ez-form_form-name "test"})]
