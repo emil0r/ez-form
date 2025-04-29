@@ -3,6 +3,7 @@
             [expectations.clojure.test :refer :all]
             [ez-form.core :as sut]
             [ez-form.field :as field]
+            [ez-form.namespace-for-test :refer [meta-opts]]
             [ez-form.validation]
             [ez-form.validation.validation-malli]
             [lookup.core :as lookup]
@@ -359,3 +360,58 @@
           (lookup/select '[input])
           (map (comp :value second)))
      "field values show up in as-template")))
+
+(defexpect defform-meta-opts-test
+  (sut/defform testform
+    {:extra-fns            {:fn/foo identity}
+     :extra-validation-fns {:validation/foo identity}
+     :extra-fields         {:field/foo identity}
+     :extra-field-fns      {:field-fn/foo identity}
+     :validation           :validation/foo}
+    [])
+  (let [form (testform {})]
+    (expect
+     fn?
+     (get-in form [:meta :fns :fn/foo])
+     "fn/foo shows up in [:meta :fns :fn/foo]")
+    (expect
+     fn?
+     (get-in form [:meta :validation-fns :validation/foo])
+     "fn/foo shows up in [:meta :validation-fns :validation/foo]")
+    (expect
+     :validation/foo
+     (get-in form [:meta :validation])
+     ":validation/foo shows up in [:meta :validation]")
+    (expect
+     fn?
+     (get-in form [:meta :fields :field/foo])
+     ":field/foo shows up in [:meta :fields :field/foo]")
+    (expect
+     fn?
+     (get-in form [:meta :field-fns :field-fn/foo])
+     ":field-fn/foo shows up in [:meta :field-fn :field-fn/foo]"))
+
+  (sut/defform testform2
+    ez-form.namespace-for-test/meta-opts
+    [{:name :foo :type :text}])
+  (let [form (testform2 {})]
+    (expect
+     fn?
+     (get-in form [:meta :fns :fn/foo])
+     "fn/foo shows up in [:meta :fns :fn/foo]")
+    (expect
+     fn?
+     (get-in form [:meta :validation-fns :validation/foo])
+     "fn/foo shows up in [:meta :validation-fns :validation/foo]")
+    (expect
+     :validation/foo
+     (get-in form [:meta :validation])
+     ":validation/foo shows up in [:meta :validation]")
+    (expect
+     fn?
+     (get-in form [:meta :fields :field/foo])
+     ":field/foo shows up in [:meta :fields :field/foo]")
+    (expect
+     fn?
+     (get-in form [:meta :field-fns :field-fn/foo])
+     ":field-fn/foo shows up in [:meta :field-fn :field-fn/foo]")))
