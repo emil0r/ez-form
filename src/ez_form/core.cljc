@@ -186,6 +186,7 @@
   (post-process-form {:meta   (-> opts
                                   (update :validation-fns merge (:extra-validation-fns opts))
                                   (update :fns merge (:extra-fns opts))
+                                  (update :fields merge (:extra-fields opts))
                                   (update :field-fns merge (:extra-field-fns opts))
                                   (dissoc :extra-fields :extra-validation-fns :extra-fns :extra-field-fns))
                       :fields fields}
