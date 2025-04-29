@@ -262,14 +262,14 @@
             (lookup/select '[th])
             (first)
             (lookup/text))
-       "th value for ::username is the capitalized name of ::username")
+       "the value for ::username is the capitalized name of ::username")
       (expect
        (str ::email-label)
        (->> (sut/as-table form)
             (lookup/select '[th])
             (second)
             (lookup/text))
-       "th value for ::email is the keyword ::email-label (lookup picks it up with text)")
+       "the value for ::email is the keyword ::email-label (lookup picks it up with text)")
       (expect
        ["testform" "anti-forgery-token" "foobar" "john.doe@example.com"]
        (->> (sut/as-table form)
@@ -332,6 +332,28 @@
             (lookup/select ["div.error"])
             (first))
        "Error shows up in as-template"))))
+
+(defexpect defform-external-validation-test
+  (let [db (atom {:!value "foobar"})]
+    (sut/defform testform
+      {:db db}
+      [{:name       ::username
+        :help       [:i18n :ui.username/help]
+        :validation [{:external  (fn [_field {:keys [db field/value]}]
+                                   (not= (:!value @db) value))
+                      :error-msg [:div.error "Username cannot be foobar"]}]
+        :type       :text}
+       {:name  ::email
+        :label [:i18n ::email-label]
+        :type  :email}]))
+  (binding [*anti-forgery-token* "anti-forgery-token"]
+    (let [form (testform {:username "foobar"}
+                         {:__ez-form_form-name "testform"
+                          :email               "john.doe@example.com"})]
+      (expect
+       false
+       (sut/valid? form)
+       "Form is invalid - name is foobar which breaks the validation for ::username"))))
 
 (defexpect defform-changed-defaults-test
   (sut/defform testform

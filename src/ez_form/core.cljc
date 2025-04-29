@@ -72,7 +72,8 @@
                                   (assoc-in [:attributes :id] field-id)
                                   (assoc :value value)
                                   (assoc :label label)
-                                  (validate-fn value)))))
+                                  (validate-fn (merge {:field/value value}
+                                                      (:meta form)))))))
                 form (:fields form))
         (assoc-in [:meta :posted?] posted?))))
 
