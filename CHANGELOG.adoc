@@ -1,0 +1,12 @@
+= Changelog
+
+== 2025-04-30
+
+* *Breaking change* - validation functions now takes parameters like
+   this: `[field ctx]`. Used to be `[field value]`. `ctx` will always
+   hold `field/value` as a key with the current value of the
+   field. `ctx` holds all data inside the `:meta` key inside a form.
+* external validation - Used to handle validation where external
+  validation is required. Example use case is looking up a value in a
+  database to compare.
+* coercion - Coerce fields to new types
