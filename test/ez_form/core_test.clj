@@ -145,8 +145,12 @@
                                      :attributes {:placeholder :ui.username/placeholder}}
                          ::email    {:type       :email
                                      :attributes {:id          "email-id"
-                                                  :placeholder :ui.email/placeholder}}}}
+                                                  :placeholder :ui.email/placeholder}}
+                         ::number   {:type   :number
+                                     :coerce (fn [_ {:keys [field/value]}]
+                                               (parse-long value))}}}
         processed-form (sut/post-process-form form {:email               email
+                                                    :number              "1"
                                                     :__ez-form_form-name "test"})]
     (expect
      {:name        :username
@@ -161,7 +165,11 @@
       :value       email
       :placeholder :ui.email/placeholder}
      (get-in processed-form [:fields ::email :attributes])
-     "email has all html attributes")))
+     "email has all html attributes")
+    (expect
+     1
+     (get-in processed-form [:fields ::number :value])
+     "number has been coerced")))
 
 (defexpect post-process-form-spec-test
   (let [user-error1    :error.username/must-exist
@@ -231,11 +239,16 @@
       :type       :text}
      {:name  ::email
       :label [:i18n ::email-label]
-      :type  :email}])
+      :type  :email}
+     {:name   ::number
+      :coerce (fn [_ {:keys [field/value]}]
+                (parse-long value))
+      :type   :number}])
   (binding [*anti-forgery-token* "anti-forgery-token"]
     (let [form (testform {:username "foobar"}
                          {:__ez-form_form-name "testform"
-                          :email               "john.doe@example.com"})]
+                          :email               "john.doe@example.com"
+                          :number              "1" })]
       (expect
        "testform"
        (get-in form [:meta :form-name])
@@ -249,7 +262,7 @@
        (get-in form [:fields ::email :value])
        "email's value is set on the params being sent in")
       (expect
-       [::username ::email]
+       [::username ::email ::number]
        (get-in form [:meta :field-order])
        "field order is set according to the order in which fields are sent in")
       (expect
@@ -271,7 +284,7 @@
             (lookup/text))
        "the value for ::email is the keyword ::email-label (lookup picks it up with text)")
       (expect
-       ["testform" "anti-forgery-token" "foobar" "john.doe@example.com"]
+       ["testform" "anti-forgery-token" "foobar" "john.doe@example.com" "1"]
        (->> (sut/as-table form)
             (lookup/select '[input])
             (map (comp :value second)))
@@ -312,11 +325,12 @@
        "as-table rendered with an alternative row layout")
       (expect
        {:username "foobar"
+        :number   1
         :email    "john.doe@example.com"}
        (sut/fields->map form)
        "fields->map on the form gives me a map of all values for the fields in the form")
       (expect
-       ["testform" "anti-forgery-token" "foobar" "john.doe@example.com"]
+       ["testform" "anti-forgery-token" "foobar" "john.doe@example.com" "1"]
        (->> (sut/as-template form [:div.layout
                                    [:field]
                                    [:field :errors :error]])

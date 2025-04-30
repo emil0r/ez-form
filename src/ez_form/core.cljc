@@ -61,13 +61,16 @@
                                                 (name field-name)))
                         label      (get-in field [:label]
                                            (str/capitalize (name field-name)))
-                        value      (if posted?
+                        value*     (if posted?
                                      (or (get params field-name)
                                          (get-in form [:meta :field-data field-name]))
-                                     (get-in form [:meta :field-data field-name]))]
+                                     (get-in form [:meta :field-data field-name]))
+                        value      (if-let [coerce-fn (:coerce field)]
+                                     (coerce-fn field {:field/value value*})
+                                     value*)]
                     (assoc-in form [:fields field-k]
                               (-> field
-                                  (assoc-in [:attributes :value] value)
+                                  (assoc-in [:attributes :value] value*)
                                   (assoc-in [:attributes :name] field-name)
                                   (assoc-in [:attributes :id] field-id)
                                   (assoc :value value)
