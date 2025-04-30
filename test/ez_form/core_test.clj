@@ -350,7 +350,7 @@
 (defexpect defform-external-validation-test
   (let [db (atom {:!value "foobar"})]
     (sut/defform testform
-      {:db db}
+      {}
       [{:name       ::username
         :help       [:i18n :ui.username/help]
         :validation [{:external  (fn [_field {:keys [db field/value]}]
@@ -359,15 +359,16 @@
         :type       :text}
        {:name  ::email
         :label [:i18n ::email-label]
-        :type  :email}]))
-  (binding [*anti-forgery-token* "anti-forgery-token"]
-    (let [form (testform {:username "foobar"}
-                         {:__ez-form_form-name "testform"
-                          :email               "john.doe@example.com"})]
-      (expect
-       false
-       (sut/valid? form)
-       "Form is invalid - name is foobar which breaks the validation for ::username"))))
+        :type  :email}])
+    (binding [*anti-forgery-token* "anti-forgery-token"]
+      (let [form (testform {:username "foobar"}
+                           {:__ez-form_form-name "testform"
+                            :email               "john.doe@example.com"}
+                           {:db db})]
+        (expect
+         false
+         (sut/valid? form)
+         "Form is invalid - name is foobar which breaks the validation for ::username")))))
 
 (defexpect defform-changed-defaults-test
   (sut/defform testform

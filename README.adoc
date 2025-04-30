@@ -12,9 +12,12 @@ image::https://img.shields.io/clojars/v/ez-form.svg[https://clojars.org/ez-form,
 * Declarative forms
 * Generate hiccup based on a declared form
 * Validation with error messages
+** Validation according to spec
+** External validation (e.g., compare against a value in a database)
+* Coercion
 * i18n support
 * Extendible
-* anti-forgery support (can be turned off, but don't do this)
+* Anti-forgery support (can be turned off, but don't do this)
 * Clojure support (using https://github.com/weavejester/hiccup[Hiccup],
   https://replicant.fun/[Replicant] or some other library)
 * Clojurescript support (using https://replicant.fun/[Replicant])
@@ -37,6 +40,8 @@ image::https://img.shields.io/clojars/v/ez-form.svg[https://clojars.org/ez-form,
 (defn present [s]
   (not (str/blank? s)))
 
+(def db (atom {:lastname "Bar"})
+
 (defform myform
   {}
   [{:type       :text
@@ -49,7 +54,10 @@ image::https://img.shields.io/clojars/v/ez-form.svg[https://clojars.org/ez-form,
     :label      "Last name"
     :name       :lastname
     :validation [{:spec      present
-                  :error-msg "Last name must be present"}]}
+                  :error-msg "Last name must be present"}
+                 {:external (fn [_field {:keys [field/value db]}]
+                              (not= (:lastname @db) value))
+                  :error-msg "Last name cannot be bar"}]
    {:type       :email
     :name       :myemail
     :label      "My email"
@@ -57,7 +65,12 @@ image::https://img.shields.io/clojars/v/ez-form.svg[https://clojars.org/ez-form,
                   :error-msg "Email must be present"}
                  {:spec      #(and (string? %)
                                    (str/contains? % "@"))
-                  :error-msg "Email must contain a @ character"}]}])
+                  :error-msg "Email must contain a @ character"}]}
+   {:type       :number
+    :name       :mynumber
+    :label      "My number"
+    :coerce     (fn [_field {:keys [field/value]}]
+                   (parse-long value))}])
 
 ;; the form as a table
 (let [data       {:firstname "John"
@@ -66,7 +79,7 @@ image::https://img.shields.io/clojars/v/ez-form.svg[https://clojars.org/ez-form,
       table-opts {:attributes {:id    "myform"
                                :class ["table" "striped"]}}]
   [:form {:method :post :action "/myform"}
-   (ezform/as-table (myform data (:params request)) table-opts)
+   (ezform/as-table (myform data (:params request) {:db db}) table-opts)
    [:input {:type :submit :value "Submit"}]])
 ```
 
@@ -137,7 +150,7 @@ Here we add a shoelace web component for color picking.
                   :error-msg [:div.error "Color must be picked"]}]}]}
 ```
 
-== rendering
+== Rendering
 
 `render` is the function that handles the actual rendering of the form
 into hiccup. It deals with either a lookup which is expected to give
@@ -200,20 +213,20 @@ of the above are hit, it gives back the same hiccup as before.
         ()]]
 ```
 
-=== rendering meta functions
+=== Rendering meta functions
 
 Can be used for arbitrarily putting in hiccup. Default implementation
 includes anti-forgery. The meta functions only work for the entire
 form.
 
-=== rendering of the actual field
+=== Rendering of the actual field
 
 Hiccup that looks like this `[:my-field-name]`, will trigger the
 rendering of the field and give back valid hiccup for the type that
 hte field has. This is what gives back an input text, radio buttons or
 a color picker.
 
-=== lookup per field
+=== Lookup per field
 
 Hiccup that looks like this `[:my-field-name :label]` will trigger a
 lookup for that field as defined in defform and return the value
@@ -234,7 +247,7 @@ email"`. The lookup can be any valid hiccup, and so we can return
                :error-msg "Email must contain a @ character"}]}
 ```
 
-=== lookup functions per field
+=== Lookup functions per field
 
 Hiccup that has the form of `lookup per field` and **also** has a key
 in `[:meta :field-fns]` in the form will run the function in there for
@@ -305,7 +318,7 @@ to render a compact table form, with the option of changing the row layout.
 ```
 
 
-=== label and error messages
+=== Label and error messages
 
 Default support for labels and error messages in as-table.
 
@@ -331,13 +344,20 @@ fields in the form and render it according to the layout provided.
   => {:firstname "Firstname", :lastname "Lastname", :email "firstname@lastname.com"}
 ```
 
-== validation
+== Validation
 
 Validation is done by spec as default. Validation is extendible. Each
 new validation type will need a validate function that is 2-arity and
-takes `field` and `value` as arguments.
+takes `field` and a `ctx` map as arguments. The `ctx` map will have
+`field/value` as a key and anything that exists in the `:meta` key
+inside the form itself.
 
 Malli is supported out of the box.
+
+External validation is supported via the `:external` key. In there a
+function should be that takes `field` + `ctx`. This follows the same
+pattern as the validate functions. By sending in things like a db, you
+can do external validation against a db, file or something else.
 
 == i18n
 
@@ -347,7 +367,7 @@ link:../test/ez_form/i18n/tongue_test.clj[tongue] and
 link:test/ez_form/i18n/tempura_test.clj[tempura] have implementation
 examples in the test suite.
 
-== anti-forgery
+== Anti-forgery
 
 ez-form uses ring.middleware.anti-forgery out of the box, but does not
 include it as a dependancy. As such, it needs to be included in any
@@ -359,7 +379,7 @@ middleware is included in the middleware chain. For Clojurescript the
 anti-forgery token needs to be included in the meta options when a
 form is being rendered.
 
-=== anti-forgery Clojurescript
+=== Anti-forgery Clojurescript
 
 A POC exists in the dev directory, but it's not fully fleshed out as
 it uses a normal POST which hooks in to the rest of the flow.
