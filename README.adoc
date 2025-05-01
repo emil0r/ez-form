@@ -17,7 +17,7 @@ image::https://img.shields.io/clojars/v/ez-form.svg[https://clojars.org/ez-form,
 * Coercion
 * i18n support
 * Extendible
-* Support for namespaced keywords
+* Support for namespaced keywords as field names
 * Anti-forgery support (can be turned off, but don't do this)
 * Clojure support (using https://github.com/weavejester/hiccup[Hiccup],
   https://replicant.fun/[Replicant] or some other library)
