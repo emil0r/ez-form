@@ -1,8 +1,6 @@
 (ns ez-form-test.forms
   (:require [clojure.string :as str]
-            #?(:clj  [ez-form.core :refer [defform]]
-               :cljs [ez-form.core]))
-  #?(:cljs (:require-macros [ez-form.core :refer [defform]])))
+            [ez-form.core :refer [defform]]))
 
 
 (defn sl-input-color-picker [{:keys [type attributes]}]

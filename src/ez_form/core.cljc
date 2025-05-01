@@ -25,16 +25,12 @@
            :name  :__ez-form_form-name}])
 
 
-(defn- get-field-name [field-k field]
-  (get-in field [:attributes :name]
-          (keyword (name field-k))))
-
 (defn fields->map
   "Return the fields of the form as a map"
   [form]
   (->> (:fields form)
        (map (fn [[field-k field]]
-              [(get-field-name field-k field)
+              [field-k
                (:value field)]))
        (into {})))
 
@@ -46,7 +42,12 @@
   (= (:__ez-form_form-name params)
      (get-in form [:meta :form-name])))
 
-(defn post-process-form [form params]
+(defn post-process-form
+  "
+  Process form after a 'POST' event. A user has submitted a form, and it
+  needs to be processed.
+"
+  [form params]
   (let [validate-fn (get (get-in form [:meta :validation-fns])
                          (get-in form [:meta :validation] :spec))
         posted?     (is-posted? form params)]
@@ -54,17 +55,17 @@
       (throw (ex-info "Missing validate-fn" {:validation     (get-in form [:meta :validation] :spec)
                                              :validation-fns (get-in form [:meta :validation-fns])})))
     (-> (reduce (fn [form [field-k field]]
-                  (let [field-name (get-field-name field-k field)
+                  (let [field-name (:name field)
                         field-id   (get-in field [:attributes :id]
                                            (str (get-in form [:meta :form-name])
                                                 "-"
                                                 (name field-name)))
                         label      (get-in field [:label]
-                                           (str/capitalize (name field-name)))
+                                           (str/capitalize (name field-k)))
                         value*     (if posted?
                                      (or (get params field-name)
-                                         (get-in form [:meta :field-data field-name]))
-                                     (get-in form [:meta :field-data field-name]))
+                                         (get-in form [:meta :field-data field-k]))
+                                     (get-in form [:meta :field-data field-k]))
                         value      (if-let [coerce-fn (:coerce field)]
                                      (coerce-fn field {:field/value value*})
                                      value*)]
@@ -196,17 +197,16 @@
                       :fields fields}
                      params))
 
-(defn raw-data->field-data
-  "Transform data from namespaced keywords to keywords.
-  wrap-keyword-params is typically not used with keyword namespaces, and so
-  this is a sensible default for now"
-  [data]
-  (->> data
-       (map (fn [[k v]]
-              (if (qualified-keyword? k)
-                [(keyword (name k)) v]
-                [k v])))
-       (into {})))
+(defn process-field [{:keys [name] :as field}]
+  (if (qualified-keyword? name)
+    ;; NOTE: Using str/replace caused an output in JS that halted
+    ;; the execution of the rest of the script
+    (let [new-name (-> (.. (subs (str name) 1 (count (str name)))
+                           (replace "." "__!")
+                           (replace "/" "_!"))
+                       (keyword))]
+      [name (assoc field :name new-name)])
+    [name field]))
 
 (defmacro defform
   "Define a form. `meta-opts` are static in defform.`"
@@ -232,8 +232,12 @@
                                   (concat (keys (:extra-fields meta-opts)))
                                   (set))
         fields*              (->> fields
-                                  (map (juxt :name identity))
+                                  (map process-field)
                                   (into (sorted-map)))
+        field-lookup         (->> fields*
+                                  (map (fn [[field-k {:keys [name]}]]
+                                         [name field-k]))
+                                  (into {}))
         field-order          (mapv :name fields)
         meta-opts-from-macro meta-opts]
     (let [diff (set/difference (set (map :type (vals fields*))) field-types)]
@@ -241,7 +245,7 @@
         (throw (ex-info (str "Unsupported field type(s): " diff) {:types diff}))))
     `(defn ~form-name
        "
-  - `data`` is the form data you wish to use initially (database, etc)
+  - `data`` is the form data you wish to use initially (comes from database, etc)
   - `params`` is the form data that has arrived from outside (POST request, AJAX call, etc)
   - `meta-opts` control the form. See documentation for more info"
        ([~'data]
@@ -252,8 +256,9 @@
 
         (->form (merge
                  {:form-name      ~form-name*
-                  :field-data     (raw-data->field-data ~'data)
+                  :field-data     ~'data
                   :field-order    ~field-order
+                  :field-lookup   ~field-lookup
                   :field-fns      {:errors render-field-errors}
                   :fields         field/fields
                   :fns            {:fn/anti-forgery    anti-forgery

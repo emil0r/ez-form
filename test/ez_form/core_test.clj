@@ -139,28 +139,31 @@
         form           {:meta {:validation     :spec
                                :form-name      "test"
                                :validation-fns {:spec ez-form.validation/validate}
-                               :field-data     {:username username}}
+                               :field-data     {::username username}}
                         :fields
                         {::username {:type       :text
+                                     :name       :_username
                                      :attributes {:placeholder :ui.username/placeholder}}
                          ::email    {:type       :email
+                                     :name       :_email
                                      :attributes {:id          "email-id"
                                                   :placeholder :ui.email/placeholder}}
                          ::number   {:type   :number
+                                     :name   :_number
                                      :coerce (fn [_ {:keys [field/value]}]
                                                (parse-long value))}}}
-        processed-form (sut/post-process-form form {:email               email
-                                                    :number              "1"
+        processed-form (sut/post-process-form form {:_email              email
+                                                    :_number             "1"
                                                     :__ez-form_form-name "test"})]
     (expect
-     {:name        :username
-      :id          "test-username"
+     {:name        :_username
+      :id          "test-_username"
       :value       username
       :placeholder :ui.username/placeholder}
      (get-in processed-form [:fields ::username :attributes])
      "username has value given by [:meta :field-data :username]")
     (expect
-     {:name        :email
+     {:name        :_email
       :id          "email-id"
       :value       email
       :placeholder :ui.email/placeholder}
@@ -180,17 +183,19 @@
                                :form-name      "test"}
                         :fields
                         {::username {:type       :text
+                                     :name       :_username
                                      :validation [{:spec      #(not (str/blank? %))
                                                    :error-msg user-error1}]
                                      :attributes {:name        :username
                                                   :placeholder :ui.username/placeholder}}
                          ::email    {:type       :email
+                                     :name       :_email
                                      :validation [{:spec      string?
                                                    :error-msg email-error1}]
                                      :attributes {:name        :email
                                                   :placeholder :ui.email/placeholder}}}}
-        processed-form (sut/post-process-form form {:username            ""
-                                                    :email               email
+        processed-form (sut/post-process-form form {:_username           ""
+                                                    :_email              email
                                                     :__ez-form_form-name "test"})]
     (expect
      [user-error1]
@@ -210,17 +215,19 @@
                                :validation-fns {:malli ez-form.validation.validation-malli/validate}}
                         :fields
                         {::username {:type       :text
+                                     :name       :_username
                                      :validation [{:spec      [:fn #(not (str/blank? %))]
                                                    :error-msg user-error1}]
                                      :attributes {:name        :username
                                                   :placeholder :ui.username/placeholder}}
                          ::email    {:type       :email
+                                     :name       :_email
                                      :validation [{:spec      :string
                                                    :error-msg email-error1}]
                                      :attributes {:name        :email
                                                   :placeholder :ui.email/placeholder}}}}
-        processed-form (sut/post-process-form form {:username            ""
-                                                    :email               email
+        processed-form (sut/post-process-form form {:_username           ""
+                                                    :_email              email
                                                     :__ez-form_form-name "test"})]
     (expect
      [user-error1]
@@ -228,6 +235,9 @@
     (expect
      []
      (get-in processed-form [:fields ::email :errors]))))
+
+(defn coerce-number [_ {:keys [field/value]}]
+  (parse-long value))
 
 (defexpect defform-test
   (sut/defform testform
@@ -241,14 +251,13 @@
       :label [:i18n ::email-label]
       :type  :email}
      {:name   ::number
-      :coerce (fn [_ {:keys [field/value]}]
-                (parse-long value))
+      :coerce coerce-number
       :type   :number}])
   (binding [*anti-forgery-token* "anti-forgery-token"]
-    (let [form (testform {:username "foobar"}
-                         {:__ez-form_form-name "testform"
-                          :email               "john.doe@example.com"
-                          :number              "1" })]
+    (let [form (testform {::username "foobar"}
+                         {:__ez-form_form-name         "testform"
+                          :ez-form__!core-test_!email  "john.doe@example.com"
+                          :ez-form__!core-test_!number "1" })]
       (expect
        "testform"
        (get-in form [:meta :form-name])
@@ -324,9 +333,9 @@
               (first)))
        "as-table rendered with an alternative row layout")
       (expect
-       {:username "foobar"
-        :number   1
-        :email    "john.doe@example.com"}
+       {::username "foobar"
+        ::number   1
+        ::email    "john.doe@example.com"}
        (sut/fields->map form)
        "fields->map on the form gives me a map of all values for the fields in the form")
       (expect
@@ -361,9 +370,9 @@
         :label [:i18n ::email-label]
         :type  :email}])
     (binding [*anti-forgery-token* "anti-forgery-token"]
-      (let [form (testform {:username "foobar"}
-                           {:__ez-form_form-name "testform"
-                            :email               "john.doe@example.com"}
+      (let [form (testform {::username "foobar"}
+                           {:__ez-form_form-name        "testform"
+                            :ez-form__!core-test_!email "john.doe@example.com"}
                            {:db db})]
         (expect
          false
@@ -380,9 +389,9 @@
      {:name  ::email
       :label [:i18n ::email-label]
       :type  :email}])
-  (let [form (testform {:username "foobar"}
-                       {:__ez-form_form-name "testform"
-                        :email               "john.doe@example.com"})]
+  (let [form (testform {::username "foobar"}
+                       {:__ez-form_form-name        "testform"
+                        :ez-form__!core-test_!email "john.doe@example.com"})]
     (expect
      ["testform" "foobar" "john.doe@example.com"]
      (->> (sut/as-table form)
@@ -397,6 +406,30 @@
           (lookup/select '[input])
           (map (comp :value second)))
      "field values show up in as-template")))
+
+(defexpect defform-field-name-test
+  (sut/defform testform
+    {:extra-fns {:fn/anti-forgery nil}}
+    [{:name ::first_name
+      :type :text}
+     {:name ::last_name
+      :type :text}
+     {:name :occupation
+      :type :text}
+     {:name :home
+      :type :text}])
+  (let [form (testform {::first_name "First name"
+                        :home        "Pluto"}
+                       {:__ez-form_form-name            "testform"
+                        :ez-form__!core-test_!last_name "Last name"
+                        :occupation                     "Hazard"})]
+    (expect
+     {::first_name "First name"
+      ::last_name  "Last name"
+      :occupation  "Hazard"
+      :home        "Pluto"}
+     (sut/fields->map form)
+     "Various naming of fields works")))
 
 (defexpect defform-meta-opts-test
   (sut/defform testform
@@ -452,3 +485,12 @@
      fn?
      (get-in form [:meta :field-fns :field-fn/foo])
      ":field-fn/foo shows up in [:meta :field-fn :field-fn/foo]")))
+
+
+(defexpect process-field-test
+  (expect
+   [:foo {:name :foo}]
+   (sut/process-field {:name :foo}))
+  (expect
+   [:foo.bar/baz {:name :foo__!bar_!baz}]
+   (sut/process-field {:name :foo.bar/baz})))

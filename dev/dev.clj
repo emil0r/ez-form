@@ -11,7 +11,8 @@
             [ring.middleware.keyword-params :refer [wrap-keyword-params]]
             [ring.middleware.params :refer [wrap-params]]
             [ring.middleware.resource :refer [wrap-resource]]
-            [ring.middleware.session :refer [wrap-session]]))
+            [ring.middleware.session :refer [wrap-session]])
+  (:import (java.text SimpleDateFormat)))
 
 
 (defform signup-form
@@ -52,6 +53,19 @@
     [:sl-input (merge attributes
                       {:type (subs type* 9 (count type*))})]))
 
+
+(defn coerce-number [_ {:keys [field/value]}]
+  (if value
+    (parse-long value)
+    ""))
+
+(defn coerce-date [_ {:keys [field/value]}]
+  (when value
+    (try
+      (.parse (SimpleDateFormat. "yyyy-MM-dd") value)
+      (catch Exception e
+        (ex-message e)))))
+
 (defform shoelace-form
   {:extra-fields {:sl-color-picker sl-input-color-picker
                   :sl-input-email  sl-input
@@ -67,10 +81,12 @@
                                (string? %)
                                (str/includes? % "@"))
                   :error-msg [:div.error "Email must have an @ character"]}]}
-   {:name ::number
-    :type :sl-input-number}
-   {:name ::date
-    :type :sl-input-date}])
+   {:name   ::number
+    :coerce coerce-number
+    :type   :sl-input-number}
+   {:name   ::date
+    :coerce coerce-date
+    :type   :sl-input-date}])
 
 (defn handler [request]
   #_(def request request)

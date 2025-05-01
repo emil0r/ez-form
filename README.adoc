@@ -17,6 +17,7 @@ image::https://img.shields.io/clojars/v/ez-form.svg[https://clojars.org/ez-form,
 * Coercion
 * i18n support
 * Extendible
+* Support for namespaced keywords
 * Anti-forgery support (can be turned off, but don't do this)
 * Clojure support (using https://github.com/weavejester/hiccup[Hiccup],
   https://replicant.fun/[Replicant] or some other library)
@@ -366,6 +367,20 @@ implementation. link:../test/ez_form/i18n/m1p_test.clj[m1p],
 link:../test/ez_form/i18n/tongue_test.clj[tongue] and
 link:test/ez_form/i18n/tempura_test.clj[tempura] have implementation
 examples in the test suite.
+
+== Namespaced keywords
+
+Namespaced keywords are supported out of the box. Implementation wise,
+you will see a lot of `__!` and `_!` in the name for fields if you use
+namespaced keywords. The reason for this is that hiccup by default
+renders only the name in namespaced keywords. Using `__!` and `_!`
+circumvents this and provides a nice mapping between `.` <-> `__!` and
+`/` <-> `_!`. The reason for the `!` at the end is that it's not
+uncommon to have an undercore in your name if the data comes from
+somewhere outside the Clojure system (SQL database for
+example), and so it's used to avoid naming clashes. Just avoid using
+`__!` and `_!` as part of field names and everything should work
+seamlessly.
 
 == Anti-forgery
 

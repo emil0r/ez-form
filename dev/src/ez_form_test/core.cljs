@@ -9,7 +9,7 @@
   (r/render
    (js/document.getElementById "replicant-app")
    [:form {:method :post}
-    (ezform/as-table (replicant-form {:anti-forgery-token anti-forgery-token} {} params))
+    (ezform/as-table (replicant-form {} params {:anti-forgery-token anti-forgery-token}))
     [:input {:type :submit :value "Submit"}]]))
 
 (defonce aft (atom nil))
