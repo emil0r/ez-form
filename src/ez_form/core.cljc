@@ -212,60 +212,55 @@
   "Define a form. `meta-opts` are static in defform.`"
   [form-name meta-opts fields]
   (assert (symbol? form-name) "form-name must be a symbol")
-  (when (and (not (map? meta-opts))
-             (symbol? meta-opts)
-             (nil? (namespace meta-opts)))
-    (throw (ex-info "meta-opts must be a fully namespaced reference" {})))
-  (when (and (not (map? meta-opts))
-             (symbol? meta-opts)
-             (namespace meta-opts))
-    (require (symbol (namespace meta-opts)))
-    (let [meta-opts @(resolve meta-opts)]
-      (assert (map? meta-opts) "meta-opts must be a map")))
-  (when-not (symbol? meta-opts)
-    (assert (map? meta-opts) "meta-opts must be a map"))
-  (assert (vector? fields) "fields must be a vector")
-  (assert (every? map? fields) "fields must be a vector of maps")
-  (assert (every? :name fields) "Each field in fields must have a :name")
-  (let [form-name*           (name form-name)
-        field-types          (->> (keys field/fields)
-                                  (concat (keys (:extra-fields meta-opts)))
-                                  (set))
-        fields*              (->> fields
-                                  (map process-field)
-                                  (into (sorted-map)))
-        field-lookup         (->> fields*
-                                  (map (fn [[field-k {:keys [name]}]]
-                                         [name field-k]))
-                                  (into {}))
-        field-order          (mapv :name fields)
-        meta-opts-from-macro meta-opts]
-    (let [diff (set/difference (set (map :type (vals fields*))) field-types)]
-      (when (seq diff)
-        (throw (ex-info (str "Unsupported field type(s): " diff) {:types diff}))))
-    `(defn ~form-name
-       "
+  (let [meta-opts* (cond (symbol? meta-opts)
+                         @(resolve meta-opts)
+
+                         :else
+                         meta-opts)]
+
+    (assert (map? meta-opts*) "meta-opts must be a map")
+    (assert (vector? fields) "fields must be a vector")
+    (assert (every? map? fields) "fields must be a vector of maps")
+    (assert (every? :name fields) "Each field in fields must have a :name")
+    (let [form-name*           (name form-name)
+          field-types          (->> (keys field/fields)
+                                    (concat (keys (:extra-fields meta-opts*)))
+                                    (set))
+          fields*              (->> fields
+                                    (map process-field)
+                                    (into (sorted-map)))
+          field-lookup         (->> fields*
+                                    (map (fn [[field-k {:keys [name]}]]
+                                           [name field-k]))
+                                    (into {}))
+          field-order          (mapv :name fields)
+          meta-opts-from-macro meta-opts*]
+      (let [diff (set/difference (set (map :type (vals fields*))) field-types)]
+        (when (seq diff)
+          (throw (ex-info (str "Unsupported field type(s): " diff) {:types diff}))))
+      `(defn ~form-name
+         "
   - `data`` is the form data you wish to use initially (comes from database, etc)
   - `params`` is the form data that has arrived from outside (POST request, AJAX call, etc)
   - `meta-opts` control the form. See documentation for more info"
-       ([~'data]
-        (~form-name ~'data nil nil))
-       ([~'data ~'params]
-        (~form-name ~'data ~'params nil))
-       ([~'data ~'params ~'meta-opts]
+         ([~'data]
+          (~form-name ~'data nil nil))
+         ([~'data ~'params]
+          (~form-name ~'data ~'params nil))
+         ([~'data ~'params ~'meta-opts]
 
-        (->form (merge
-                 {:form-name      ~form-name*
-                  :field-data     ~'data
-                  :field-order    ~field-order
-                  :field-lookup   ~field-lookup
-                  :field-fns      {:errors render-field-errors}
-                  :fields         field/fields
-                  :fns            {:fn/anti-forgery    anti-forgery
-                                   :fn/input-form-name input-form-name}
-                  :validation     :spec
-                  :validation-fns {:spec ez-form.validation/validate}}
-                 ~meta-opts-from-macro
-                 ~'meta-opts)
-                ~fields*
-                ~'params)))))
+          (->form (merge
+                   {:form-name      ~form-name*
+                    :field-data     ~'data
+                    :field-order    ~field-order
+                    :field-lookup   ~field-lookup
+                    :field-fns      {:errors render-field-errors}
+                    :fields         field/fields
+                    :fns            {:fn/anti-forgery    anti-forgery
+                                     :fn/input-form-name input-form-name}
+                    :validation     :spec
+                    :validation-fns {:spec ez-form.validation/validate}}
+                   ~meta-opts-from-macro
+                   ~'meta-opts)
+                  ~fields*
+                  ~'params))))))

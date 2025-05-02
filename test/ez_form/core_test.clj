@@ -3,7 +3,7 @@
             [expectations.clojure.test :refer :all]
             [ez-form.core :as sut]
             [ez-form.field :as field]
-            [ez-form.namespace-for-test :refer [meta-opts]]
+            [ez-form.namespace-for-test :refer [meta-opts meta-opts-faulty]]
             [ez-form.validation]
             [ez-form.validation.validation-malli]
             [lookup.core :as lookup]
@@ -431,6 +431,15 @@
      (sut/fields->map form)
      "Various naming of fields works")))
 
+(defn sl-input [{:keys [type attributes]}]
+  (let [type* (name type)]
+    [:sl-input (merge attributes
+                      {:type (subs type* 9 (count type*))})]))
+
+(def meta-opts-local {:extra-fields {:sl-input-text  sl-input
+                                     :sl-input-email sl-input}})
+
+
 (defexpect defform-meta-opts-test
   (sut/defform testform
     {:extra-fns            {:fn/foo identity}
@@ -462,7 +471,7 @@
      ":field-fn/foo shows up in [:meta :field-fn :field-fn/foo]"))
 
   (sut/defform testform2
-    ez-form.namespace-for-test/meta-opts
+    meta-opts
     [{:name :foo :type :text}])
   (let [form (testform2 {})]
     (expect
@@ -484,7 +493,33 @@
     (expect
      fn?
      (get-in form [:meta :field-fns :field-fn/foo])
-     ":field-fn/foo shows up in [:meta :field-fn :field-fn/foo]")))
+     ":field-fn/foo shows up in [:meta :field-fn :field-fn/foo]"))
+
+  (sut/defform testform3
+    ez-form.core-test/meta-opts-local
+    [{:type :sl-input-text
+      :name :name}
+     {:type :sl-input-email
+      :name :email}])
+
+  (let [form (testform3 {})]
+    (expect
+     #{:sl-input-text
+       :sl-input-email}
+     (->> form :fields (vals) (map :type) set)))
+
+  (sut/defform testform4
+    meta-opts-local
+    [{:type :sl-input-text
+      :name :name}
+     {:type :sl-input-email
+      :name :email}])
+
+  (let [form (testform4 {})]
+    (expect
+     #{:sl-input-text
+       :sl-input-email}
+     (->> form :fields (vals) (map :type) set))))
 
 
 (defexpect process-field-test
@@ -494,3 +529,21 @@
   (expect
    [:foo.bar/baz {:name :foo__!bar_!baz}]
    (sut/process-field {:name :foo.bar/baz})))
+
+
+(comment
+
+  (sut/defform testform5
+    meta-opts-faulty
+    [{:type :sl-input-text
+      :name :name}
+     {:type :sl-input-email
+      :name :email}])
+
+  (sut/defform testform5
+    meta-opts
+    [{:type :text
+      :name :name}
+     {:type :email
+      :name :email}])
+  )

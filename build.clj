@@ -3,7 +3,7 @@
    [clojure.tools.build.api :as b]
    [deps-deploy.deps-deploy :as d]))
 
-(def version "2025.05.01")
+(def version "2025.05.02")
 (def target "target")
 (def class-dir (str target "/class-dir"))
 (def lib 'ez-form/ez-form)
