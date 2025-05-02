@@ -11,11 +11,14 @@
     [:sl-input (merge attributes
                       {:type (subs type* 9 (count type*))})]))
 
-(defform replicant-form
+(def meta-opts
   {:extra-fields {:sl-color-picker sl-input-color-picker
                   :sl-input-email  sl-input
                   :sl-input-number sl-input
-                  :sl-input-date   sl-input}}
+                  :sl-input-date   sl-input}})
+
+(defform replicant-form
+  meta-opts
   [{:name       ::color
     :type       :sl-color-picker
     :validation [{:spec      #(not (str/blank? %))

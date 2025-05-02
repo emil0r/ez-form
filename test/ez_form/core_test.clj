@@ -133,7 +133,7 @@
                        [:fn/test]])
      "field is rendered with a meta function")))
 
-(defexpect post-process-form-test
+(defexpect process-form-test
   (let [email          "john.doe@example.com"
         username       "john.doe"
         form           {:meta {:validation     :spec
@@ -152,9 +152,9 @@
                                      :name   :_number
                                      :coerce (fn [_ {:keys [field/value]}]
                                                (parse-long value))}}}
-        processed-form (sut/post-process-form form {:_email              email
-                                                    :_number             "1"
-                                                    :__ez-form_form-name "test"})]
+        processed-form (sut/process-form form {:_email              email
+                                               :_number             "1"
+                                               :__ez-form_form-name "test"})]
     (expect
      {:name        :_username
       :id          "test-_username"
@@ -174,7 +174,7 @@
      (get-in processed-form [:fields ::number :value])
      "number has been coerced")))
 
-(defexpect post-process-form-spec-test
+(defexpect process-form-spec-test
   (let [user-error1    :error.username/must-exist
         email-error1   :error.email/must-exist
         email          "john.doe@example.com"
@@ -194,9 +194,9 @@
                                                    :error-msg email-error1}]
                                      :attributes {:name        :email
                                                   :placeholder :ui.email/placeholder}}}}
-        processed-form (sut/post-process-form form {:_username           ""
-                                                    :_email              email
-                                                    :__ez-form_form-name "test"})]
+        processed-form (sut/process-form form {:_username           ""
+                                               :_email              email
+                                               :__ez-form_form-name "test"})]
     (expect
      [user-error1]
      (get-in processed-form [:fields ::username :errors])
@@ -206,7 +206,7 @@
      (get-in processed-form [:fields ::email :errors])
      "email has no errors")))
 
-(defexpect post-process-form-malli-test
+(defexpect process-form-malli-test
   (let [user-error1    :error.username/must-exist
         email-error1   :error.email/must-exist
         email          "john.doe@example.com"
@@ -226,9 +226,9 @@
                                                    :error-msg email-error1}]
                                      :attributes {:name        :email
                                                   :placeholder :ui.email/placeholder}}}}
-        processed-form (sut/post-process-form form {:_username           ""
-                                                    :_email              email
-                                                    :__ez-form_form-name "test"})]
+        processed-form (sut/process-form form {:_username           ""
+                                               :_email              email
+                                               :__ez-form_form-name "test"})]
     (expect
      [user-error1]
      (get-in processed-form [:fields ::username :errors]))
@@ -257,7 +257,7 @@
     (let [form (testform {::username "foobar"}
                          {:__ez-form_form-name         "testform"
                           :ez-form__!core-test_!email  "john.doe@example.com"
-                          :ez-form__!core-test_!number "1" })]
+                          :ez-form__!core-test_!number "1"})]
       (expect
        "testform"
        (get-in form [:meta :form-name])
@@ -536,14 +536,14 @@
   (sut/defform testform5
     meta-opts-faulty
     [{:type :sl-input-text
-      :name :name}
+      :name ::name}
      {:type :sl-input-email
-      :name :email}])
+      :name ::email}])
 
   (sut/defform testform5
     meta-opts
     [{:type :text
-      :name :name}
-     {:type :email
-      :name :email}])
+      :name ::name}
+     {:type :sl-input-email
+      :name ::email}])
   )

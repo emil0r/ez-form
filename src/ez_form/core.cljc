@@ -42,11 +42,10 @@
   (= (:__ez-form_form-name params)
      (get-in form [:meta :form-name])))
 
-(defn post-process-form
+(defn process-form
   "
-  Process form after a 'POST' event. A user has submitted a form, and it
-  needs to be processed.
-"
+  Process form. Sets it up to be rendered, validates, coerces, etc
+  "
   [form params]
   (let [validate-fn (get (get-in form [:meta :validation-fns])
                          (get-in form [:meta :validation] :spec))
@@ -93,6 +92,10 @@
        (:errors field)))
 
 (defn render [form layout]
+  ;; NOTE: :fields is a sorted-map, which require all keys
+  ;; to be of the same sort
+  ;; render field functions and render lookup need to
+  ;; look for this
   (walk/postwalk
    (fn [x]
      (cond
@@ -113,7 +116,7 @@
 
        ;; render field functions
        (and (vector? x)
-            (get-in form (into [:fields] (take 2 x)))
+            (get-in form (into [:fields] (filter keyword? (take 2 x))))
             (get-in form [:meta :field-fns (second x)]))
        (cond (and (= :errors (second x))
                   (not (get-in form [:meta :posted?])))
@@ -127,6 +130,7 @@
        ;; render lookup
        (and (vector? x)
             (not= :errors (second x))
+            (keyword? (first x))
             (get-in form [:fields (first x)]))
        (let [value (get-in form (into [:fields] x))]
          (if (and (vector? value)
@@ -188,7 +192,8 @@
 (defn ->form
   "Create a form"
   [opts fields params]
-  (post-process-form {:meta   (-> opts
+  ;; the meta update has to be in here, as we want to be able to override in runtime
+  (process-form {:meta   (-> opts
                                   (update :validation-fns merge (:extra-validation-fns opts))
                                   (update :fns merge (:extra-fns opts))
                                   (update :fields merge (:extra-fields opts))
@@ -197,70 +202,66 @@
                       :fields fields}
                      params))
 
-(defn process-field [{:keys [name] :as field}]
-  (if (qualified-keyword? name)
+(defn process-field [{field-name :name :as field}]
+  (if (qualified-keyword? field-name)
     ;; NOTE: Using str/replace caused an output in JS that halted
     ;; the execution of the rest of the script
-    (let [new-name (-> (.. (subs (str name) 1 (count (str name)))
+    (let [new-name (-> (.. (subs (str field-name) 1 (count (str field-name)))
                            (replace "." "__!")
                            (replace "/" "_!"))
                        (keyword))]
-      [name (assoc field :name new-name)])
-    [name field]))
+      [field-name (assoc field :name new-name)])
+    [field-name field]))
+
+(defn reg-form [form-name meta-opts fields]
+  (assert (map? meta-opts) (str "meta-opts must be a map. Is currently: " (type meta-opts)))
+  (assert (vector? fields) "fields must be a vector")
+  (assert (every? map? fields) "fields must be a vector of maps")
+  (assert (every? :name fields) "Each field in fields must have a :name")
+  (let [field-types  (->> (keys field/fields)
+                          (concat (keys (:extra-fields meta-opts)))
+                          (set))
+        fields*      (->> fields
+                          (map process-field)
+                          (into (sorted-map)))
+        field-lookup (->> fields*
+                          (map (fn [[field-k {:keys [name]}]]
+                                 [name field-k]))
+                          (into {}))
+        field-order  (mapv :name fields)]
+    (let [diff (set/difference (set (map :type (vals fields*))) field-types)]
+      (when (seq diff)
+        (throw (ex-info (str "Unsupported field type(s): " diff) {:types diff}))))
+    (fn form-fn
+      ([data]
+       (form-fn data nil nil))
+      ([data params]
+       (form-fn data params nil))
+      ([data params meta-opts-runtime]
+       (->form (merge
+                {:form-name      form-name
+                 :field-data     data
+                 :field-order    field-order
+                 :field-lookup   field-lookup
+                 :field-fns      {:errors render-field-errors}
+                 :fields         field/fields
+                 :fns            {:fn/anti-forgery    anti-forgery
+                                  :fn/input-form-name input-form-name}
+                 :validation     :spec
+                 :validation-fns {:spec ez-form.validation/validate}}
+                meta-opts
+                meta-opts-runtime)
+               fields*
+               params)))))
 
 (defmacro defform
   "Define a form. `meta-opts` are static in defform.`"
   [form-name meta-opts fields]
   (assert (symbol? form-name) "form-name must be a symbol")
-  (let [meta-opts* (cond (symbol? meta-opts)
-                         @(resolve meta-opts)
-
-                         :else
-                         meta-opts)]
-
-    (assert (map? meta-opts*) "meta-opts must be a map")
-    (assert (vector? fields) "fields must be a vector")
-    (assert (every? map? fields) "fields must be a vector of maps")
-    (assert (every? :name fields) "Each field in fields must have a :name")
-    (let [form-name*           (name form-name)
-          field-types          (->> (keys field/fields)
-                                    (concat (keys (:extra-fields meta-opts*)))
-                                    (set))
-          fields*              (->> fields
-                                    (map process-field)
-                                    (into (sorted-map)))
-          field-lookup         (->> fields*
-                                    (map (fn [[field-k {:keys [name]}]]
-                                           [name field-k]))
-                                    (into {}))
-          field-order          (mapv :name fields)
-          meta-opts-from-macro meta-opts*]
-      (let [diff (set/difference (set (map :type (vals fields*))) field-types)]
-        (when (seq diff)
-          (throw (ex-info (str "Unsupported field type(s): " diff) {:types diff}))))
-      `(defn ~form-name
-         "
+  (let [form-name* (name form-name)]
+    `(def ~form-name
+       "
   - `data`` is the form data you wish to use initially (comes from database, etc)
   - `params`` is the form data that has arrived from outside (POST request, AJAX call, etc)
   - `meta-opts` control the form. See documentation for more info"
-         ([~'data]
-          (~form-name ~'data nil nil))
-         ([~'data ~'params]
-          (~form-name ~'data ~'params nil))
-         ([~'data ~'params ~'meta-opts]
-
-          (->form (merge
-                   {:form-name      ~form-name*
-                    :field-data     ~'data
-                    :field-order    ~field-order
-                    :field-lookup   ~field-lookup
-                    :field-fns      {:errors render-field-errors}
-                    :fields         field/fields
-                    :fns            {:fn/anti-forgery    anti-forgery
-                                     :fn/input-form-name input-form-name}
-                    :validation     :spec
-                    :validation-fns {:spec ez-form.validation/validate}}
-                   ~meta-opts-from-macro
-                   ~'meta-opts)
-                  ~fields*
-                  ~'params))))))
+       (reg-form ~form-name* ~meta-opts ~fields))))
