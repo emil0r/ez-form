@@ -350,8 +350,8 @@ fields in the form and render it according to the layout provided.
 Validation is done by spec as default. Validation is extendible. Each
 new validation type will need a validate function that is 2-arity and
 takes `field` and a `ctx` map as arguments. The `ctx` map will have
-`field/value` as a key and anything that exists in the `:meta` key
-inside the form itself.
+`field/value` and `fields` as keys and anything that exists in the
+`:meta` key inside the form itself.
 
 Malli is supported out of the box.
 

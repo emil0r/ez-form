@@ -53,32 +53,39 @@
     (when (nil? validate-fn)
       (throw (ex-info "Missing validate-fn" {:validation     (get-in form [:meta :validation] :spec)
                                              :validation-fns (get-in form [:meta :validation-fns])})))
-    (-> (reduce (fn [form [field-k field]]
-                  (let [field-name (:name field)
-                        field-id   (get-in field [:attributes :id]
-                                           (str (get-in form [:meta :form-name])
-                                                "-"
-                                                (name field-name)))
-                        label      (get-in field [:label]
-                                           (str/capitalize (name field-k)))
-                        value*     (if posted?
-                                     (or (get params field-name)
-                                         (get-in form [:meta :field-data field-k]))
-                                     (get-in form [:meta :field-data field-k]))
-                        value      (if-let [coerce-fn (:coerce field)]
-                                     (coerce-fn field {:field/value value*})
-                                     value*)]
-                    (assoc-in form [:fields field-k]
-                              (-> field
-                                  (assoc-in [:attributes :value] value*)
-                                  (assoc-in [:attributes :name] field-name)
-                                  (assoc-in [:attributes :id] field-id)
-                                  (assoc :value value)
-                                  (assoc :label label)
-                                  (validate-fn (merge {:field/value value}
-                                                      (:meta form)))))))
-                form (:fields form))
-        (assoc-in [:meta :posted?] posted?))))
+    (let [fields           (->> (:fields form)
+                                (map (fn [[field-k field]]
+                                       (let [field-name (:name field)
+                                             field-id   (get-in field [:attributes :id]
+                                                                (str (get-in form [:meta :form-name])
+                                                                     "-"
+                                                                     (name field-name)))
+                                             label      (get-in field [:label]
+                                                                (str/capitalize (name field-k)))
+                                             value*     (if posted?
+                                                          (or (get params field-name)
+                                                              (get-in form [:meta :field-data field-k]))
+                                                          (get-in form [:meta :field-data field-k]))
+                                             value      (if-let [coerce-fn (:coerce field)]
+                                                          (coerce-fn field {:field/value value*})
+                                                          value*)]
+                                         [field-k (-> field
+                                                      (assoc-in [:attributes :value] value*)
+                                                      (assoc-in [:attributes :name] field-name)
+                                                      (assoc-in [:attributes :id] field-id)
+                                                      (assoc :value value)
+                                                      (assoc :label label))])))
+                                (into {}))
+          ;; do two passes on fields. one for updates, one for validations where
+          ;; fields might depend on other fields
+          validated-fields (map (fn [[field-k field]]
+                                  [field-k (validate-fn field (merge {:field/value (:value field)
+                                                                      :fields      fields}
+                                                                     (:meta form)))])
+                                fields)]
+      (-> form
+          (assoc-in [:meta :posted?] posted?)
+          (assoc :fields (into {} validated-fields))))))
 
 (defn- walk-errors [layout error]
   (walk/postwalk (fn [x]
@@ -194,13 +201,13 @@
   [opts fields params]
   ;; the meta update has to be in here, as we want to be able to override in runtime
   (process-form {:meta   (-> opts
-                                  (update :validation-fns merge (:extra-validation-fns opts))
-                                  (update :fns merge (:extra-fns opts))
-                                  (update :fields merge (:extra-fields opts))
-                                  (update :field-fns merge (:extra-field-fns opts))
-                                  (dissoc :extra-fields :extra-validation-fns :extra-fns :extra-field-fns))
-                      :fields fields}
-                     params))
+                             (update :validation-fns merge (:extra-validation-fns opts))
+                             (update :fns merge (:extra-fns opts))
+                             (update :fields merge (:extra-fields opts))
+                             (update :field-fns merge (:extra-field-fns opts))
+                             (dissoc :extra-fields :extra-validation-fns :extra-fns :extra-field-fns))
+                 :fields fields}
+                params))
 
 (defn process-field [{field-name :name :as field}]
   (if (qualified-keyword? field-name)

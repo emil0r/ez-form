@@ -141,17 +141,24 @@
                                :validation-fns {:spec ez-form.validation/validate}
                                :field-data     {::username username}}
                         :fields
-                        {::username {:type       :text
-                                     :name       :_username
-                                     :attributes {:placeholder :ui.username/placeholder}}
-                         ::email    {:type       :email
-                                     :name       :_email
-                                     :attributes {:id          "email-id"
-                                                  :placeholder :ui.email/placeholder}}
-                         ::number   {:type   :number
-                                     :name   :_number
-                                     :coerce (fn [_ {:keys [field/value]}]
-                                               (parse-long value))}}}
+                        {::username     {:type       :text
+                                         :name       :_username
+                                         :attributes {:placeholder :ui.username/placeholder}}
+                         ::email        {:type       :email
+                                         :name       :_email
+                                         :attributes {:id          "email-id"
+                                                      :placeholder :ui.email/placeholder}}
+                         ::repeat-email {:type       :email
+                                         :name       :_repeat-email
+                                         :attributes {:id          "email-id2"
+                                                      :placeholder :ui.repeat-email/placeholder}
+                                         :validation [{:external  (fn [_ {:keys [field/value fields]}]
+                                                                    (= value (get-in fields [::email :value])))
+                                                       :error-msg [:span {:class ["error"]} "Not the same email"]}]}
+                         ::number       {:type   :number
+                                         :name   :_number
+                                         :coerce (fn [_ {:keys [field/value]}]
+                                                   (parse-long value))}}}
         processed-form (sut/process-form form {:_email              email
                                                :_number             "1"
                                                :__ez-form_form-name "test"})]
@@ -169,6 +176,10 @@
       :placeholder :ui.email/placeholder}
      (get-in processed-form [:fields ::email :attributes])
      "email has all html attributes")
+    (expect
+     [[:span {:class ["error"]} "Not the same email"]]
+     (get-in processed-form [:fields ::repeat-email :errors])
+     "repeat email has to have the same value as email")
     (expect
      1
      (get-in processed-form [:fields ::number :value])
