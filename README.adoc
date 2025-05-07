@@ -363,8 +363,8 @@ can do external validation against a db, file or something else.
 == i18n
 
 i18n is supported and does not have a default
-implementation. link:../test/ez_form/i18n/m1p_test.clj[m1p],
-link:../test/ez_form/i18n/tongue_test.clj[tongue] and
+implementation. link:test/ez_form/i18n/m1p_test.clj[m1p],
+link:test/ez_form/i18n/tongue_test.clj[tongue] and
 link:test/ez_form/i18n/tempura_test.clj[tempura] have implementation
 examples in the test suite.
 
@@ -412,7 +412,7 @@ Alternative approaches:
 
 == Examples
 
-There are example implementations in link:../dev/dev.clj[dev/dev.clj]
+There are example implementations in link:dev/dev.clj[dev/dev.clj]
 
 == linting
 
