@@ -39,8 +39,9 @@
    (every? empty? (map :errors (vals (:fields form))))))
 
 (defn- is-posted? [form params]
-  (= (:__ez-form_form-name params)
-     (get-in form [:meta :form-name])))
+  (or (true? (get-in form [:meta :process?]))
+      (= (:__ez-form_form-name params)
+         (get-in form [:meta :form-name]))))
 
 (defn process-form
   "

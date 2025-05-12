@@ -103,6 +103,9 @@ image::https://img.shields.io/clojars/v/ez-form.svg[https://clojars.org/ez-form,
 * `validation` - Which validation to use. Default is `:spec`.
 * `validation-fns` - Validation fns. Default is the `:spec` validate function.
 * `extra-validation-fns` - Merged with `validation-fns`
+* `process?` - Boolean value to turn on/off processing of the
+  form. This is what processes each field with regards to attributes,
+  value, coercions and errors.
 
 == fields
 

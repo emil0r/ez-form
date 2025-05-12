@@ -365,7 +365,16 @@
                                    [:field :errors :error]])
             (lookup/select ["div.error"])
             (first))
-       "Error shows up in as-template"))))
+       "Error shows up in as-template")))
+  (binding [*anti-forgery-token* "anti-forgery-token"]
+    (let [form (testform {::username "foobar"}
+                         {:ez-form__!core-test_!email  "john.doe@example.com"
+                          :ez-form__!core-test_!number "1"}
+                         {:process? true})]
+      (expect
+       "john.doe@example.com"
+       (get-in form [:fields ::email :value])
+       "email's value is set on the params being sent in and the enforced processing"))))
 
 (defexpect defform-external-validation-test
   (let [db (atom {:!value "foobar"})]
