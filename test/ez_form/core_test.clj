@@ -15,10 +15,12 @@
                        :fns       {:fn/test (fn [_ _] "This is a meta function")}
                        :field-fns {:errors sut/render-field-errors
                                    :fn/t   (fn [_form _field [_ label]]
-                                             (str/capitalize (name label)))}}
+                                             (str/capitalize (name label)))}
+                       :errors    {::username      ["Error 1"
+                                                    "Error 2"]
+                                   ::arbitrary ["This is an arbitratry error message that is not tied to a specific field"]}}
               :fields {::username {:type       :text
-                                   :errors     ["Error 1"
-                                                "Error 2"]
+                                   :field-k    ::username
                                    :label      [:fn/t ::username]
                                    :help       [:div.help "My help text"]
                                    :attributes {:name        :username
@@ -51,6 +53,13 @@
                        [::username :errors
                         [:div.error :error]]])
      "Field is rendered with errors (:posted? is true)")
+    (expect
+     [:div
+      '(([:div.error "This is an arbitratry error message that is not tied to a specific field"]))]
+     (sut/render form [:div
+                       [::arbitrary :errors
+                        [:div.error :error]]])
+     "Arbitrary error is rendered (:posted? is true)")
     (expect
      [:div
       [:input {:type        :text
@@ -178,7 +187,7 @@
      "email has all html attributes")
     (expect
      [[:span {:class ["error"]} "Not the same email"]]
-     (get-in processed-form [:fields ::repeat-email :errors])
+     (get-in processed-form [:meta :errors ::repeat-email])
      "repeat email has to have the same value as email")
     (expect
      1
@@ -195,12 +204,14 @@
                         :fields
                         {::username {:type       :text
                                      :name       :_username
+                                     :field-k    ::username
                                      :validation [{:spec      #(not (str/blank? %))
                                                    :error-msg user-error1}]
                                      :attributes {:name        :username
                                                   :placeholder :ui.username/placeholder}}
                          ::email    {:type       :email
                                      :name       :_email
+                                     :field-k    ::email
                                      :validation [{:spec      string?
                                                    :error-msg email-error1}]
                                      :attributes {:name        :email
@@ -210,11 +221,11 @@
                                                :__ez-form_form-name "test"})]
     (expect
      [user-error1]
-     (get-in processed-form [:fields ::username :errors])
+     (get-in processed-form [:meta :errors ::username])
      "username has one error")
     (expect
      []
-     (get-in processed-form [:fields ::email :errors])
+     (get-in processed-form [:meta :errors ::email])
      "email has no errors")))
 
 (defexpect process-form-malli-test
@@ -242,10 +253,10 @@
                                                :__ez-form_form-name "test"})]
     (expect
      [user-error1]
-     (get-in processed-form [:fields ::username :errors]))
+     (get-in processed-form [:meta :errors ::username]))
     (expect
      []
-     (get-in processed-form [:fields ::email :errors]))))
+     (get-in processed-form [:meta :errors ::email]))))
 
 (defn coerce-number [_ {:keys [field/value]}]
   (parse-long value))

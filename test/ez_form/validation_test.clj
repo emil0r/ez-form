@@ -14,11 +14,9 @@
         number-field {:validation [{:spec      ::int
                                     :error-msg error-msg}]}]
     (expect []
-            (-> (sut/validate number-field {:field/value 1})
-                :errors))
+            (sut/validate number-field {:field/value 1}))
     (expect [error-msg]
-            (-> (sut/validate number-field {:field/value "asdf"})
-                :errors))))
+            (sut/validate number-field {:field/value "asdf"}))))
 
 (defexpect external-validation-spec-test
   (let [error-msg           "Expected number must be 1"
@@ -29,13 +27,11 @@
         number-field        {:validation [{:external  external-validation
                                            :error-msg error-msg}]}]
     (expect []
-            (-> (sut/validate number-field {:field/value 1
-                                            :db          db})
-                :errors))
+            (sut/validate number-field {:field/value 1
+                                        :db          db}))
     (expect [error-msg]
-            (-> (sut/validate number-field {:field/value "asdf"
-                                            :db          db})
-                :errors))))
+            (sut/validate number-field {:field/value "asdf"
+                                        :db          db}))))
 
 
 (defexpect validation-spec-multi-test
@@ -46,11 +42,9 @@
                                    {:spec      ::int>100
                                     :error-msg error-msg2}]}]
     (expect [error-msg2]
-            (-> (sut/validate number-field {:field/value 1})
-                :errors))
+            (sut/validate number-field {:field/value 1}))
     (expect [error-msg1 error-msg2]
-            (-> (sut/validate number-field {:field/value "asdf"})
-                :errors))))
+            (sut/validate number-field {:field/value "asdf"}))))
 
 (defexpect validation-malli-test
   (let [error-msg    "Must be an integer"
@@ -58,11 +52,9 @@
         number-field {:validation [{:spec      spec
                                     :error-msg error-msg}]}]
     (expect []
-            (-> (sutm/validate number-field {:field/value 1})
-                :errors))
+            (sutm/validate number-field {:field/value 1}))
     (expect [error-msg]
-            (-> (sutm/validate number-field "asdf")
-                :errors))))
+            (sutm/validate number-field "asdf"))))
 
 (defexpect external-validation-malli-test
   (let [error-msg           "Expected number must be 1"
@@ -73,13 +65,11 @@
         number-field        {:validation [{:external  external-validation
                                            :error-msg error-msg}]}]
     (expect []
-            (-> (sutm/validate number-field {:field/value 1
-                                             :db          db})
-                :errors))
+            (sutm/validate number-field {:field/value 1
+                                         :db          db}))
     (expect [error-msg]
-            (-> (sutm/validate number-field {:field/value "asdf"
-                                             :db          db})
-                :errors))))
+            (sutm/validate number-field {:field/value "asdf"
+                                         :db          db}))))
 
 (defexpect validation-malli-multi-test
   (let [error-msg1   "Must be an integer"
@@ -91,8 +81,6 @@
                                    {:spec      spec2
                                     :error-msg error-msg2}]}]
     (expect [error-msg2]
-            (-> (sutm/validate number-field {:field/value 1})
-                :errors))
+            (sutm/validate number-field {:field/value 1}))
     (expect [error-msg1 error-msg2]
-            (-> (sutm/validate number-field {:field/value "asdf"})
-                :errors))))
+            (sutm/validate number-field {:field/value "asdf"}))))

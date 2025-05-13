@@ -36,7 +36,7 @@
 
 (defn valid?
   ([form]
-   (every? empty? (map :errors (vals (:fields form))))))
+   (every? empty? (vals (get-in form [:meta :errors])))))
 
 (defn- is-posted? [form params]
   (or (true? (get-in form [:meta :process?]))
@@ -54,39 +54,42 @@
     (when (nil? validate-fn)
       (throw (ex-info "Missing validate-fn" {:validation     (get-in form [:meta :validation] :spec)
                                              :validation-fns (get-in form [:meta :validation-fns])})))
-    (let [fields           (->> (:fields form)
-                                (map (fn [[field-k field]]
-                                       (let [field-name (:name field)
-                                             field-id   (get-in field [:attributes :id]
-                                                                (str (get-in form [:meta :form-name])
-                                                                     "-"
-                                                                     (name field-name)))
-                                             label      (get-in field [:label]
-                                                                (str/capitalize (name field-k)))
-                                             value*     (if posted?
-                                                          (or (get params field-name)
-                                                              (get-in form [:meta :field-data field-k]))
-                                                          (get-in form [:meta :field-data field-k]))
-                                             value      (if-let [coerce-fn (:coerce field)]
-                                                          (coerce-fn field {:field/value value*})
-                                                          value*)]
-                                         [field-k (-> field
-                                                      (assoc-in [:attributes :value] value*)
-                                                      (assoc-in [:attributes :name] field-name)
-                                                      (assoc-in [:attributes :id] field-id)
-                                                      (assoc :value value)
-                                                      (assoc :label label))])))
-                                (into {}))
+    (let [fields (->> (:fields form)
+                      (map (fn [[field-k field]]
+                             (let [field-name (:name field)
+                                   field-id   (get-in field [:attributes :id]
+                                                      (str (get-in form [:meta :form-name])
+                                                           "-"
+                                                           (name field-name)))
+                                   label      (get-in field [:label]
+                                                      (str/capitalize (name field-k)))
+                                   value*     (if posted?
+                                                (or (get params field-name)
+                                                    (get-in form [:meta :field-data field-k]))
+                                                (get-in form [:meta :field-data field-k]))
+                                   value      (if-let [coerce-fn (:coerce field)]
+                                                (coerce-fn field {:field/value value*})
+                                                value*)]
+                               [field-k (-> field
+                                            (assoc-in [:attributes :value] value*)
+                                            (assoc-in [:attributes :name] field-name)
+                                            (assoc-in [:attributes :id] field-id)
+                                            (assoc :value value
+                                                   :label label
+                                                   :field-k field-k))])))
+                      (into {}))
           ;; do two passes on fields. one for updates, one for validations where
           ;; fields might depend on other fields
-          validated-fields (map (fn [[field-k field]]
-                                  [field-k (validate-fn field (merge {:field/value (:value field)
-                                                                      :fields      fields}
-                                                                     (:meta form)))])
-                                fields)]
+          errors (->> fields
+                      (map (fn [[field-k field]]
+                             [field-k (validate-fn field (merge {:field/value (:value field)
+                                                                 :fields      fields}
+                                                                (:meta form)))]))
+                      (into {}))]
       (-> form
           (assoc-in [:meta :posted?] posted?)
-          (assoc :fields (into {} validated-fields))))))
+          (assoc-in [:meta :errors] errors)
+          (assoc :fields fields)))))
 
 (defn- walk-errors [layout error]
   (walk/postwalk (fn [x]
@@ -95,9 +98,10 @@
                      x))
                  layout))
 
-(defn render-field-errors [_form field layout]
-  (map #(walk-errors (drop 2 layout) %)
-       (:errors field)))
+(defn render-field-errors [form _field layout]
+  (when (get-in form [:meta :posted?])
+    (map #(walk-errors (drop 2 layout) %)
+         (get-in form [:meta :errors (first layout)]))))
 
 (defn render [form layout]
   ;; NOTE: :fields is a sorted-map, which require all keys
@@ -124,16 +128,10 @@
 
        ;; render field functions
        (and (vector? x)
-            (get-in form (into [:fields] (filter keyword? (take 2 x))))
             (get-in form [:meta :field-fns (second x)]))
-       (cond (and (= :errors (second x))
-                  (not (get-in form [:meta :posted?])))
-             nil
-
-             :else
-             (let [f     (get-in form [:meta :field-fns (second x)])
-                   field (get-in form [:fields (first x)])]
-               (f form field x)))
+       (let [f     (get-in form [:meta :field-fns (second x)])
+             field (get-in form [:fields (first x)])]
+         (f form field x))
 
        ;; render lookup
        (and (vector? x)
