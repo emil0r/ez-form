@@ -16,8 +16,8 @@
                        :field-fns {:errors sut/render-field-errors
                                    :fn/t   (fn [_form _field [_ label]]
                                              (str/capitalize (name label)))}
-                       :errors    {::username      ["Error 1"
-                                                    "Error 2"]
+                       :errors    {::username  ["Error 1"
+                                                "Error 2"]
                                    ::arbitrary ["This is an arbitratry error message that is not tied to a specific field"]}}
               :fields {::username {:type       :text
                                    :field-k    ::username
@@ -193,6 +193,88 @@
      1
      (get-in processed-form [:fields ::number :value])
      "number has been coerced")))
+
+(defexpect process-form-conditional-test
+  (let [email          "john.doe@example.com"
+        username       "john.doe"
+        form           {:meta {:validation     :spec
+                               :form-name      "test"
+                               :validation-fns {:spec ez-form.validation/validate}
+                               :field-data     {::username username}
+                               :agreement      {:active? true}
+                               :branching      [ ;; controller for showing field
+                                                {:initiator {:field ::username
+                                                             :ctx   {:values #{"do not show"}}
+                                                             :fn    (fn [{:keys [field values]}]
+                                                                      (not (values
+                                                                            (:value field))))}
+                                                 :target    {:field ::email
+                                                             :fn    (fn [{:keys [field]}]
+                                                                      (assoc field :show? false))}}
+                                                ;; controller for inactive number field if show-number is false
+                                                {:initiator {:field ::show-number
+                                                             :fn    (fn [{:keys [field]}]
+                                                                      (not=
+                                                                       #{"true"}
+                                                                       (:value field)))}
+                                                 :target    {:field ::number
+                                                             :fn    (fn [{:keys [field]}]
+                                                                      (assoc field :active? false))}}
+                                                ;; controller for agreement checkbox
+                                                {:initiator {:fn (fn [{:keys [form]}]
+                                                                   (get-in form [:meta :agreement :active?]))}
+                                                 :target    {:field ::agreement-checkbox
+                                                             :fn    (fn [{:keys [field]}]
+                                                                      (assoc field :active? true))}}]}
+                        :fields
+                        {::username           {:type       :text
+                                               :name       :_username
+                                               :attributes {:placeholder :ui.username/placeholder}}
+                         ::email              {:type       :email
+                                               :name       :_email
+                                               :attributes {:id          "email-id"
+                                                            :placeholder :ui.email/placeholder}}
+                         ::show-number        {:type    :checkbox
+                                               :name    :_show-number
+                                               :value   nil
+                                               :options [["true" "Show number"]]}
+                         ::number             {:type   :number
+                                               :name   :_number
+                                               :coerce (fn [_ {:keys [field/value]}]
+                                                         (parse-long value))}
+                         ::agreement-checkbox {:type    :checkbox
+                                               :name    :_agreement-checkbox
+                                               :options [["agree" "I agree"]]
+                                               :active? false}}}
+        processed-form (sut/process-form form {:_email              email
+                                               :_number             "1"
+                                               :__ez-form_form-name "test"})]
+    (expect
+     {:name        :_username
+      :id          "test-_username"
+      :value       username
+      :placeholder :ui.username/placeholder}
+     (get-in processed-form [:fields ::username :attributes])
+     "username has value given by [:meta :field-data :username]")
+    (expect
+     {:name        :_email
+      :id          "email-id"
+      :value       email
+      :placeholder :ui.email/placeholder}
+     (get-in processed-form [:fields ::email :attributes])
+     "email has all html attributes")
+    (expect
+     {:show? false}
+     (in (get-in processed-form [:fields ::email]))
+     "email is set to {:show? false}")
+    (expect
+     nil
+     (get-in processed-form [:fields ::number])
+     "number is inactive")
+    (expect
+     map?
+     (get-in processed-form [:fields ::agreement-checkbox])
+     "agreement checkbox is active")))
 
 (defexpect process-form-spec-test
   (let [user-error1    :error.username/must-exist
@@ -553,13 +635,13 @@
      (->> form :fields (vals) (map :type) set))))
 
 
-(defexpect process-field-test
+(defexpect adapt-field-test
   (expect
    [:foo {:name :foo}]
-   (sut/process-field {:name :foo}))
+   (sut/adapt-field {:name :foo}))
   (expect
    [:foo.bar/baz {:name :foo__!bar_!baz}]
-   (sut/process-field {:name :foo.bar/baz})))
+   (sut/adapt-field {:name :foo.bar/baz})))
 
 
 (comment
