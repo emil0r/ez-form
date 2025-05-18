@@ -70,6 +70,22 @@
                         :show? (:show? field true)
                         :active? (:active? field true)))]))
 
+(defn- controller->field
+  "Takes a context map for a controller and runs the controller.
+  Helper fn for process-form"
+  [{:keys [initiator target form fields]}]
+  (when ((:fn initiator)
+         (merge
+          (:ctx initiator)
+          {:form  form
+           :field (fields (:field initiator))}))
+    [(:field target)
+     ((:fn target)
+      (merge
+       (:ctx target)
+       {:form  form
+        :field (fields (:field target))}))]))
+
 (defn process-form
   "Process the form. Sets it up to be rendered, validates, coerces, etc"
   [form params]
@@ -92,21 +108,19 @@
                (into {}))
           ;; updated fields based on branching
           updated-fields
-          (->> (get-in form [:meta :branching])
-               (map (fn [{:keys [initiator target]}]
-                      (when ((:fn initiator)
-                             (merge
-                              (:ctx initiator)
-                              {:form  form
-                               :field (fields (:field initiator))}))
-                        [(:field target)
-                         ((:fn target)
-                          (merge
-                           (:ctx target)
-                           {:form  form
-                            :field (fields (:field target))}))])))
-               (remove nil?)
-               (into {}))
+          (loop [updated-fields       []
+                 [branch & branching] (get-in form [:meta :branching])]
+            (if (nil? branch)
+              (->> updated-fields
+                   (into {}))
+              (let [[controller-name controller-opts & ?branches] branch
+                    controller                                    (get-in form [:meta :controllers controller-name])
+                    updated-field                                 (controller->field (->  controller
+                                                                                          (merge controller-opts)
+                                                                                          (assoc :form form :fields fields)))]
+                (recur (conj updated-fields updated-field) (if updated-field
+                                                             (concat ?branches branching)
+                                                             branching)))))
           ;; final fields. we remove inactive fields
           final-fields
           (if (seq updated-fields)
@@ -122,7 +136,10 @@
                           :field-k field-k
                           :field   field})))
                  (into {}))
-            fields)
+            (->> fields
+                 (filter (fn [[_ field]]
+                           (:active? field)))
+                 (into {})))
           ;; validate fields
           errors
           (->> final-fields
@@ -272,20 +289,29 @@
   (assert (vector? fields) "fields must be a vector")
   (assert (every? map? fields) "fields must be a vector of maps")
   (assert (every? :name fields) "Each field in fields must have a :name")
-  (let [field-types  (->> (keys field/fields)
-                          (concat (keys (:extra-fields meta-opts)))
-                          (set))
-        fields*      (->> fields
-                          (map adapt-field)
-                          (into (sorted-map)))
-        field-lookup (->> fields*
-                          (map (fn [[field-k {:keys [name]}]]
-                                 [name field-k]))
-                          (into {}))
-        field-order  (mapv :name fields)]
+  (let [field-types           (->> (keys field/fields)
+                                   (concat (keys (:extra-fields meta-opts)))
+                                   (set))
+        fields*               (->> fields
+                                   (map adapt-field)
+                                   (into (sorted-map)))
+        field-lookup          (->> fields*
+                                   (map (fn [[field-k {:keys [name]}]]
+                                          [name field-k]))
+                                   (into {}))
+        field-order           (mapv :name fields)
+        branching-controllers (loop [controllers #{}
+                                     [branch & branching] (:branching meta-opts)]
+                                (if (nil? branch)
+                                  controllers
+                                  (recur (conj controllers (first branch))
+                                         (concat branching (drop 2 branch)))))]
     (let [diff (set/difference (set (map :type (vals fields*))) field-types)]
       (when (seq diff)
         (throw (ex-info (str "Unsupported field type(s): " diff) {:types diff}))))
+    (let [diff (set/difference branching-controllers (set (keys (:controllers meta-opts))))]
+      (when (seq diff)
+        (throw (ex-info (str "Unspecified branching controllers" diff) {:controllers diff}))))
     (fn form-fn
       ([data]
        (form-fn data nil nil))
