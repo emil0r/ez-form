@@ -16,8 +16,8 @@
                        :field-fns {:errors sut/render-field-errors
                                    :fn/t   (fn [_form _field [_ label]]
                                              (str/capitalize (name label)))}
-                       :errors    {::username      ["Error 1"
-                                                    "Error 2"]
+                       :errors    {::username  ["Error 1"
+                                                "Error 2"]
                                    ::arbitrary ["This is an arbitratry error message that is not tied to a specific field"]}}
               :fields {::username {:type       :text
                                    :field-k    ::username
@@ -169,6 +169,7 @@
                                          :coerce (fn [_ {:keys [field/value]}]
                                                    (parse-long value))}}}
         processed-form (sut/process-form form {:_email              email
+                                               :_repeat-email       "asdf"
                                                :_number             "1"
                                                :__ez-form_form-name "test"})]
     (expect
@@ -197,6 +198,7 @@
 (defexpect process-form-spec-test
   (let [user-error1    :error.username/must-exist
         email-error1   :error.email/must-exist
+        street-error1  :error.street/must-exist
         email          "john.doe@example.com"
         form           {:meta {:validation     :spec
                                :validation-fns {:spec ez-form.validation/validate}
@@ -215,6 +217,13 @@
                                      :validation [{:spec      string?
                                                    :error-msg email-error1}]
                                      :attributes {:name        :email
+                                                  :placeholder :ui.email/placeholder}}
+                         ::street   {:type       :string
+                                     :name       :_street
+                                     :field-k    ::street
+                                     :validation [{:spec      string?
+                                                   :error-msg street-error1}]
+                                     :attributes {:name        :email
                                                   :placeholder :ui.email/placeholder}}}}
         processed-form (sut/process-form form {:_username           ""
                                                :_email              email
@@ -226,7 +235,30 @@
     (expect
      []
      (get-in processed-form [:meta :errors ::email])
-     "email has no errors")))
+     "email has no errors")
+    (expect
+     nil
+     (get-in processed-form [:meta :errors ::street])
+     "street has not been processed because it has not been initialized")
+    (expect
+     false
+     (sut/valid? processed-form)
+     "The form should not be valid")
+    (expect
+     true
+     (sut/valid?
+      (sut/process-form form {:_username           "username"
+                              :_email              email
+                              :_street             "street"
+                              :__ez-form_form-name "test"}))
+     "The form is valid")
+    (expect
+     false
+     (sut/valid?
+      (sut/process-form form {:_username           "username"
+                              :_email              email
+                              :__ez-form_form-name "test"}))
+     "The form is invalid because street is not committed")))
 
 (defexpect process-form-malli-test
   (let [user-error1    :error.username/must-exist

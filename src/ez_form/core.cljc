@@ -36,7 +36,8 @@
 
 (defn valid?
   ([form]
-   (every? empty? (vals (get-in form [:meta :errors])))))
+   (and (every? empty? (vals (get-in form [:meta :errors])))
+        (every? some? (map :value (vals (:fields form)))))))
 
 (defn- is-posted? [form params]
   (or (true? (get-in form [:meta :process?]))
@@ -82,9 +83,11 @@
           ;; fields might depend on other fields
           errors (->> fields
                       (map (fn [[field-k field]]
-                             [field-k (validate-fn field (merge {:field/value (:value field)
-                                                                 :fields      fields}
-                                                                (:meta form)))]))
+                             (when (some? (:value field))
+                               [field-k (validate-fn field (merge {:field/value (:value field)
+                                                                   :fields      fields}
+                                                                  (:meta form)))])))
+                      (remove nil?)
                       (into {}))]
       (-> form
           (assoc-in [:meta :posted?] posted?)
