@@ -783,7 +783,10 @@
       :name ::email}])
 
   (sut/defform testform5
-    {:branching [[:foo nil [:baz]]]
+    {:branching [[:foo nil [:baz]]
+                 ;; TODO: implement this?
+                 [:baz {:pred (fn [ctx passes]
+                                (and ))}]]
      :controllers {:foo {}
                    :bar {}}}
     [{:type :text
