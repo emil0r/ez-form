@@ -84,9 +84,10 @@
           errors (->> fields
                       (map (fn [[field-k field]]
                              (when (some? (:value field))
-                               [field-k (validate-fn field (merge {:field/value (:value field)
-                                                                   :fields      fields}
-                                                                  (:meta form)))])))
+                               [field-k (validate-fn field (merge
+                                                            (:meta form)
+                                                            {:field/value (:value field)
+                                                             :form/fields fields}))])))
                       (remove nil?)
                       (into {}))]
       (-> form

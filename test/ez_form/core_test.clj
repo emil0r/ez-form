@@ -148,6 +148,7 @@
         form           {:meta {:validation     :spec
                                :form-name      "test"
                                :validation-fns {:spec ez-form.validation/validate}
+                               :fields         {}
                                :field-data     {::username username}}
                         :fields
                         {::username     {:type       :text
@@ -161,7 +162,7 @@
                                          :name       :_repeat-email
                                          :attributes {:id          "email-id2"
                                                       :placeholder :ui.repeat-email/placeholder}
-                                         :validation [{:external  (fn [_ {:keys [field/value fields]}]
+                                         :validation [{:external  (fn [_ {:keys [field/value form/fields]}]
                                                                     (= value (get-in fields [::email :value])))
                                                        :error-msg [:span {:class ["error"]} "Not the same email"]}]}
                          ::number       {:type   :number
@@ -190,6 +191,14 @@
      [[:span {:class ["error"]} "Not the same email"]]
      (get-in processed-form [:meta :errors ::repeat-email])
      "repeat email has to have the same value as email")
+    (let [processed-form (sut/process-form form {:_email              email
+                                                 :_repeat-email       email
+                                                 :_number             "1"
+                                                 :__ez-form_form-name "test"})]
+      (expect
+       []
+       (get-in processed-form [:meta :errors ::repeat-email])
+       "repeat email has the same value as email"))
     (expect
      1
      (get-in processed-form [:fields ::number :value])
