@@ -204,6 +204,210 @@
      (get-in processed-form [:fields ::number :value])
      "number has been coerced")))
 
+(defexpect process-form-branching-basic-test
+  (let [email          "john.doe@example.com"
+        username       "john.doe"
+        form           {:meta {:validation     :spec
+                               :form-name      "test"
+                               :validation-fns {:spec ez-form.validation/validate}
+                               :field-data     {::username username}
+                               :agreement      {:active? true}
+                               :controllers    {;; controller for showing field
+                                                :show-email     {:initiator {:field ::username
+                                                                             :ctx   {:values #{"do not show"}}
+                                                                             :fn    (fn [{:keys [field values]}]
+                                                                                      (not (values
+                                                                                            (:value field))))}
+                                                                 :target    {:field ::email
+                                                                             :fn    (fn [{:keys [field]}]
+                                                                                      (assoc field :show? false))}}
+                                                ;; controller for inactive number field if show-number is false
+                                                :show-number    {:initiator {:field ::show-number
+                                                                             :fn    (fn [{:keys [field]}]
+                                                                                      (not=
+                                                                                       #{"true"}
+                                                                                       (:value field)))}
+                                                                 :target    {:field ::number
+                                                                             :fn    (fn [{:keys [field]}]
+                                                                                      (assoc field :active? false))}}
+                                                ;; controller for agreement checkbox
+                                                :show-agreement {:initiator {:fn (fn [{:keys [form]}]
+                                                                                   (get-in form [:meta :agreement :active?]))}
+                                                                 :target    {:field ::agreement-checkbox
+                                                                             :fn    (fn [{:keys [field]}]
+                                                                                      (assoc field :active? true))}}}
+                               ;; NOTE
+                               ;; controllers should be a map with the controllers
+                               ;; and branching could then be a tree structure
+                               ;; which would describe a branching structure
+                               ;; of the form
+                               :branching      [[:show-email]
+                                                [:show-number]
+                                                [:show-agreement]]}
+                        :fields
+                        {::username           {:type       :text
+                                               :name       :_username
+                                               :attributes {:placeholder :ui.username/placeholder}}
+                         ::email              {:type       :email
+                                               :name       :_email
+                                               :attributes {:id          "email-id"
+                                                            :placeholder :ui.email/placeholder}}
+                         ::show-number        {:type    :checkbox
+                                               :name    :_show-number
+                                               :value   nil
+                                               :options [["true" "Show number"]]}
+                         ::number             {:type   :number
+                                               :name   :_number
+                                               :coerce (fn [_ {:keys [field/value]}]
+                                                         (parse-long value))}
+                         ::agreement-checkbox {:type    :checkbox
+                                               :name    :_agreement-checkbox
+                                               :options [["agree" "I agree"]]
+                                               :active? false}}}
+        processed-form (sut/process-form form {:_email              email
+                                               :_number             "1"
+                                               :__ez-form_form-name "test"})]
+    (expect
+     {:name        :_username
+      :id          "test-_username"
+      :value       username
+      :placeholder :ui.username/placeholder}
+     (get-in processed-form [:fields ::username :attributes])
+     "username has value given by [:meta :field-data :username]")
+    (expect
+     {:name        :_email
+      :id          "email-id"
+      :value       email
+      :placeholder :ui.email/placeholder}
+     (get-in processed-form [:fields ::email :attributes])
+     "email has all html attributes")
+    (expect
+     {:show? false}
+     (in (get-in processed-form [:fields ::email]))
+     "email is set to {:show? false}")
+    (expect
+     nil
+     (get-in processed-form [:fields ::number])
+     "number is inactive")
+    (expect
+     map?
+     (get-in processed-form [:fields ::agreement-checkbox])
+     "agreement checkbox is active")))
+
+(defexpect process-form-branching-advanced-test
+  (let [email             "john.doe@example.com"
+        username          "john.doe"
+        some-value?       (fn [{:keys [field]}]
+                         (some? (:value field)))
+        show-field        (fn [{:keys [field]}]
+                         (assoc field :show? true))
+        form              {:meta {:validation     :spec
+                                  :form-name      "test"
+                                  :validation-fns {:spec ez-form.validation/validate}
+                                  :agreement      {:active? true}
+                                  :controllers    { ;; controller for showing field
+                                                   :show-email     {:initiator {:field ::username
+                                                                                :fn    some-value?}
+                                                                    :target    {:field ::email
+                                                                                :fn    show-field}}
+                                                   :show-adress    {:initiator {:field ::username
+                                                                                :fn    some-value?}
+                                                                    :target    {:field ::address
+                                                                                :fn    show-field}}
+                                                   :show-city      {:initiator {:field ::address
+                                                                                :fn    some-value?}
+                                                                    :target    {:field ::city
+                                                                                :fn    show-field}}
+                                                   :show-zip       {:initiator {:field ::city
+                                                                                :fn    some-value?}
+                                                                    :target    {:field ::zip
+                                                                                :fn    show-field}}
+                                                   :show-agreement {:initiator {:fn (fn [{:keys [form]}]
+                                                                                      (get-in form [:meta :agreement :active?]))}
+                                                                    :target    {:field ::agreement-checkbox
+                                                                                :fn    (fn [{:keys [field]}]
+                                                                                         (assoc field :active? true))}}}
+                                  ;; NOTE
+                                  ;; controllers should be a map with the controllers
+                                  ;; and branching could then be a tree structure
+                                  ;; which would describe a branching structure
+                                  ;; of the form
+                                  :branching      [[:show-email]
+                                                   [:show-adress {}
+                                                    [:show-city]
+                                                    [:show-zip]]
+                                                   [:show-agreement]]}
+                           :fields
+                           {::username           {:type       :text
+                                                  :name       :_username
+                                                  :attributes {:placeholder :ui.username/placeholder}}
+                            ::email              {:type       :email
+                                                  :name       :_email
+                                                  :show?      false
+                                                  :attributes {:id          "email-id"
+                                                               :placeholder :ui.email/placeholder}}
+                            ::address            {:type  :text
+                                                  :show? false
+                                                  :name  :_address}
+                            ::city               {:type  :text
+                                                  :show? false
+                                                  :name  :_city}
+                            ::zip                {:type  :text
+                                                  :show? false
+                                                  :name  :_zip}
+                            ::agreement-checkbox {:type    :checkbox
+                                                  :name    :_agreement-checkbox
+                                                  :options [["agree" "I agree"]]
+                                                  :active? false}}}
+        get-expected-data (fn [form] (->> form
+                                           :fields
+                                           (map (fn [[k field]]
+                                                  [k (select-keys field [:show? :active?])]))
+                                           (into {})))]
+
+    (let [processed-form    (sut/process-form form {:_username           username
+                                                    :_email              email
+                                                    :_address            "address"
+                                                    :_city               "city"
+                                                    :__ez-form_form-name "test"})]
+      (expect
+       {::username           {:show? true :active? true}
+        ::email              {:show? true :active? true}
+        ::address            {:show? true :active? true}
+        ::city               {:show? true :active? true}
+        ::zip                {:show? true :active? true}
+        ::agreement-checkbox {:show? true :active? true}}
+       (get-expected-data processed-form)
+       "all fields are shown"))
+    (let [processed-form (sut/process-form form {:_username           username
+                                                 :_email              email
+                                                 :__ez-form_form-name "test"})]
+      (expect
+       {::username           {:show? true :active? true}
+        ::email              {:show? true :active? true}
+        ::address            {:show? true :active? true}
+        ::city               {:show? false :active? true}
+        ::zip                {:show? false :active? true}
+        ::agreement-checkbox {:show? true :active? true}}
+       (get-expected-data processed-form)))
+    (let [processed-form (sut/process-form form {:__ez-form_form-name "test"})]
+      (expect
+       {::username           {:show? true :active? true}
+        ::email              {:show? false :active? true}
+        ::address            {:show? false :active? true}
+        ::city               {:show? false :active? true}
+        ::zip                {:show? false :active? true}
+        ::agreement-checkbox {:show? true :active? true}}
+       (get-expected-data processed-form)))
+    (let [processed-form (sut/process-form (update form :meta dissoc :agreement) {:__ez-form_form-name "test"})]
+      (expect
+       {::username           {:show? true :active? true}
+        ::email              {:show? false :active? true}
+        ::address            {:show? false :active? true}
+        ::city               {:show? false :active? true}
+        ::zip                {:show? false :active? true}}
+       (get-expected-data processed-form)))))
+
 (defexpect process-form-spec-test
   (let [user-error1    :error.username/must-exist
         email-error1   :error.email/must-exist
@@ -594,13 +798,13 @@
      (->> form :fields (vals) (map :type) set))))
 
 
-(defexpect process-field-test
+(defexpect adapt-field-test
   (expect
    [:foo {:name :foo}]
-   (sut/process-field {:name :foo}))
+   (sut/adapt-field {:name :foo}))
   (expect
    [:foo.bar/baz {:name :foo__!bar_!baz}]
-   (sut/process-field {:name :foo.bar/baz})))
+   (sut/adapt-field {:name :foo.bar/baz})))
 
 
 (comment
@@ -617,5 +821,17 @@
     [{:type :text
       :name ::name}
      {:type :sl-input-email
+      :name ::email}])
+
+  (sut/defform testform5
+    {:branching [[:foo nil [:baz]]
+                 ;; TODO: implement this?
+                 [:baz {:pred (fn [ctx passes]
+                                (and ))}]]
+     :controllers {:foo {}
+                   :bar {}}}
+    [{:type :text
+      :name ::name}
+     {:type :email
       :name ::email}])
   )

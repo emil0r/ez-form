@@ -44,10 +44,51 @@
       (= (:__ez-form_form-name params)
          (get-in form [:meta :form-name]))))
 
+(defn- process-field
+  "Process a field in the form. Helper fn for proess-form"
+  [{:keys [posted? params form field-k field]}]
+  (let [field-name (:name field)
+        field-id   (get-in field [:attributes :id]
+                           (str (get-in form [:meta :form-name])
+                                "-"
+                                (name field-name)))
+        label      (get-in field [:label]
+                           (str/capitalize (name field-k)))
+        value*     (if posted?
+                     (or (get params field-name)
+                         (get-in form [:meta :field-data field-k]))
+                     (get-in form [:meta :field-data field-k]))
+        value      (if-let [coerce-fn (:coerce field)]
+                     (coerce-fn field {:field/value value*})
+                     value*)]
+    [field-k (-> field
+                 (assoc-in [:attributes :value] value*)
+                 (assoc-in [:attributes :name] field-name)
+                 (assoc-in [:attributes :id] field-id)
+                 (assoc :value value
+                        :label label
+                        :field-k field-k
+                        :show? (:show? field true)
+                        :active? (:active? field true)))]))
+
+(defn- controller->field
+  "Takes a context map for a controller and runs the controller.
+  Helper fn for process-form"
+  [{:keys [initiator target form fields]}]
+  (when ((:fn initiator)
+         (merge
+          (:ctx initiator)
+          {:form  form
+           :field (fields (:field initiator))}))
+    [(:field target)
+     ((:fn target)
+      (merge
+       (:ctx target)
+       {:form  form
+        :field (fields (:field target))}))]))
+
 (defn process-form
-  "
-  Process form. Sets it up to be rendered, validates, coerces, etc
-  "
+  "Process the form. Sets it up to be rendered, validates, coerces, etc"
   [form params]
   (let [validate-fn (get (get-in form [:meta :validation-fns])
                          (get-in form [:meta :validation] :spec))
@@ -55,45 +96,66 @@
     (when (nil? validate-fn)
       (throw (ex-info "Missing validate-fn" {:validation     (get-in form [:meta :validation] :spec)
                                              :validation-fns (get-in form [:meta :validation-fns])})))
-    (let [fields (->> (:fields form)
-                      (map (fn [[field-k field]]
-                             (let [field-name (:name field)
-                                   field-id   (get-in field [:attributes :id]
-                                                      (str (get-in form [:meta :form-name])
-                                                           "-"
-                                                           (name field-name)))
-                                   label      (get-in field [:label]
-                                                      (str/capitalize (name field-k)))
-                                   value*     (if posted?
-                                                (or (get params field-name)
-                                                    (get-in form [:meta :field-data field-k]))
-                                                (get-in form [:meta :field-data field-k]))
-                                   value      (if-let [coerce-fn (:coerce field)]
-                                                (coerce-fn field {:field/value value*})
-                                                value*)]
-                               [field-k (-> field
-                                            (assoc-in [:attributes :value] value*)
-                                            (assoc-in [:attributes :name] field-name)
-                                            (assoc-in [:attributes :id] field-id)
-                                            (assoc :value value
-                                                   :label label
-                                                   :field-k field-k))])))
-                      (into {}))
-          ;; do two passes on fields. one for updates, one for validations where
-          ;; fields might depend on other fields
-          errors (->> fields
-                      (map (fn [[field-k field]]
-                             (when (some? (:value field))
-                               [field-k (validate-fn field (merge
-                                                            (:meta form)
-                                                            {:field/value (:value field)
-                                                             :form/fields fields}))])))
-                      (remove nil?)
-                      (into {}))]
+    (let [fields
+          (->> (:fields form)
+               (map (comp
+                     process-field
+                     (fn [[field-k field]]
+                       {:form    form
+                        :params  params
+                        :posted? posted?
+                        :field-k field-k
+                        :field   field})))
+               (into {}))
+          ;; updated fields based on branching
+          updated-fields
+          (loop [updated-fields       []
+                 [branch & branching] (get-in form [:meta :branching])]
+            (if (nil? branch)
+              (->> updated-fields
+                   (into {}))
+              (let [[controller-name controller-opts & ?branches] branch
+                    controller                                    (get-in form [:meta :controllers controller-name])
+                    updated-field                                 (controller->field (->  controller
+                                                                                          (merge controller-opts)
+                                                                                          (assoc :form form :fields fields)))]
+                (recur (conj updated-fields updated-field) (if updated-field
+                                                             (concat ?branches branching)
+                                                             branching)))))
+          ;; final fields. we remove inactive fields
+          final-fields
+          (if (seq updated-fields)
+            (->> (merge fields updated-fields)
+                 (filter (fn [[_ field]]
+                           (:active? field)))
+                 (map (comp
+                       process-field
+                       (fn [[field-k field]]
+                         {:form    form
+                          :params  params
+                          :posted? posted?
+                          :field-k field-k
+                          :field   field})))
+                 (into {}))
+            (->> fields
+                 (filter (fn [[_ field]]
+                           (:active? field)))
+                 (into {})))
+          ;; validate fields
+          errors
+          (->> final-fields
+               (map (fn [[field-k field]]
+                      (when (some? (:value field))
+                        [field-k (validate-fn field (merge
+                                                     (:meta form)
+                                                     {:field/value (:value field)
+                                                      :form/fields fields}))])))
+               (remove nil?)
+               (into {}))]
       (-> form
           (assoc-in [:meta :posted?] posted?)
           (assoc-in [:meta :errors] errors)
-          (assoc :fields fields)))))
+          (assoc :fields final-fields)))))
 
 (defn- walk-errors [layout error]
   (walk/postwalk (fn [x]
@@ -212,7 +274,9 @@
                  :fields fields}
                 params))
 
-(defn process-field [{field-name :name :as field}]
+(defn adapt-field
+  "Adapt a field's name for the web"
+  [{field-name :name :as field}]
   (if (qualified-keyword? field-name)
     ;; NOTE: Using str/replace caused an output in JS that halted
     ;; the execution of the rest of the script
@@ -228,20 +292,29 @@
   (assert (vector? fields) "fields must be a vector")
   (assert (every? map? fields) "fields must be a vector of maps")
   (assert (every? :name fields) "Each field in fields must have a :name")
-  (let [field-types  (->> (keys field/fields)
-                          (concat (keys (:extra-fields meta-opts)))
-                          (set))
-        fields*      (->> fields
-                          (map process-field)
-                          (into (sorted-map)))
-        field-lookup (->> fields*
-                          (map (fn [[field-k {:keys [name]}]]
-                                 [name field-k]))
-                          (into {}))
-        field-order  (mapv :name fields)]
+  (let [field-types           (->> (keys field/fields)
+                                   (concat (keys (:extra-fields meta-opts)))
+                                   (set))
+        fields*               (->> fields
+                                   (map adapt-field)
+                                   (into (sorted-map)))
+        field-lookup          (->> fields*
+                                   (map (fn [[field-k {:keys [name]}]]
+                                          [name field-k]))
+                                   (into {}))
+        field-order           (mapv :name fields)
+        branching-controllers (loop [controllers          #{}
+                                     [branch & branching] (:branching meta-opts)]
+                                (if (nil? branch)
+                                  controllers
+                                  (recur (conj controllers (first branch))
+                                         (concat branching (drop 2 branch)))))]
     (let [diff (set/difference (set (map :type (vals fields*))) field-types)]
       (when (seq diff)
         (throw (ex-info (str "Unsupported field type(s): " diff) {:types diff}))))
+    (let [diff (set/difference branching-controllers (set (keys (:controllers meta-opts))))]
+      (when (seq diff)
+        (throw (ex-info (str "Unspecified branching controllers" diff) {:controllers diff}))))
     (fn form-fn
       ([data]
        (form-fn data nil nil))
