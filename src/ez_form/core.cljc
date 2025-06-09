@@ -6,7 +6,9 @@
             [ez-form.validation])
   #?(:cljs (:require-macros [ez-form.core])))
 
-(defn anti-forgery [#?(:clj _form :cljs form) _]
+(defn anti-forgery
+  "print out a hidden field with the anti-forgery-token"
+  [#?(:clj _form :cljs form) _]
   #?(:clj
      (do (require 'ring.middleware.anti-forgery)
          [:input {:id    :__anti-forgery-token
@@ -19,11 +21,22 @@
               :value (get-in form [:meta :anti-forgery-token])
               :type  :hidden}]))
 
-(defn input-form-name [form _]
+(defn input-form-name
+  "Print out a hidden field with the form name. This is used when POSTing to
+  keep track of which fields should be counted, when running the
+  post-process-form"
+  [form _]
   [:input {:type  :hidden
            :value (get-in form [:meta :form-name])
            :name  :__ez-form_form-name}])
 
+(defn show-field?
+  "form fn for wrapping whether to show the entirety of a field or not"
+  [form layout]
+  (let [[_ field-k & r] layout]
+    (when-let [field (get-in form [:fields field-k])]
+      (when (:show? field)
+        (render form r)))))
 
 (defn fields->map
   "Return the fields of the form as a map"
@@ -164,7 +177,9 @@
                      x))
                  layout))
 
-(defn render-field-errors [form _field layout]
+(defn render-field-errors
+  "Render the errors for a specific field"
+  [form _field layout]
   (when (get-in form [:meta :posted?])
     (map #(walk-errors (drop 2 layout) %)
          (get-in form [:meta :errors (first layout)]))))
@@ -189,28 +204,44 @@
             (keyword? (first x))
             (= 1 (count x))
             (get-in form [:fields (first x)]))
-       (field/render (get-in form [:fields (first x)])
-                     (get-in form [:meta :fields]))
+       ;; only render the field if it's set to show? = true
+       (if (true? (get-in form [:fields (first x) :show?]))
+         (field/render (get-in form [:fields (first x)])
+                       (get-in form [:meta :fields]))
+         nil)
 
        ;; render field functions
        (and (vector? x)
             (get-in form [:meta :field-fns (second x)]))
        (let [f     (get-in form [:meta :field-fns (second x)])
              field (get-in form [:fields (first x)])]
-         (f form field x))
+         ;; we check for false in case it's a field fn
+         ;; that matches a field, in which case we want to return
+         ;; nil if it's false. if it's an arbitrary field fn
+         ;; we still want to run the function
+         (if (false? (get-in form [:fields (first x) :show?]))
+           nil
+           (f form field x)))
 
        ;; render lookup
        (and (vector? x)
             (not= :errors (second x))
             (keyword? (first x))
-            (get-in form [:fields (first x)]))
-       (let [value (get-in form (into [:fields] x))]
-         (if (and (vector? value)
-                  (get-in form [:meta :field-fns (first value)]))
-           (let [f     (get-in form [:meta :field-fns (first value)])
-                 field (get-in form [:fields (first x)])]
-             (f form field value))
-           value))
+            (some? (get-in form [:fields (first x)])))
+       (let [value (get-in form (into [:fields] x))
+             show? (get-in form [:fields (first x) :show?])]
+         (cond (and (true? show?)
+                    (vector? value)
+                    (get-in form [:meta :field-fns (first value)]))
+               (let [f     (get-in form [:meta :field-fns (first value)])
+                     field (get-in form [:fields (first x)])]
+                 (f form field value))
+
+               (false? show?)
+               nil
+
+               :else
+               value))
 
        :else
        x))
@@ -227,13 +258,14 @@
          field-order (get-in form [:meta :field-order])
          row-layout  (:row-layout table-opts
                                   (fn [field-k]
-                                    [:tr
-                                     [:th
-                                      [:label {:for [field-k :attributes :id]}
-                                       [field-k :label]]]
-                                     [:td
-                                      [field-k]
-                                      [field-k :errors :error]]]))]
+                                    [:fn/show-field? field-k
+                                     [:tr
+                                      [:th
+                                       [:label {:for [field-k :attributes :id]}
+                                        [field-k :label]]]
+                                      [:td
+                                       [field-k]
+                                       [field-k :errors :error]]]]))]
      (render
       form
       (list
@@ -329,7 +361,8 @@
                  :field-fns      {:errors render-field-errors}
                  :fields         field/fields
                  :fns            {:fn/anti-forgery    anti-forgery
-                                  :fn/input-form-name input-form-name}
+                                  :fn/input-form-name input-form-name
+                                  :fn/show-field?     show-field?}
                  :validation     :spec
                  :validation-fns {:spec ez-form.validation/validate}}
                 meta-opts

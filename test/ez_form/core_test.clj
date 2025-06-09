@@ -12,7 +12,8 @@
 (defexpect render-test
   (let [form {:meta   {:posted?   true
                        :fields    field/fields
-                       :fns       {:fn/test (fn [_ _] "This is a meta function")}
+                       :fns       {:fn/test  (fn [_ _] "This is a meta function")
+                                   :fn/show-field? sut/show-field?}
                        :field-fns {:errors sut/render-field-errors
                                    :fn/t   (fn [_form _field [_ label]]
                                              (str/capitalize (name label)))}
@@ -21,12 +22,22 @@
                                    ::arbitrary ["This is an arbitratry error message that is not tied to a specific field"]}}
               :fields {::username {:type       :text
                                    :field-k    ::username
+                                   :show?      true
                                    :label      [:fn/t ::username]
                                    :help       [:div.help "My help text"]
                                    :attributes {:name        :username
                                                 :value       "johndoe"
                                                 :id          "testform-username"
-                                                :placeholder :ui.username/placeholder}}}}]
+                                                :placeholder :ui.username/placeholder}}
+                       ::email    {:type       :email
+                                   :field-k    ::email
+                                   :show?      false
+                                   :label      [:fn/t ::email]
+                                   :help       [:div.help "My help text"]
+                                   :attributes {:name        :email
+                                                :value       "johndoe@example.com"
+                                                :id          "testform-email"
+                                                :placeholder :ui.email/placeholder}}}}]
     (expect
      [:div
       [:input {:type        :text
@@ -36,7 +47,7 @@
                :placeholder :ui.username/placeholder}]]
      (sut/render form [:div
                        [::username]])
-     "Field is rendered (field lookup)")
+     "Username is rendered (field lookup)")
     (expect
      [:div
       [:input {:type        :text
@@ -52,7 +63,13 @@
                        [::username]
                        [::username :errors
                         [:div.error :error]]])
-     "Field is rendered with errors (:posted? is true)")
+     "Username is rendered with errors (:posted? is true)")
+    (expect
+     nil
+     (sut/render form [:fn/show-field? ::email
+                       [:div
+                        [::email]]])
+     "Email is not rendered as the field is not shown")
     (expect
      [:div
       '(([:div.error "This is an arbitratry error message that is not tied to a specific field"]))]
@@ -73,7 +90,7 @@
                   [::username]
                   [::username :errors
                    [:div.error :error]]])
-     "Field is rendered with no errors (:posted? is false)")
+     "Username is rendered with no errors (:posted? is false)")
     (expect
      [:div
       [:input {:type        :text
@@ -85,7 +102,7 @@
      (sut/render form [:div
                        [::username]
                        [::username :help]])
-     "field is rendered with :help (field :key lookup)")
+     "Username is rendered with :help (field :key lookup)")
     (expect
      [:div
       [:label {:for "testform-username"}
@@ -101,7 +118,7 @@
                         [::username :label]]
                        [::username]
                        [::username :help]])
-     "field is a :label that targets the field")
+     "Username is a :label that targets the field")
     (expect
      [:div
       [:input {:type        :text
@@ -114,7 +131,7 @@
      (sut/render form [:div
                        [::username]
                        [::username :text]])
-     "field is rendered with :text (field :key lookup)")
+     "Username is rendered with :text (field :key lookup)")
     (expect
      [:div
       [:label
@@ -128,7 +145,7 @@
                        [:label
                         [::username]
                         [::username :label]]])
-     "field is rendered with a field-fn [field :key lookup]")
+     "Username is rendered with a field-fn [field :key lookup]")
     (expect
      [:div
       [:input {:type        :text
@@ -140,7 +157,7 @@
      (sut/render form [:div
                        [::username]
                        [:fn/test]])
-     "field is rendered with a meta function")))
+     "Username is rendered with a meta function")))
 
 (defexpect process-form-test
   (let [email          "john.doe@example.com"
@@ -298,9 +315,9 @@
   (let [email             "john.doe@example.com"
         username          "john.doe"
         some-value?       (fn [{:keys [field]}]
-                         (some? (:value field)))
+                            (some? (:value field)))
         show-field        (fn [{:keys [field]}]
-                         (assoc field :show? true))
+                            (assoc field :show? true))
         form              {:meta {:validation     :spec
                                   :form-name      "test"
                                   :validation-fns {:spec ez-form.validation/validate}
@@ -360,16 +377,16 @@
                                                   :options [["agree" "I agree"]]
                                                   :active? false}}}
         get-expected-data (fn [form] (->> form
-                                           :fields
-                                           (map (fn [[k field]]
-                                                  [k (select-keys field [:show? :active?])]))
-                                           (into {})))]
+                                          :fields
+                                          (map (fn [[k field]]
+                                                 [k (select-keys field [:show? :active?])]))
+                                          (into {})))]
 
-    (let [processed-form    (sut/process-form form {:_username           username
-                                                    :_email              email
-                                                    :_address            "address"
-                                                    :_city               "city"
-                                                    :__ez-form_form-name "test"})]
+    (let [processed-form (sut/process-form form {:_username           username
+                                                 :_email              email
+                                                 :_address            "address"
+                                                 :_city               "city"
+                                                 :__ez-form_form-name "test"})]
       (expect
        {::username           {:show? true :active? true}
         ::email              {:show? true :active? true}
@@ -401,11 +418,11 @@
        (get-expected-data processed-form)))
     (let [processed-form (sut/process-form (update form :meta dissoc :agreement) {:__ez-form_form-name "test"})]
       (expect
-       {::username           {:show? true :active? true}
-        ::email              {:show? false :active? true}
-        ::address            {:show? false :active? true}
-        ::city               {:show? false :active? true}
-        ::zip                {:show? false :active? true}}
+       {::username {:show? true :active? true}
+        ::email    {:show? false :active? true}
+        ::address  {:show? false :active? true}
+        ::city     {:show? false :active? true}
+        ::zip      {:show? false :active? true}}
        (get-expected-data processed-form)))))
 
 (defexpect process-form-spec-test
@@ -824,10 +841,10 @@
       :name ::email}])
 
   (sut/defform testform5
-    {:branching [[:foo nil [:baz]]
-                 ;; TODO: implement this?
-                 [:baz {:pred (fn [ctx passes]
-                                (and ))}]]
+    {:branching   [[:foo nil [:baz]]
+                   ;; TODO: implement this?
+                   [:baz {:pred (fn [ctx passes]
+                                  (and ))}]]
      :controllers {:foo {}
                    :bar {}}}
     [{:type :text
