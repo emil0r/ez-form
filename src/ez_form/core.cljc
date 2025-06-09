@@ -6,6 +6,7 @@
             [ez-form.validation])
   #?(:cljs (:require-macros [ez-form.core])))
 
+(declare render)
 (defn anti-forgery
   "print out a hidden field with the anti-forgery-token"
   [#?(:clj _form :cljs form) _]
