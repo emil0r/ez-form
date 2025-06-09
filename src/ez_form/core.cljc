@@ -89,17 +89,19 @@
   "Takes a context map for a controller and runs the controller.
   Helper fn for process-form"
   [{:keys [initiator target form fields]}]
-  (when ((:fn initiator)
-         (merge
-          (:ctx initiator)
-          {:form  form
-           :field (fields (:field initiator))}))
-    [(:field target)
-     ((:fn target)
-      (merge
-       (:ctx target)
-       {:form  form
-        :field (fields (:field target))}))]))
+  (let [result ((:fn initiator)
+                (merge
+                 (:ctx initiator)
+                 {:form  form
+                  :field (fields (:field initiator))}))]
+    (when (some? result)
+      [(:field target)
+       ((:fn target)
+        (merge
+         (:ctx target)
+         {:form         form
+          :ctx-initator result
+          :field        (fields (:field target))}))])))
 
 (defn process-form
   "Process the form. Sets it up to be rendered, validates, coerces, etc"
