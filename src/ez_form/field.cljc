@@ -34,6 +34,17 @@
               option-label]))
          options)))
 
+(defn input-boolean-field [{:keys [value attributes]}]
+  (let [value (case value
+                "true" true
+                true   true
+                false)]
+    [:label
+     [:input (merge attributes
+                    {:type    :checkbox
+                     :value   (str (not value))
+                     :checked (true? value)})]]))
+
 (defn textarea-field [{:keys [attributes]}]
   [:textarea (dissoc attributes :value)
    (:value attributes)])
@@ -49,6 +60,7 @@
 
 
 (def fields {:button         input-field
+             :boolean        input-boolean-field
              :checkbox       input-checkbox-field
              :color          input-field
              :date           input-field
@@ -74,8 +86,8 @@
 
 (defn render
   "Render a field according to type"
-  [field fields]
+  [field fields ctx]
   (if-let [field-fn (fields (:type field))]
-    (field-fn field)
+    (field-fn (assoc field :ctx ctx))
     (str "I am missing the field " (pr-str (or (get-in field [:attributes :name])
                                                field)))))

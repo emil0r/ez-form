@@ -72,9 +72,15 @@
                      (or (get params field-name)
                          (get-in form [:meta :field-data field-k]))
                      (get-in form [:meta :field-data field-k]))
-        value      (if-let [coerce-fn (:coerce field)]
-                     (coerce-fn field {:field/value value*})
-                     value*)]
+        value      (cond (:coerce field)
+                         ((:coerce field) field {:field/value value*})
+
+                         (= :boolean (:type field))
+                         (or (true? value*)
+                             (= "true" value*))
+
+                         :else
+                         value*)]
     [field-k (-> field
                  (assoc-in [:attributes :value] value*)
                  (assoc-in [:attributes :name] field-name)
@@ -99,9 +105,9 @@
        ((:fn target)
         (merge
          (:ctx target)
-         {:form         form
-          :ctx-initator result
-          :field        (fields (:field target))}))])))
+         {:form          form
+          :ctx-initiator result
+          :field         (fields (:field target))}))])))
 
 (defn process-form
   "Process the form. Sets it up to be rendered, validates, coerces, etc"
@@ -210,7 +216,8 @@
        ;; only render the field if it's set to show? = true
        (if (true? (get-in form [:fields (first x) :show?]))
          (field/render (get-in form [:fields (first x)])
-                       (get-in form [:meta :fields]))
+                       (get-in form [:meta :fields])
+                       (:meta form))
          nil)
 
        ;; render field functions

@@ -12,7 +12,7 @@
 (defexpect render-test
   (let [form {:meta   {:posted?   true
                        :fields    field/fields
-                       :fns       {:fn/test  (fn [_ _] "This is a meta function")
+                       :fns       {:fn/test        (fn [_ _] "This is a meta function")
                                    :fn/show-field? sut/show-field?}
                        :field-fns {:errors sut/render-field-errors
                                    :fn/t   (fn [_form _field [_ label]]
@@ -185,10 +185,13 @@
                          ::number       {:type   :number
                                          :name   :_number
                                          :coerce (fn [_ {:keys [field/value]}]
-                                                   (parse-long value))}}}
+                                                   (parse-long value))}
+                         ::boolean      {:type :boolean
+                                         :name :_boolean}}}
         processed-form (sut/process-form form {:_email              email
                                                :_repeat-email       "asdf"
                                                :_number             "1"
+                                               :_boolean            "true"
                                                :__ez-form_form-name "test"})]
     (expect
      {:name        :_username
@@ -219,7 +222,11 @@
     (expect
      1
      (get-in processed-form [:fields ::number :value])
-     "number has been coerced")))
+     "number has been coerced")
+    (expect
+     true
+     (get-in processed-form [:fields ::boolean :value])
+     "boolean is an actual boolean")))
 
 (defexpect process-form-branching-basic-test
   (let [email          "john.doe@example.com"
@@ -315,9 +322,9 @@
   (let [email             "john.doe@example.com"
         username          "john.doe"
         some-value?       (fn [{:keys [field]}]
-                            (some? (:value field)))
-        show-field        (fn [{:keys [field]}]
-                            (assoc field :show? true))
+                            {:show? (some? (:value field))})
+        show-field        (fn [{:keys [field ctx-initiator]}]
+                            (assoc field :show? (:show? ctx-initiator)))
         form              {:meta {:validation     :spec
                                   :form-name      "test"
                                   :validation-fns {:spec ez-form.validation/validate}

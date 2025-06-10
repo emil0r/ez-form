@@ -42,7 +42,10 @@
               "β"
               "γ"
               "δ"
-              "ε"]}])
+              "ε"]}
+   {:name    ::boolean
+    :type    :boolean
+    :label   "Boolean checkbox"}])
 
 
 (defn sl-input-color-picker [{:keys [type attributes]}]
