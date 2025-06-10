@@ -308,14 +308,21 @@
   "Create a form"
   [opts fields params]
   ;; the meta update has to be in here, as we want to be able to override in runtime
-  (process-form {:meta   (-> opts
-                             (update :validation-fns merge (:extra-validation-fns opts))
-                             (update :fns merge (:extra-fns opts))
-                             (update :fields merge (:extra-fields opts))
-                             (update :field-fns merge (:extra-field-fns opts))
-                             (dissoc :extra-fields :extra-validation-fns :extra-fns :extra-field-fns))
-                 :fields fields}
-                params))
+  (let [meta-opts      (-> opts
+                           (update :validation-fns merge (:extra-validation-fns opts))
+                           (update :fns merge (:extra-fns opts))
+                           (update :fields merge (:extra-fields opts))
+                           (update :field-fns merge (:extra-field-fns opts))
+                           (dissoc :extra-fields :extra-validation-fns :extra-fns :extra-field-fns))
+        fields* (if-let [f (:process-fields meta-opts)]
+                         (->> fields
+                              (map (fn [[k field]]
+                                     [k (f meta-opts field)]))
+                              (into (sorted-map)))
+                         fields)]
+    (process-form {:meta   meta-opts
+                   :fields fields*}
+                  params)))
 
 (defn adapt-field
   "Adapt a field's name for the web"
@@ -338,8 +345,11 @@
   (let [field-types           (->> (keys field/fields)
                                    (concat (keys (:extra-fields meta-opts)))
                                    (set))
+        pre-process-fields    (if-let [f (:pre-process-fields meta-opts)]
+                                (partial f meta-opts)
+                                identity)
         fields*               (->> fields
-                                   (map adapt-field)
+                                   (map (comp adapt-field pre-process-fields))
                                    (into (sorted-map)))
         field-lookup          (->> fields*
                                    (map (fn [[field-k {:keys [name]}]]

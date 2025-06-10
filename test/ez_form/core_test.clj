@@ -806,7 +806,8 @@
     (expect
      #{:sl-input-text
        :sl-input-email}
-     (->> form :fields (vals) (map :type) set)))
+     (->> form :fields (vals) (map :type) set)
+     "meta-opts referred via a namespace is handled correctly by defform"))
 
   (sut/defform testform4
     meta-opts-local
@@ -819,7 +820,27 @@
     (expect
      #{:sl-input-text
        :sl-input-email}
-     (->> form :fields (vals) (map :type) set))))
+     (->> form :fields (vals) (map :type) set)
+     "meta-opts locally referred is handled correctly by defform"))
+
+  (sut/defform testform5
+    {:id                 :testform5
+     :pre-process-fields (fn [meta-opts field]
+                           (assoc field :form/id (:id meta-opts)))
+     :process-fields     (fn [meta-opts field]
+                           (assoc field :form/id (:id meta-opts)))}
+    [{:type :text
+      :name :name}
+     {:type :text
+      :name :email}])
+  (let [form (testform5 {})]
+    (expect [:testform5 :testform5]
+            (->> form :fields (vals) (map :form/id))
+            ":form/id added to fields via :pre-process-fields"))
+  (let [form (testform5 {} {} {:id ::testus})]
+    (expect [::testus ::testus]
+            (->> form :fields (vals) (map :form/id))
+            ":form/id added to fields via :process-fields")))
 
 
 (defexpect adapt-field-test
