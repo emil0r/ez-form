@@ -49,6 +49,7 @@
        (into {})))
 
 (defn valid?
+  "Check if the form is valid, passing all validations"
   ([form]
    (and (every? empty? (vals (get-in form [:meta :errors])))
         (every? some? (map :value (vals (:fields form)))))))
@@ -138,13 +139,13 @@
                    (into {}))
               (let [[controller-name controller-opts & ?branches] branch
                     controller                                    (get-in form [:meta :controllers controller-name])
-                    updated-field                                 (controller->field (->  controller
-                                                                                          (merge controller-opts)
-                                                                                          (assoc :form form :fields fields)))]
+                    updated-field                                 (controller->field (-> controller
+                                                                                         (merge controller-opts)
+                                                                                         (assoc :form form :fields fields)))]
                 (recur (conj updated-fields updated-field) (if updated-field
                                                              (concat ?branches branching)
                                                              branching)))))
-          ;; final fields. we remove inactive fields
+          ;; final fields. remove inactive fields
           final-fields
           (if (seq updated-fields)
             (->> (merge fields updated-fields)
@@ -326,8 +327,8 @@
                            (replace "." "__!")
                            (replace "/" "_!"))
                        (keyword))]
-      [field-name (assoc field :name new-name)])
-    [field-name field]))
+      [field-name (assoc field :name new-name :k field-name)])
+    [field-name (assoc field :k field-name)]))
 
 (defn reg-form [form-name meta-opts fields]
   (assert (map? meta-opts) (str "meta-opts must be a map. Is currently: " (type meta-opts)))

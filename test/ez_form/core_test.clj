@@ -824,10 +824,10 @@
 
 (defexpect adapt-field-test
   (expect
-   [:foo {:name :foo}]
+   [:foo {:name :foo :k :foo}]
    (sut/adapt-field {:name :foo}))
   (expect
-   [:foo.bar/baz {:name :foo__!bar_!baz}]
+   [:foo.bar/baz {:name :foo__!bar_!baz :k :foo.bar/baz}]
    (sut/adapt-field {:name :foo.bar/baz})))
 
 
