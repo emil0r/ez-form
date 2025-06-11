@@ -70,8 +70,10 @@
         label      (get-in field [:label]
                            (str/capitalize (name field-k)))
         value*     (if posted?
-                     (or (get params field-name)
-                         (get-in form [:meta :field-data field-k]))
+                     (or (get params field-name) ;; from a HTTP POST
+                         (get params field-k)    ;; from a js event
+                         (get-in form [:meta :field-data field-k]) ;; from the initial data being sent in
+                         )
                      (get-in form [:meta :field-data field-k]))
         value      (cond (:coerce field)
                          ((:coerce field) field {:field/value value*})
