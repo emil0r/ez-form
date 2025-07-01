@@ -60,7 +60,7 @@
          (get-in form [:meta :form-name]))))
 
 (defn- process-field
-  "Process a field in the form. Helper fn for proess-form"
+  "Process a field in the form. Helper fn for process-form"
   [{:keys [posted? params form field-k field]}]
   (let [field-name (:name field)
         field-id   (get-in field [:attributes :id]
@@ -180,7 +180,10 @@
       (-> form
           (assoc-in [:meta :posted?] posted?)
           (assoc-in [:meta :errors] errors)
-          (assoc :fields final-fields)))))
+          (assoc :fields (->> final-fields
+                              (map (fn [[k field]]
+                                     [k (assoc field :errors (get errors k))]))
+                              (into {})))))))
 
 (defn- walk-errors [layout error]
   (walk/postwalk (fn [x]
@@ -310,18 +313,18 @@
   "Create a form"
   [opts fields params]
   ;; the meta update has to be in here, as we want to be able to override in runtime
-  (let [meta-opts      (-> opts
-                           (update :validation-fns merge (:extra-validation-fns opts))
-                           (update :fns merge (:extra-fns opts))
-                           (update :fields merge (:extra-fields opts))
-                           (update :field-fns merge (:extra-field-fns opts))
-                           (dissoc :extra-fields :extra-validation-fns :extra-fns :extra-field-fns))
-        fields* (if-let [f (:process-fields meta-opts)]
-                         (->> fields
-                              (map (fn [[k field]]
-                                     [k (f meta-opts field)]))
-                              (into (sorted-map)))
-                         fields)]
+  (let [meta-opts (-> opts
+                      (update :validation-fns merge (:extra-validation-fns opts))
+                      (update :fns merge (:extra-fns opts))
+                      (update :fields merge (:extra-fields opts))
+                      (update :field-fns merge (:extra-field-fns opts))
+                      (dissoc :extra-fields :extra-validation-fns :extra-fns :extra-field-fns))
+        fields*   (if-let [f (:process-fields meta-opts)]
+                    (->> fields
+                         (map (fn [[k field]]
+                                [k (f meta-opts field)]))
+                         (into (sorted-map)))
+                    fields)]
     (process-form {:meta   meta-opts
                    :fields fields*}
                   params)))

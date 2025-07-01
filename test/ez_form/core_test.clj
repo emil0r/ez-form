@@ -7,6 +7,8 @@
             [ez-form.validation]
             [ez-form.validation.validation-malli]
             [lookup.core :as lookup]
+            [malli.core :as m]
+            [malli.util :as mu]
             [ring.middleware.anti-forgery :refer [*anti-forgery-token*]]))
 
 (defexpect render-test
@@ -678,6 +680,96 @@
          false
          (sut/valid? form)
          "Form is invalid - name is foobar which breaks the validation for ::username")))))
+
+(defn path-permissions
+  "Composite field for path permissions. Depends on a non-defined
+  action (think Replicant), that would in turn emit a custom JS event with the
+  data. This would then be picked up by whatever has been defined for the form.
+
+  An implementation of this field for the typical web form would involve some
+  pr-str and coercesion via edn/read-string"
+  [{:keys [value errors on]}]
+  (let [[{:keys [validation-map result]}]              errors
+        {:keys [error-msg-path error-msg-permissions]} validation-map
+        has-error                                      (->> (:errors result)
+                                                           (map :in)
+                                                           (set))]
+    [:div.path-permissions
+     (for [[idx {:keys [path permissions]}] (map vector (range) value)]
+       [:div.path-permission
+        [:input {:type  :text
+                 :value path
+                 ;; this would depend on an extra action that would dispatch a
+                 ;; custom event for anything above the field to pick it up
+                 :on    (update on :change conj [[:path-permissions-update
+                                                  (assoc value idx {:path        :event.target/value
+                                                                    :permissions permissions})]])}]
+        (when (has-error [idx :path])
+          [:div.error error-msg-path])
+        (for [permission ["read" "write" "execute"]]
+          (let [checked? (contains? permissions permission)]
+            [:label [:input {:type    :checkbox
+                             :checked checked?
+                             :on      (update on :change conj [[:path-permissions-update
+                                                                (assoc value idx {:path        path
+                                                                                  :permissions (if checked?
+                                                                                                 (disj permissions permission)
+                                                                                                 (conj permissions permission))})]])}]
+             permission]))
+        (when (has-error [idx :permissions])
+          [:div.error error-msg-permissions])])
+     [:div
+      [:button {:on {:click [[:path-permissions-update (conj value {})]]}}]]]))
+
+(defexpect defform-complex-validation-test
+  (let [error-msg-path        "Path must be a string"
+        error-msg-permissions "Permissions must be a combination of read, write and execute"
+        Path                  :string
+        Permission            [:enum "write" "read" "execute"]
+        Permissions           [:set Permission]
+        PathPermission        [:map
+                              [:path Path]
+                              [:permissions Permissions]]
+        PathPermissions       [:sequential PathPermission]
+        complex-fn            (fn [_field {:keys [field/value PathPermissions] :as _ctx}]
+                               (when-not (m/validate PathPermissions value)
+                                 (mu/explain-data PathPermissions value)))]
+    (sut/defform testform
+      {:extra-fields {:path-permissions path-permissions}}
+      [{:name       ::path-permissions
+        :help       [:i18n :ui.username/help]
+        :on         {:change [[:form/update ::path-permissions :event.target/value]]}
+        :validation [{:complex               complex-fn
+                      :PathPermissions       PathPermissions
+                      :error-msg-path        error-msg-path
+                      :error-msg-permissions error-msg-permissions}]
+        :type       :path-permissions}])
+    (binding [*anti-forgery-token* "anti-forgery-token"]
+      (let [get-form (fn [initial-data] (testform initial-data {:__ez-form_form-name "testform"} {}))]
+        (expect
+         [[:div {:class #{"path-permissions"}}
+           [:div
+            [:button {:on {:click [[:path-permissions-update [{}]]]}}]]]]
+         (lookup/select '[div.path-permissions] (sut/as-table (get-form {::path-permissions []})))
+         "Empty form gives back the path-permissions field")
+        (expect
+         []
+         (lookup/select '[div.error] (sut/as-table (get-form {::path-permissions [{:path "/foo" :permissions #{"read" "write"}}]})))
+         "Valid form gives back the path-permissions field without errors")
+        (expect
+         [[:div {:class #{"error"}} error-msg-path]
+          [:div {:class #{"error"}} error-msg-permissions]]
+         (lookup/select '[div.error] (sut/as-table (get-form {::path-permissions [{:path nil :permissions nil}]})))
+         "Invalid form gives back the path-permissions field with errors")
+        (expect
+         [[:div {:class #{"error"}} error-msg-path]
+          [:div {:class #{"error"}} error-msg-permissions]
+          [:div {:class #{"error"}} error-msg-permissions]
+          [:div {:class #{"error"}} error-msg-path]]
+         (lookup/select '[div.error] (sut/as-table (get-form {::path-permissions [{:path nil :permissions nil}
+                                                                                  {:path "/path" :permissions nil}
+                                                                                  {:path nil :permissions #{"write"}}]})))
+         "Invalid form gives back the path-permissions field with multiple errors")))))
 
 (defexpect defform-changed-defaults-test
   (sut/defform testform
