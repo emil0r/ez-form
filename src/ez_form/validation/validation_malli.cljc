@@ -14,4 +14,10 @@
         (map (fn [{:keys [external error-msg]}]
                (when-not (external field ctx)
                  error-msg)))
-        (remove nil?))))
+        (remove nil?))
+   (->> (:validation field)
+        (filter :complex)
+        (map (fn [{:keys [complex] :as validation-map}]
+               {:validation-map validation-map
+                :result         (complex field (merge ctx validation-map))}))
+        (remove #(nil? (:result %))))))

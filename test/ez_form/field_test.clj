@@ -140,14 +140,14 @@
            [:label
             [:input {:type        :checkbox
                      :name        :test
-                     :value       "B"
+                     :value       "A"
                      :checked     false
                      :placeholder "placeholder"}]
             "B"]
            [:label
             [:input {:type        :checkbox
                      :name        :test
-                     :value       "C"
+                     :value       "A"
                      :checked     false
                      :placeholder "placeholder"}]
             "C"])
